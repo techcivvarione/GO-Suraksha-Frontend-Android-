@@ -6,12 +6,12 @@ import retrofit2.http.POST
 
 interface AnalyzeApi {
 
-    @POST("analyze")
+    @POST("analyze/")   // <-- ADD TRAILING SLASH
     suspend fun analyze(
         @Body request: AnalyzeRequest
     ): AnalyzeResponse
 
-    @POST("ai/explain")
+    @POST("ai/explain/")
     suspend fun explain(
         @Body request: AiExplainRequest
     ): AiExplainResponse

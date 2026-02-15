@@ -31,7 +31,7 @@ open class BaseViewModel(application: Application) : AndroidViewModel(applicatio
 
                 // 🔐 If unauthorized, trigger global logout
                 if (uiError is UiError.Unauthorized) {
-                    SessionManager.clear(getApplication())
+                    SessionManager.clear()
                     SessionManager.notifySessionExpired()
                 }
 

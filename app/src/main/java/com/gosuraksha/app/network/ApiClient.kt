@@ -37,6 +37,10 @@ object ApiClient {
     lateinit var riskApi: RiskApi
         private set
 
+    lateinit var trustedContactsApi: TrustedContactsApi
+        private set
+
+
 
     fun init(context: Context) {
 
@@ -65,6 +69,8 @@ object ApiClient {
         historyApi = retrofit.create(HistoryApi::class.java)
         alertsApi = retrofit.create(AlertsApi::class.java)
         riskApi = retrofit.create(RiskApi::class.java)
+        trustedContactsApi = retrofit.create(TrustedContactsApi::class.java)
+
 
 
 

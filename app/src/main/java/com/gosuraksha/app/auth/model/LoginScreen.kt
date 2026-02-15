@@ -62,7 +62,7 @@ fun LoginScreen(
                     painter = painterResource(id = R.drawable.logo),
                     contentDescription = "GO Suraksha",
                     modifier = Modifier
-                        .height(150.dp)
+                        .height(50.dp)
                         .fillMaxWidth(),
                     contentScale = ContentScale.Fit
                 )

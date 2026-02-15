@@ -1,5 +1,6 @@
 package com.gosuraksha.app.ui.main
 
+import android.annotation.SuppressLint
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
@@ -8,119 +9,164 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.navigation.compose.*
 import com.gosuraksha.app.navigation.MainRoutes
+import com.gosuraksha.app.navigation.Routes
 import com.gosuraksha.app.ui.components.AppTopBar
 import com.gosuraksha.app.ui.home.HomeScreen
+import com.gosuraksha.app.ui.history.HistoryScreen
+import com.gosuraksha.app.ui.main.*
 
+@SuppressLint("ComposableDestinationInComposeScope")
 @Composable
 fun MainShell(
-    onLogout: () -> Unit
+    onLogout: () -> Unit,
 ) {
 
-    val bottomNavController = rememberNavController()
-    val currentDestination =
-        bottomNavController.currentBackStackEntryAsState().value?.destination?.route
-
-    var isDarkMode by remember { mutableStateOf(false) }
+    val navController = rememberNavController()
+    val currentRoute =
+        navController.currentBackStackEntryAsState().value?.destination?.route
 
     Scaffold(
+        containerColor = MaterialTheme.colorScheme.background,
+
         topBar = {
             AppTopBar(
-                isDarkMode = isDarkMode,
-                onToggleDarkMode = {
-                    isDarkMode = !isDarkMode
-                },
-                onCyberSosClick = {
-                    // TODO: Navigate to Cyber SOS screen
-                }
+                onCyberSosClick = { }
             )
+
         },
+
         bottomBar = {
-            NavigationBar {
+            NavigationBar(
+                containerColor = MaterialTheme.colorScheme.surface
+            ) {
 
                 NavigationBarItem(
-                    selected = currentDestination == MainRoutes.Home.route,
+                    selected = currentRoute == MainRoutes.Home.route,
                     onClick = {
-                        bottomNavController.navigate(MainRoutes.Home.route) {
+                        navController.navigate(MainRoutes.Home.route) {
                             launchSingleTop = true
                         }
                     },
-                    icon = { Icon(Icons.Default.Home, null) },
-                    label = { Text("Home") }
+                    icon = {
+                        Icon(
+                            Icons.Default.Home,
+                            contentDescription = "Home"
+                        )
+                    },
+                    label = { Text("Home") },
+                    colors = NavigationBarItemDefaults.colors(
+                        selectedIconColor = MaterialTheme.colorScheme.primary,
+                        selectedTextColor = MaterialTheme.colorScheme.primary,
+                        unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                        unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                        indicatorColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.15f)
+                    )
                 )
 
                 NavigationBarItem(
-                    selected = currentDestination == MainRoutes.News.route,
+                    selected = currentRoute == MainRoutes.News.route,
                     onClick = {
-                        bottomNavController.navigate(MainRoutes.News.route) {
+                        navController.navigate(MainRoutes.News.route) {
                             launchSingleTop = true
                         }
                     },
-                    icon = { Icon(Icons.Default.Article, null) },
-                    label = { Text("News") }
+                    icon = { Icon(Icons.Default.Article, "News") },
+                    label = { Text("News") },
+                    colors = NavigationBarItemDefaults.colors(
+                        selectedIconColor = MaterialTheme.colorScheme.primary,
+                        selectedTextColor = MaterialTheme.colorScheme.primary,
+                        unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                        unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                        indicatorColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.15f)
+                    )
                 )
 
                 NavigationBarItem(
-                    selected = currentDestination == MainRoutes.Scan.route,
+                    selected = currentRoute == MainRoutes.Scan.route,
                     onClick = {
-                        bottomNavController.navigate(MainRoutes.Scan.route) {
+                        navController.navigate(MainRoutes.Scan.route) {
                             launchSingleTop = true
                         }
                     },
-                    icon = { Icon(Icons.Default.CameraAlt, null) },
-                    label = { Text("Scan") }
+                    icon = { Icon(Icons.Default.CameraAlt, "Scan") },
+                    label = { Text("Scan") },
+                    colors = NavigationBarItemDefaults.colors(
+                        selectedIconColor = MaterialTheme.colorScheme.primary,
+                        selectedTextColor = MaterialTheme.colorScheme.primary,
+                        unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                        unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                        indicatorColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.15f)
+                    )
                 )
 
                 NavigationBarItem(
-                    selected = currentDestination == MainRoutes.Alerts.route,
+                    selected = currentRoute == MainRoutes.Alerts.route,
                     onClick = {
-                        bottomNavController.navigate(MainRoutes.Alerts.route) {
+                        navController.navigate(MainRoutes.Alerts.route) {
                             launchSingleTop = true
                         }
                     },
-                    icon = { Icon(Icons.Default.Notifications, null) },
-                    label = { Text("Alerts") }
+                    icon = { Icon(Icons.Default.Notifications, "Alerts") },
+                    label = { Text("Alerts") },
+                    colors = NavigationBarItemDefaults.colors(
+                        selectedIconColor = MaterialTheme.colorScheme.primary,
+                        selectedTextColor = MaterialTheme.colorScheme.primary,
+                        unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                        unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                        indicatorColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.15f)
+                    )
                 )
 
                 NavigationBarItem(
-                    selected = currentDestination == MainRoutes.Profile.route,
+                    selected = currentRoute == MainRoutes.Profile.route,
                     onClick = {
-                        bottomNavController.navigate(MainRoutes.Profile.route) {
+                        navController.navigate(MainRoutes.Profile.route) {
                             launchSingleTop = true
                         }
                     },
-                    icon = { Icon(Icons.Default.Person, null) },
-                    label = { Text("Profile") }
+                    icon = { Icon(Icons.Default.Person, "Profile") },
+                    label = { Text("Profile") },
+                    colors = NavigationBarItemDefaults.colors(
+                        selectedIconColor = MaterialTheme.colorScheme.primary,
+                        selectedTextColor = MaterialTheme.colorScheme.primary,
+                        unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                        unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                        indicatorColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.15f)
+                    )
                 )
             }
         }
-    ) { paddingValues ->
+    ) { padding ->
 
         NavHost(
-            navController = bottomNavController,
+            navController = navController,
             startDestination = MainRoutes.Home.route,
-            modifier = Modifier.padding(paddingValues)
+            modifier = Modifier.padding(padding)
         ) {
 
             composable(MainRoutes.Home.route) {
-                HomeScreen(onLogout = onLogout)
-            }
-
-            composable(MainRoutes.News.route) {
-                NewsScreen()
-            }
-
-            composable(MainRoutes.Scan.route) {
-                ScanScreen()
-            }
-
-            composable(MainRoutes.Alerts.route) {
-                AlertsScreen()
-            }
-
-            composable(MainRoutes.Profile.route) {
-                ProfileScreen(
-                    onLogout = onLogout
+                HomeScreen(
+                    onLogout = onLogout,
+                    onNavigateToHistory = {
+                        navController.navigate(Routes.HISTORY)
+                    },
+                    onNavigateToRisk = {
+                        navController.navigate("risk_internal")
+                    }
                 )
+            }
+
+            composable(MainRoutes.News.route) { NewsScreen() }
+            composable(MainRoutes.Scan.route) { ScanScreen() }
+            composable(MainRoutes.Alerts.route) { AlertsScreen() }
+            composable(MainRoutes.Profile.route) { ProfileScreen(onLogout = onLogout) }
+
+            composable(Routes.HISTORY) {
+                HistoryScreen(onBack = { navController.popBackStack() })
+            }
+
+            composable("risk_internal") {
+                RiskScreen()
             }
         }
     }

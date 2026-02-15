@@ -17,38 +17,40 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
     private val _isLoggedIn = MutableStateFlow(false)
     val isLoggedIn: StateFlow<Boolean> = _isLoggedIn
 
+    // Starts true — blocks navigation until restore completes
+    private val _isLoadingSession = MutableStateFlow(true)
+    val isLoadingSession: StateFlow<Boolean> = _isLoadingSession
+
     init {
-        checkExistingLogin()
+        restoreSession()
     }
 
-    private fun checkExistingLogin() {
+    private fun restoreSession() {
         viewModelScope.launch {
+            try {
+                val token = TokenDataStore
+                    .getToken(getApplication())
+                    .firstOrNull()
 
-            val token = TokenDataStore.getToken(getApplication()).firstOrNull()
-            println("TOKEN FROM DATASTORE: $token")
-
-            if (!token.isNullOrEmpty()) {
-                try {
-                    println("Calling getMe()...")
-                    val me = ApiClient.authApi.getMe()
-                    println("getMe SUCCESS: $me")
-
-                    SessionManager.setUser(me)
-                    _isLoggedIn.value = true
-
-                } catch (e: Exception) {
-                    e.printStackTrace()
-                    println("getMe FAILED: ${e.message}")
+                if (!token.isNullOrEmpty()) {
+                    try {
+                        val me = ApiClient.authApi.getMe()
+                        SessionManager.setUser(me)
+                        _isLoggedIn.value = true
+                    } catch (e: Exception) {
+                        TokenDataStore.clearToken(getApplication())
+                        SessionManager.clear()
+                        _isLoggedIn.value = false
+                    }
+                } else {
                     _isLoggedIn.value = false
                 }
-
-            } else {
-                println("NO TOKEN FOUND")
-                _isLoggedIn.value = false
+            } finally {
+                // Always unblocks navigation — whether success, failure, or exception
+                _isLoadingSession.value = false
             }
         }
     }
-
 
     fun login(
         request: LoginRequest,
@@ -102,7 +104,7 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
     fun logout() {
         viewModelScope.launch {
             TokenDataStore.clearToken(getApplication())
-            SessionManager.clear(getApplication())
+            SessionManager.clear()
             _isLoggedIn.value = false
         }
     }
