@@ -15,6 +15,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.delay
@@ -26,10 +27,17 @@ fun AppTopBar(
     onCyberSosClick: () -> Unit
 ) {
 
-    val items = listOf("LOGO", "GO Safe", "GO Secure")
+
+// 🔹 Rotating image list
+    val items = listOf(
+        R.drawable.logo,
+        R.drawable.go_safe,
+        R.drawable.go_secure
+    )
 
     var currentIndex by remember { mutableStateOf(0) }
 
+    // 🔹 Auto rotate every 2.5 seconds
     LaunchedEffect(Unit) {
         while (true) {
             delay(2500)
@@ -49,29 +57,23 @@ fun AppTopBar(
                 modifier = Modifier.height(40.dp),
                 contentAlignment = Alignment.CenterStart
             ) {
+
                 AnimatedContent(
                     targetState = items[currentIndex],
                     transitionSpec = {
                         slideInVertically { it } + fadeIn() togetherWith
                                 slideOutVertically { -it } + fadeOut()
                     },
-                    label = "logoSwitcher"
-                ) { item ->
+                    label = "imageSwitcher"
+                ) { imageRes ->
 
-                    if (item == "LOGO") {
-                        Icon(
-                            painter = painterResource(id = R.drawable.logo),
-                            contentDescription = null,
-                            modifier = Modifier.height(24.dp),
-                            tint = Color.Unspecified
-                        )
-                    } else {
-                        Text(
-                            text = item,
-                            style = MaterialTheme.typography.titleMedium,
-                            color = MaterialTheme.colorScheme.primary
-                        )
-                    }
+                    Icon(
+                        painter = painterResource(id = imageRes),
+                        contentDescription = null,
+                        modifier = Modifier
+                            .height(26.dp),
+                        tint = Color.Unspecified
+                    )
                 }
             }
         },

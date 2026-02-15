@@ -68,14 +68,6 @@ fun EntryScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            Spacer(modifier = Modifier.height(10.dp))
-
-            Text(
-                text = "GO Suraksha",
-                fontSize = 26.sp,
-                color = Color.White,
-                modifier = Modifier.alpha(alpha.value)
-            )
 
             Text(
                 text = "Your Digital Safety App",

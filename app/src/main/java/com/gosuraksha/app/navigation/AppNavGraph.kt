@@ -1,5 +1,6 @@
 package com.gosuraksha.app.navigation
 
+import com.gosuraksha.app.ui.screens.CyberSosScreen
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.CircularProgressIndicator
@@ -204,5 +205,10 @@ fun AppNavGraph() {
                 onBack = { navController.popBackStack() }
             )
         }
+
+        composable("cyber_sos") {
+            CyberSosScreen()
+        }
+
     }
 }

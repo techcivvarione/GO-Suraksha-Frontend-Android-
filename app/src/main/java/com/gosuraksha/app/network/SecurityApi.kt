@@ -1,10 +1,14 @@
 package com.gosuraksha.app.network
 
+import com.gosuraksha.app.data.remote.dto.CyberSosRequest
+import com.gosuraksha.app.data.remote.dto.CyberSosResponse
 import com.gosuraksha.app.security.model.*
+import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.GET
 import retrofit2.http.POST
 import retrofit2.http.Query
+
 
 interface SecurityApi {
 
@@ -60,5 +64,10 @@ interface SecurityApi {
 
     @GET("security/evidence/export")
     suspend fun exportEvidence(): okhttp3.ResponseBody
+
+    @POST("security/cyber-sos/confirm")
+    suspend fun triggerCyberSos(
+        @Body request: CyberSosRequest
+    ): Response<CyberSosResponse>
 
 }
