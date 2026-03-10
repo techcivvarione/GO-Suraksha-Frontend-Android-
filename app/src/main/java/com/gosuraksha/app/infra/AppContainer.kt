@@ -14,6 +14,7 @@ import com.gosuraksha.app.data.repository.SessionRepositoryImpl
 import com.gosuraksha.app.domain.usecase.AuthUseCases
 import com.gosuraksha.app.domain.usecase.HomeUseCases
 import com.gosuraksha.app.domain.usecase.GetHomeOverviewUseCase
+import com.gosuraksha.app.domain.usecase.GoogleLoginUseCase
 import com.gosuraksha.app.domain.usecase.LoginUseCase
 import com.gosuraksha.app.domain.usecase.RestoreSessionUseCase
 import com.gosuraksha.app.domain.usecase.SignupUseCase
@@ -42,6 +43,7 @@ class AppContainer(
     val authUseCases: AuthUseCases by lazy {
         AuthUseCases(
             login = LoginUseCase(authRepository, dispatchers),
+            googleLogin = GoogleLoginUseCase(authRepository, dispatchers),
             signup = SignupUseCase(authRepository, dispatchers),
             restoreSession = RestoreSessionUseCase(authRepository, sessionRepository, dispatchers)
         )

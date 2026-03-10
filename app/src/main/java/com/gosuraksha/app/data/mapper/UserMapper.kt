@@ -6,14 +6,14 @@ import com.gosuraksha.app.domain.model.User
 
 fun UserResponse.toDomain(): User {
     val planValue = when (plan.uppercase()) {
-        "PAID" -> Plan.PAID
+        "PAID", "GO_PRO", "GO_ULTRA" -> Plan.PAID
         else -> Plan.FREE
     }
     return User(
         id = id,
-        name = name,
+        name = name.orEmpty(),
         email = email,
-        role = role,
+        role = role.orEmpty(),
         plan = planValue
     )
 }

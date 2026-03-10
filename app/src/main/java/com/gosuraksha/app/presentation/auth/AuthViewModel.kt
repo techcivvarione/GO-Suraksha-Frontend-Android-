@@ -6,9 +6,11 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
+import com.gosuraksha.app.auth.GoogleSignInManager
 import com.gosuraksha.app.core.result.AppResult
 import com.gosuraksha.app.data.remote.dto.auth.EmailRequest
 import com.gosuraksha.app.data.remote.dto.auth.VerifyOtpRequest
+import com.gosuraksha.app.domain.usecase.GoogleLoginUseCase
 import com.gosuraksha.app.domain.usecase.LoginParams
 import com.gosuraksha.app.domain.usecase.LoginUseCase
 import com.gosuraksha.app.domain.usecase.RestoreSessionUseCase
@@ -26,6 +28,7 @@ import kotlinx.coroutines.launch
 class AuthViewModel(
     application: Application,
     private val loginUseCase: LoginUseCase,
+    private val googleLoginUseCase: GoogleLoginUseCase,
     private val signupUseCase: SignupUseCase,
     private val restoreSessionUseCase: RestoreSessionUseCase
 ) : AndroidViewModel(application) {
@@ -126,8 +129,26 @@ class AuthViewModel(
         }
     }
 
+    fun loginWithGoogle(
+        idToken: String,
+        onSuccess: () -> Unit,
+        onError: (String) -> Unit
+    ) {
+        viewModelScope.launch {
+            when (val result = googleLoginUseCase(idToken)) {
+                is AppResult.Success -> {
+                    SessionManager.setUser(result.data.user)
+                    _isLoggedIn.value = true
+                    onSuccess()
+                }
+                is AppResult.Failure -> onError(result.error.toMessage())
+            }
+        }
+    }
+
     fun logout() {
         viewModelScope.launch {
+            GoogleSignInManager(getApplication()).signOut()
             SessionManager.clear()
             _isLoggedIn.value = false
         }
@@ -228,6 +249,7 @@ class AuthViewModelFactory(
             return AuthViewModel(
                 application,
                 useCases.login,
+                useCases.googleLogin,
                 useCases.signup,
                 useCases.restoreSession
             ) as T

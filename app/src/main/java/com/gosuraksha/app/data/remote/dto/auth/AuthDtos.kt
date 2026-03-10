@@ -12,6 +12,17 @@ data class LoginResponse(
     val access_token: String
 )
 
+data class GoogleAuthRequest(
+    val id_token: String
+)
+
+data class GoogleAuthResponse(
+    @SerializedName("access_token")
+    val access_token: String,
+    val token_type: String,
+    val user: UserResponse
+)
+
 data class SignupRequest(
     val name: String,
     val email: String,

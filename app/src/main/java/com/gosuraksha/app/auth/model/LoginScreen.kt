@@ -1,5 +1,6 @@
 package com.gosuraksha.app.ui.auth
 
+import android.app.Activity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.animation.*
 import androidx.compose.animation.core.*
@@ -27,10 +28,16 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.platform.LocalContext
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import com.gosuraksha.app.R
+import com.gosuraksha.app.auth.GoogleSignInManager
 import com.gosuraksha.app.design.tokens.ColorTokens
 import com.gosuraksha.app.presentation.auth.AuthViewModel
 import com.gosuraksha.app.ui.components.localizedUiMessage
+import com.google.android.gms.auth.api.signin.GoogleSignIn
+import com.google.android.gms.common.api.ApiException
 import kotlinx.coroutines.delay
 
 @Composable
@@ -46,7 +53,46 @@ fun LoginScreen(
     var passwordVisible by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
     var isLoading by remember { mutableStateOf(false) }
+    var isGoogleLoading by remember { mutableStateOf(false) }
     var showContent by remember { mutableStateOf(false) }
+    val context = LocalContext.current
+    val googleSignInManager = remember(context) { GoogleSignInManager(context) }
+
+    val googleLoginLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.StartActivityForResult()
+    ) { activityResult ->
+        if (activityResult.resultCode != Activity.RESULT_OK) {
+            isGoogleLoading = false
+            errorMessage = "Google sign-in canceled"
+            return@rememberLauncherForActivityResult
+        }
+
+        val signInTask = GoogleSignIn.getSignedInAccountFromIntent(activityResult.data)
+        try {
+            val account = signInTask.getResult(ApiException::class.java)
+            val token = account.idToken
+            if (token.isNullOrBlank()) {
+                isGoogleLoading = false
+                errorMessage = "Invalid Google token"
+                return@rememberLauncherForActivityResult
+            }
+
+            viewModel.loginWithGoogle(
+                idToken = token,
+                onSuccess = {
+                    isGoogleLoading = false
+                    onLoginSuccess()
+                },
+                onError = {
+                    isGoogleLoading = false
+                    errorMessage = it
+                }
+            )
+        } catch (_: ApiException) {
+            isGoogleLoading = false
+            errorMessage = "Unable to sign in with Google"
+        }
+    }
 
     LaunchedEffect(Unit) {
         delay(150)
@@ -124,6 +170,7 @@ fun LoginScreen(
                     passwordVisible = passwordVisible,
                     errorMessage = errorMessage,
                     isLoading = isLoading,
+                    isGoogleLoading = isGoogleLoading,
                     onModeChange = { loginMode = it; errorMessage = null },
                     onEmailChange = { email = it; errorMessage = null },
                     onPhoneChange = { phone = it; errorMessage = null },
@@ -139,6 +186,11 @@ fun LoginScreen(
                                 onError = { isLoading = false; errorMessage = it }
                             )
                         }
+                    },
+                    onGoogleLogin = {
+                        isGoogleLoading = true
+                        errorMessage = null
+                        googleLoginLauncher.launch(googleSignInManager.client.signInIntent)
                     },
                     onNavigateToSignup = onNavigateToSignup
                 )
@@ -207,12 +259,14 @@ private fun CleanLoginCard(
     passwordVisible: Boolean,
     errorMessage: String?,
     isLoading: Boolean,
+    isGoogleLoading: Boolean,
     onModeChange: (Int) -> Unit,
     onEmailChange: (String) -> Unit,
     onPhoneChange: (String) -> Unit,
     onPasswordChange: (String) -> Unit,
     onPasswordVisibilityToggle: () -> Unit,
     onLogin: () -> Unit,
+    onGoogleLogin: () -> Unit,
     onNavigateToSignup: () -> Unit
 ) {
     Column(
@@ -307,6 +361,57 @@ private fun CleanLoginCard(
             } else {
                 Text(
                     if (loginMode == 0) stringResource(R.string.ui_loginscreen_1) else stringResource(R.string.login_send_otp),
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.SemiBold
+                )
+            }
+        }
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            HorizontalDivider(modifier = Modifier.weight(1f), color = ColorTokens.border().copy(alpha = 0.35f))
+            Text(
+                text = stringResource(R.string.login_or_continue_with),
+                fontSize = 11.sp,
+                color = ColorTokens.textSecondary()
+            )
+            HorizontalDivider(modifier = Modifier.weight(1f), color = ColorTokens.border().copy(alpha = 0.35f))
+        }
+
+        OutlinedButton(
+            onClick = onGoogleLogin,
+            enabled = !isLoading && !isGoogleLoading,
+            modifier = Modifier.fillMaxWidth().height(48.dp),
+            shape = RoundedCornerShape(10.dp),
+            border = BorderStroke(1.dp, ColorTokens.border().copy(alpha = 0.4f)),
+            colors = ButtonDefaults.outlinedButtonColors(
+                contentColor = ColorTokens.textPrimary(),
+                disabledContentColor = ColorTokens.textSecondary()
+            )
+        ) {
+            if (isGoogleLoading) {
+                CircularProgressIndicator(
+                    modifier = Modifier.size(16.dp),
+                    strokeWidth = 2.dp
+                )
+                Spacer(Modifier.width(8.dp))
+                Text(
+                    text = stringResource(R.string.login_google_loading),
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.SemiBold
+                )
+            } else {
+                Icon(
+                    imageVector = Icons.Outlined.AccountCircle,
+                    contentDescription = null,
+                    modifier = Modifier.size(18.dp)
+                )
+                Spacer(Modifier.width(8.dp))
+                Text(
+                    text = stringResource(R.string.login_continue_with_google),
                     fontSize = 14.sp,
                     fontWeight = FontWeight.SemiBold
                 )

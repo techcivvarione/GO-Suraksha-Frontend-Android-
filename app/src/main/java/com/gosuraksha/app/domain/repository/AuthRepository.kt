@@ -5,6 +5,7 @@ import com.gosuraksha.app.domain.model.AuthSession
 
 interface AuthRepository {
     suspend fun login(identifier: String, password: String): AppResult<AuthSession>
+    suspend fun googleLogin(idToken: String): AppResult<AuthSession>
     suspend fun signup(
         name: String,
         email: String,

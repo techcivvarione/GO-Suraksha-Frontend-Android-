@@ -1,6 +1,7 @@
 package com.gosuraksha.app.data.repository
 
 import com.gosuraksha.app.data.remote.dto.auth.LoginRequest
+import com.gosuraksha.app.data.remote.dto.auth.GoogleAuthRequest
 import com.gosuraksha.app.data.remote.dto.auth.SignupRequest
 import com.gosuraksha.app.core.network.NetworkErrorMapper
 import com.gosuraksha.app.core.result.AppResult
@@ -24,6 +25,16 @@ class AuthRepositoryImpl(
             tokenLocal.saveToken(response.access_token)
             val user = remote.getMe().toDomain()
             AppResult.Success(AuthSession(response.access_token, user))
+        } catch (t: Throwable) {
+            AppResult.Failure(NetworkErrorMapper.map(t))
+        }
+    }
+
+    override suspend fun googleLogin(idToken: String): AppResult<AuthSession> {
+        return try {
+            val response = remote.googleLogin(GoogleAuthRequest(id_token = idToken))
+            tokenLocal.saveToken(response.access_token)
+            AppResult.Success(AuthSession(response.access_token, response.user.toDomain()))
         } catch (t: Throwable) {
             AppResult.Failure(NetworkErrorMapper.map(t))
         }

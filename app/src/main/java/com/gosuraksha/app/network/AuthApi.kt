@@ -5,6 +5,8 @@ import com.gosuraksha.app.data.remote.dto.auth.LoginResponse
 import com.gosuraksha.app.data.remote.dto.auth.SignupRequest
 import com.gosuraksha.app.data.remote.dto.auth.SignupResponse
 import com.gosuraksha.app.data.remote.dto.auth.UserResponse
+import com.gosuraksha.app.data.remote.dto.auth.GoogleAuthRequest
+import com.gosuraksha.app.data.remote.dto.auth.GoogleAuthResponse
 import com.gosuraksha.app.data.remote.dto.auth.EmailRequest
 import com.gosuraksha.app.data.remote.dto.auth.VerifyOtpRequest
 import com.gosuraksha.app.data.remote.dto.auth.GenericResponse
@@ -22,6 +24,11 @@ interface AuthApi {
     suspend fun login(
         @Body request: LoginRequest
     ): LoginResponse
+
+    @POST("auth/google")
+    suspend fun googleLogin(
+        @Body request: GoogleAuthRequest
+    ): GoogleAuthResponse
 
     @POST("auth/signup")
     suspend fun signup(

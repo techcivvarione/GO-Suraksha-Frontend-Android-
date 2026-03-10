@@ -635,6 +635,10 @@
     <string name="cybercard_back_laws_standards">DPDP Act 2023 and applicable data protection and cybersecurity standards.</string>
     <string name="cybercard_back_logo_go">GO</string>
     <string name="cybercard_back_logo_suraksha">Suraksha</string>
+    <string name="google_client_id">YOUR_GOOGLE_CLIENT_ID</string>
+    <string name="login_continue_with_google">Continue with Google</string>
+    <string name="login_google_loading">Signing in with Google</string>
+    <string name="login_or_continue_with">OR</string>
 </resources>
 
 
