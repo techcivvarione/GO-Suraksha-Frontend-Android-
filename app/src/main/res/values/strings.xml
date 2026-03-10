@@ -1,3 +1,641 @@
+<?xml version="1.0" encoding="utf-8"?>
 <resources>
+
+    <!-- App Name -->
     <string name="app_name">GO Suraksha</string>
+
+    <!-- ═══════════════════════════════════════════════════════════════════════ -->
+    <!-- ERRORS -->
+    <!-- ═══════════════════════════════════════════════════════════════════════ -->
+    <string name="error_network">No internet connection</string>
+    <string name="error_timeout">Request timed out</string>
+    <string name="error_unauthorized">Session expired. Please login again.</string>
+    <string name="error_forbidden">Access denied</string>
+    <string name="error_not_found">Resource not found</string>
+    <string name="error_server">Server issue. Please try again.</string>
+    <string name="error_generic">Something went wrong</string>
+    <string name="error_auth_invalid_credentials">Invalid email or password</string>
+    <string name="error_news_load_failed">Failed to load news</string>
+    <string name="error_trusted_alert_not_found">Trusted alert not found</string>
+    <string name="error_trusted_contacts_load_failed">Failed to load contacts</string>
+    <string name="error_trusted_alerts_load_failed">Failed to load alerts</string>
+    <string name="error_cybersos_failed_code">Cyber SOS failed (%1$s)</string>
+
+    <!-- ═══════════════════════════════════════════════════════════════════════ -->
+    <!-- PROFILE SCREEN -->
+    <!-- ═══════════════════════════════════════════════════════════════════════ -->
+    <string name="profile_verified_account">Verified Account</string>
+    <string name="profile_security_score">SECURITY SCORE</string>
+    <string name="profile_good_standing">Good Standing</string>
+    <string name="profile_needs_attention">Needs Attention</string>
+    <string name="profile_at_risk">At Risk</string>
+    <string name="profile_score_description">Based on your scan history and threat detections.</string>
+
+    <!-- Stats -->
+    <string name="profile_stat_scans">Scans</string>
+    <string name="profile_stat_threats">Threats</string>
+    <string name="profile_stat_resolved">Resolved</string>
+
+    <!-- Profile Section -->
+    <string name="profile_section_title">Profile Information</string>
+    <string name="profile_field_full_name">Full Name</string>
+    <string name="profile_field_phone">Phone Number</string>
+    <string name="profile_btn_save">Save Changes</string>
+
+    <!-- Security Section -->
+    <string name="profile_section_security">Security &amp; Password</string>
+    <string name="profile_field_current_password">Current Password</string>
+    <string name="profile_field_new_password">New Password</string>
+    <string name="profile_field_confirm_password">Confirm Password</string>
+    <string name="profile_btn_update_password">Update Password</string>
+
+    <!-- Password Strength -->
+    <string name="profile_password_weak">Weak</string>
+    <string name="profile_password_fair">Fair</string>
+    <string name="profile_password_strong">Strong</string>
+    <string name="profile_password_very_strong">Very Strong</string>
+
+    <!-- Language Section -->
+    <string name="profile_section_language">Language &amp; Region</string>
+    <string name="profile_language_label">App Language</string>
+    <string name="profile_language_description">Change app interface language</string>
+
+    <!-- Theme Section -->
+    <string name="profile_section_theme">Appearance &amp; Theme</string>
+    <string name="theme_title">App Theme</string>
+    <string name="theme_description">Choose your preferred theme</string>
+    <string name="theme_system_dark">Currently: Dark Mode (System)</string>
+    <string name="theme_system_light">Currently: Light Mode (System)</string>
+    <string name="theme_tap_to_change">Tap to change theme</string>
+
+    <!-- Danger Zone -->
+    <string name="profile_danger_zone">DANGER ZONE</string>
+    <string name="profile_logout_warning">Logging out all sessions will immediately revoke access on all devices.</string>
+    <string name="profile_btn_logout_all">Logout All Sessions</string>
+
+    <!-- Dialogs -->
+    <string name="dialog_upgrade_title">Upgrade Required</string>
+    <string name="dialog_upgrade_message">Upgrade to Premium to access your Cyber Card and advanced threat intelligence.</string>
+    <string name="dialog_upgrade_confirm">Upgrade Now</string>
+    <string name="dialog_upgrade_dismiss">Not Now</string>
+
+    <string name="dialog_logout_title">Logout All Sessions?</string>
+    <string name="dialog_logout_message">This will sign you out from all devices immediately.</string>
+    <string name="dialog_logout_confirm">Logout All</string>
+    <string name="dialog_logout_dismiss">Cancel</string>
+
+    <!-- ═══════════════════════════════════════════════════════════════════════ -->
+    <!-- SCAN SCREEN -->
+    <!-- ═══════════════════════════════════════════════════════════════════════ -->
+    <string name="scan_title">Scan Intelligence</string>
+    <string name="scan_subtitle">Threats · Breaches · Leaks</string>
+
+    <!-- Tab Labels -->
+    <string name="scan_tab_threats">Threats</string>
+    <string name="scan_tab_email">Email</string>
+    <string name="scan_tab_password">Password</string>
+    <string name="scan_tab_qr">QR</string>
+    <string name="scan_tab_reality">Reality</string>
+
+    <!-- Input Hints -->
+    <string name="scan_hint_messages">Enter messages</string>
+    <string name="scan_hint_email">Enter email</string>
+    <string name="scan_hint_password">Enter password</string>
+
+    <!-- Buttons -->
+    <string name="scan_btn_analyze">Analyze</string>
+    <string name="scan_btn_ai_explain">AI Explain</string>
+
+    <!-- Results -->
+    <string name="scan_result_label">SCAN RESULT</string>
+    <string name="scan_score_label">score</string>
+    <string name="scan_findings_label">Findings</string>
+    <string name="scan_breaches_found">Breaches Found</string>
+    <string name="scan_breached_sites">Breached Sites</string>
+    <string name="scan_affected_domains">Affected Domains</string>
+
+    <!-- Risk Levels -->
+    <string name="scan_risk_high">HIGH</string>
+    <string name="scan_risk_medium">MEDIUM</string>
+    <string name="scan_risk_low">LOW</string>
+
+    <!-- Upgrade -->
+    <string name="scan_upgrade_locked">🔒</string>
+    <string name="scan_upgrade_title">Upgrade to Pro</string>
+    <string name="scan_upgrade_message">Upgrade to view full breach details.</string>
+
+    <!-- AI Analysis -->
+    <string name="scan_ai_analysis_label">AI ANALYSIS</string>
+
+    <!-- ═══════════════════════════════════════════════════════════════════════ -->
+    <!-- HOME SCREEN -->
+    <!-- ═══════════════════════════════════════════════════════════════════════ -->
+    <string name="home_greeting_morning">Good Morning,</string>
+    <string name="home_greeting_afternoon">Good Afternoon,</string>
+    <string name="home_greeting_evening">Good Evening,</string>
+    <string name="home_status_protected">Protected</string>
+
+    <!-- Security Snapshot -->
+    <string name="home_snapshot_title">SECURITY SNAPSHOT</string>
+    <string name="home_snapshot_scans">Scans Done</string>
+    <string name="home_snapshot_threats">Threats Detected</string>
+    <string name="home_risk_label">risk</string>
+
+    <!-- Quick Actions -->
+    <string name="home_quick_actions">Quick Actions</string>
+    <string name="home_action_risk">Risk\nIntelligence</string>
+    <string name="home_action_history">Scan\nHistory</string>
+    <string name="home_action_view">View</string>
+
+    <!-- RealityScan Card -->
+    <string name="home_reality_title">RealityScan</string>
+    <string name="home_reality_subtitle">Detect AI-generated images instantly</string>
+    <string name="home_reality_new_badge">NEW</string>
+    <string name="home_reality_cta">Scan</string>
+
+    <!-- Cyber Tip -->
+    <string name="home_tip_label">CYBER TIP</string>
+
+    <!-- ═══════════════════════════════════════════════════════════════════════ -->
+    <!-- LANGUAGE SWITCHER -->
+
+    <string name="language_select_title">Choose your language</string>
+    <string name="language_more_soon">More languages coming soon</string>
+    <string name="language_hindi_native">&#2361;&#2367;&#2306;&#2342;&#2368;</string>
+    <string name="language_telugu_native">&#3108;&#3142;&#3122;&#3137;&#3095;&#3137;</string>
+    <!-- ═══════════════════════════════════════════════════════════════════════ -->
+    <string name="language_english">English</string>
+    <string name="language_hindi">Hindi</string>
+    <string name="language_telugu">Telugu</string>
+    <string name="language_kannada">Kannada</string>
+    <string name="language_tamil">Tamil</string>
+    <string name="language_malayalam">Malayalam</string>
+    <string name="language_gujarati">Gujarati</string>
+    <string name="language_bengali">Bengali</string>
+    <string name="language_marathi">Marathi</string>
+
+    <!-- ═══════════════════════════════════════════════════════════════════════ -->
+    <!-- COMMON -->
+    <!-- ═══════════════════════════════════════════════════════════════════════ -->
+    <string name="common_cancel">Cancel</string>
+    <string name="common_confirm">Confirm</string>
+    <string name="common_close">Close</string>
+    <string name="common_back">Back</string>
+    <string name="common_save">Save</string>
+    <string name="common_delete">Delete</string>
+    <string name="common_edit">Edit</string>
+    <string name="common_loading">Loading…</string>
+
+
+    <string name="ui_apptopbar_1">CyberSOS</string>
+    <string name="ui_apptopbar_2">logoCarousel</string>
+    <string name="ui_cybercard_1">GO Suraksha</string>
+    <string name="ui_cybercard_2">Cyber ID: %s</string>
+    <string name="ui_cybercardback_1">CYBER CARD</string>
+    <string name="ui_cybercardback_2">Score Breakdown</string>
+    <string name="ui_cybercardback_3">This Cyber Card is generated using your security activity including Email, Password, Threat scans, OCR usage and Scam Reports. It represents a digital risk profile and is NOT a government-issued identity document.</string>
+    <string name="ui_cybercardfront_1">GO Suraksha</string>
+    <string name="ui_cybercardfront_2">CYBER CARD</string>
+    <string name="ui_cybercardfront_3">CYBER CARD NUMBER</string>
+    <string name="ui_cybercardfront_4">Name</string>
+    <string name="ui_cybercardfront_5">CYBER SCORE</string>
+    <string name="ui_cybercardfront_6">%1$s / %2$s</string>
+    <string name="ui_cybercardfront_7">Generated on: %s</string>
+    <string name="ui_cybercardfront_8">Valid till: %s</string>
+    <string name="cybercard_brand_go">GO</string>
+    <string name="cybercard_brand_suraksha">Suraksha</string>
+    <string name="ui_lockedcybercard_1">Upgrade to Premium to Unlock\nYour Cyber Card</string>
+    <string name="ui_lockedmonthcard_1">CYBER CARD LOCKED</string>
+    <string name="ui_lockedmonthcard_2">Score remains: %s</string>
+    <string name="ui_nextrefreshindicator_1">Next score refresh in %s days</string>
+    <string name="ui_entryscreen_1">SECURE · PRIVATE · TRUSTED</string>
+    <string name="ui_entryscreen_2">Indias First Personal Cyber Security App</string>
+    <string name="ui_entryscreen_3">grid_wave</string>
+    <string name="ui_entryscreen_4">wave</string>
+    <string name="ui_entryscreen_5">d1</string>
+    <string name="ui_entryscreen_6">d2</string>
+    <string name="ui_entryscreen_7">d3</string>
+    <string name="ui_historyscreen_1">Scan History</string>
+    <string name="ui_historyscreen_2">No scan history found.</string>
+    <string name="ui_historyscreen_3">Score: %s</string>
+    <string name="ui_homescreen_1">Good %s</string>
+    <string name="ui_homescreen_2">Protected</string>
+    <string name="ui_homescreen_3">SECURITY SNAPSHOT</string>
+    <string name="ui_homescreen_4">Quick Actions</string>
+    <string name="ui_homescreen_5">RealityScan</string>
+    <string name="ui_homescreen_6">NEW</string>
+    <string name="ui_homescreen_7">Detect AI-generated images instantly</string>
+    <string name="ui_homescreen_8">Scan</string>
+    <string name="ui_homescreen_9">View</string>
+    <string name="ui_homescreen_10">CYBER TIP</string>
+    <string name="ui_homescreen_11">risk</string>
+    <string name="ui_homescreen_12">shimmer</string>
+    <string name="ui_homescreen_13">sx</string>
+    <string name="ui_homescreen_14">dot</string>
+    <string name="ui_homescreen_15">dot_scale</string>
+    <string name="ui_alertsscreen_1">Threat Center</string>
+    <string name="ui_alertsscreen_2">Live alerts &amp; trusted network</string>
+    <string name="ui_alertsscreen_3">LIVE THREATS</string>
+    <string name="ui_alertsscreen_4">TODAYS RISK LEVEL</string>
+    <string name="ui_alertsscreen_5">Add Contact</string>
+    <string name="ui_alertsscreen_6">%s</string>
+    <string name="ui_alertsscreen_7">tab_bg_%s</string>
+    <string name="ui_alertsscreen_8">tab_txt_%s</string>
+    <string name="ui_alertsscreen_9">High</string>
+    <string name="ui_alertsscreen_10">Medium</string>
+    <string name="ui_alertsscreen_11">Low</string>
+    <string name="ui_mainshell_1">Scan</string>
+    <string name="ui_mainshell_2">News Screen</string>
+    <string name="ui_mainshell_3">Scan Screen</string>
+    <string name="ui_mainshell_4">Alerts Screen</string>
+    <string name="ui_mainshell_5">Risk Screen</string>
+    <string name="ui_mainshell_6">Profile Screen</string>
+    <string name="ui_mainshell_7">Sign Out</string>
+    <string name="ui_newsscreen_1">Read</string>
+    <string name="ui_newsscreen_2">No news in this category</string>
+    <string name="ui_newsscreen_3">🔥 TRENDING</string>
+    <string name="ui_newsscreen_4">card_scale</string>
+    <string name="ui_newsscreen_5">chip_bg</string>
+    <string name="ui_newsscreen_6">chip_text</string>
+    <string name="ui_newsscreen_7">dot_width</string>
+    <string name="ui_newsscreen_8">dot_color</string>
+    <string name="ui_newsscreen_9">shimmer</string>
+    <string name="ui_newsscreen_10">shimmer_x</string>
+    <string name="ui_profilescreen_1">Protected</string>
+    <string name="ui_profilescreen_2">Security status</string>
+    <string name="ui_profilescreen_3">All protections enabled</string>
+    <string name="ui_profilescreen_4">Account actions</string>
+    <string name="ui_profilescreen_5">You can sign out of all devices or request account deletion.</string>
+    <string name="ui_profilescreen_6">Delete Account</string>
+    <string name="ui_realityscanscreen_1">RealityScan</string>
+    <string name="ui_realityscanscreen_2">Detect AI-Generated Images</string>
+    <string name="ui_realityscanscreen_3">Analyzing reality…</string>
+    <string name="ui_realityscanscreen_4">EXIF + Neural Vision</string>
+    <string name="ui_realityscanscreen_5">Upload image to scan</string>
+    <string name="ui_realityscanscreen_6">JPG · PNG · WEBP · max 10MB</string>
+    <string name="ui_realityscanscreen_7">%1$s%%</string>
+    <string name="ui_realityscanscreen_8">conf.</string>
+    <string name="ui_realityscanscreen_9">AI Probability</string>
+    <string name="ui_realityscanscreen_10">DETECTION SIGNALS</string>
+    <string name="ui_realityscanscreen_11">Upgrade to see full forensic signal breakdown</string>
+    <string name="ui_realityscanscreen_12">HOW REALITYSCAN WORKS</string>
+    <string name="ui_realityscanscreen_13">rs</string>
+    <string name="ui_realityscanscreen_14">p1</string>
+    <string name="ui_realityscanscreen_15">beam</string>
+    <string name="ui_realityscanscreen_16">d1</string>
+    <string name="ui_realityscanscreen_17">d2</string>
+    <string name="ui_realityscanscreen_18">d3</string>
+    <string name="ui_realityscanscreen_19">bar</string>
+    <string name="ui_riskscreen_1">Risk Intelligence</string>
+    <string name="ui_riskscreen_2">Risk Score</string>
+    <string name="ui_riskscreen_3">Level: %s</string>
+    <string name="ui_riskscreen_4">Window: %s</string>
+    <string name="ui_riskscreen_5">Total Scans: %s</string>
+    <string name="ui_riskscreen_6">Generated At: %s</string>
+    <string name="ui_riskscreen_7">Risk Timeline</string>
+    <string name="ui_riskscreen_8">%1$s -> Score: %2$s | H:%3$s M:%4$s L:%5$s</string>
+    <string name="ui_riskscreen_9">Insights</string>
+    <string name="ui_riskscreen_10">Peak Risk Days:</string>
+    <string name="ui_riskscreen_11">%1$s -> H:%2$s M:%3$s L:%4$s</string>
+    <string name="ui_riskscreen_12">Top Keywords:</string>
+    <string name="ui_riskscreen_13">%1$s (%2$s)</string>
+    <string name="ui_riskscreen_14">Recommendations:</string>
+    <string name="ui_riskscreen_15">• %s</string>
+    <string name="ui_riskscreen_16">Score: %s</string>
+    <string name="ui_scanscreen_1">Scan Intelligence</string>
+    <string name="ui_scanscreen_2">Threats · Breaches · Leaks · Reality · QR</string>
+    <string name="ui_scanscreen_3">Enter %s</string>
+    <string name="ui_scanscreen_4">Analyze</string>
+    <string name="ui_scanscreen_5">SCAN RESULT</string>
+    <string name="ui_scanscreen_6">%s</string>
+    <string name="ui_scanscreen_7">score</string>
+    <string name="ui_scanscreen_8">Breaches Found</string>
+    <string name="ui_scanscreen_9">%s</string>
+    <string name="ui_scanscreen_10">🔒</string>
+    <string name="ui_scanscreen_11">Upgrade to Pro</string>
+    <string name="ui_scanscreen_12">AI Explain</string>
+    <string name="ui_scanscreen_13">AI ANALYSIS</string>
+    <string name="ui_scanscreen_14">🌐</string>
+    <string name="ui_scanscreen_15">seg_bg</string>
+    <string name="ui_scanscreen_16">seg_text</string>
+    <string name="ui_scanscreen_17">loader</string>
+    <string name="ui_scanscreen_18">arc_rot</string>
+    <string name="ui_scanscreen_19">bg_anim</string>
+    <string name="ui_scanscreen_20">bg_angle</string>
+    <string name="ui_cybersosscreen_1">Report Fraud / Emergency Assistance</string>
+    <string name="ui_cybersosscreen_2">CyberSOS</string>
+    <string name="ui_cybersosscreen_3">Report fraud fast and get guided emergency steps.</string>
+    <string name="ui_cybersosscreen_4">Immediate Safety Steps</string>
+    <string name="ui_cybersosscreen_5">?</string>
+    <string name="ui_cybersosscreen_6">Report Type</string>
+    <string name="ui_cybersosscreen_7">Report Details</string>
+    <string name="ui_cybersosscreen_8">Type: %s</string>
+    <string name="ui_cybersosscreen_9">Back</string>
+    <string name="ui_cybersosscreen_10">Report submitted</string>
+    <string name="ui_cybersosscreen_11">Our team is reviewing your report.</string>
+    <string name="ui_cybersosscreen_12">Done</string>
+    <string name="ui_cybersosscreen_13">sos_glow</string>
+    <string name="ui_cybersosscreen_14">glow_alpha</string>
+    <string name="ui_cybersosscreen_15">glow_scale</string>
+    <string name="ui_cybersosscreen_16">What happened?</string>
+    <string name="ui_cybersosscreen_17">Loss amount (optional)</string>
+    <string name="ui_cybersosscreen_18">Scam source (optional)</string>
+    <string name="ui_setpinscreen_1">Change PIN</string>
+    <string name="ui_setpinscreen_2">orbit</string>
+    <string name="ui_setpinscreen_3">o</string>
+    <string name="ui_setpinscreen_4">icon_s</string>
+    <string name="ui_setpinscreen_5">pill_w_%s</string>
+    <string name="ui_setpinscreen_6">pill_c_%s</string>
+    <string name="ui_setpinscreen_7">heading</string>
+    <string name="ui_setpinscreen_8">dot_%s</string>
+    <string name="ui_setpinscreen_9">dot_c_%s</string>
+    <string name="ui_setpinscreen_10">key_press</string>
+    <string name="ui_unlockpinscreen_1">Use PIN</string>
+    <string name="ui_unlockpinscreen_2">GO Suraksha</string>
+    <string name="ui_unlockpinscreen_3">Attempts remaining</string>
+    <string name="ui_unlockpinscreen_4">%s / 10</string>
+    <string name="ui_unlockpinscreen_5">Use Biometric Instead</string>
+    <string name="ui_unlockpinscreen_6">Logging you out for security…</string>
+    <string name="ui_unlockpinscreen_7">unlock_orbit</string>
+    <string name="ui_unlockpinscreen_8">orbit</string>
+    <string name="ui_unlockpinscreen_9">pulse</string>
+    <string name="ui_unlockpinscreen_10">icon_scale</string>
+    <string name="ui_unlockpinscreen_11">bar</string>
+    <string name="ui_loginscreen_1">Sign In</string>
+    <string name="ui_loginscreen_2">Indias First Personal Cyber Risk Platform</string>
+    <string name="ui_loginscreen_3">Welcome back</string>
+    <string name="ui_loginscreen_4">Sign in to your secure account</string>
+    <string name="ui_loginscreen_5">+91 </string>
+    <string name="ui_loginscreen_6">Signing in...</string>
+    <string name="ui_loginscreen_7">Dont have an account? </string>
+    <string name="ui_loginscreen_8">Sign Up</string>
+    <string name="ui_loginscreen_9">Security assurances</string>
+    <string name="ui_loginscreen_10">mode_bg_%s</string>
+    <string name="ui_loginscreen_11">mode_text_%s</string>
+    <string name="ui_loginscreen_12">Email Address</string>
+    <string name="ui_loginscreen_13">Password</string>
+    <string name="ui_loginscreen_14">Phone Number</string>
+    <string name="ui_loginscreen_15">End-to-End Encrypted</string>
+    <string name="ui_loginscreen_16">Zero Data Sharing</string>
+    <string name="ui_loginscreen_17">AI Threat Detection</string>
+    <string name="ui_signupscreen_1">Create your account</string>
+    <string name="ui_signupscreen_2">Join Indias cyber security platform</string>
+    <string name="ui_signupscreen_3">+91 </string>
+    <string name="ui_signupscreen_4">Creating account...</string>
+    <string name="ui_signupscreen_5">Create Account</string>
+    <string name="ui_signupscreen_6">Already have an account? </string>
+    <string name="ui_signupscreen_7">Sign In</string>
+    <string name="ui_signupscreen_8">Full Name</string>
+    <string name="ui_signupscreen_9">Email Address</string>
+    <string name="ui_signupscreen_10">Phone Number</string>
+    <string name="ui_signupscreen_11">Password</string>
+    <string name="ui_signupscreen_12">Confirm Password</string>
+    <string name="ui_designsystem_1">Scan Now</string>
+    <string name="ui_designsystem_2">Scan Now</string>
+    <string name="ui_designsystem_3">System Secure</string>
+    <string name="ui_designsystem_4">Scan</string>
+    <string name="ui_designsystem_5">Cancel</string>
+    <string name="ui_designsystem_6">Security</string>
+    <string name="ui_buttonstyles_1">Scan Now</string>
+    <string name="ui_buttonstyles_2">View Details</string>
+    <string name="ui_buttonstyles_3">Delete</string>
+    <string name="ui_cardstyles_1">Card Title</string>
+    <string name="ui_cardstyles_2">Card content</string>
+    <string name="ui_cardstyles_3">Security Status: Safe</string>
+    <string name="ui_cardstyles_4">Tap to view details</string>
+    <string name="ui_navigationconfig_1">Home</string>
+    <string name="ui_navigationconfig_2">Security</string>
+    <string name="ui_navigationconfig_3">Alerts</string>
+    <string name="ui_navigationconfig_4">Profile</string>
+    <string name="ui_screenlayouts_1">Retry</string>
+    <string name="ui_screenlayouts_2">Scan Now</string>
+    <string name="ui_screenlayouts_3">Something went wrong</string>
+    <string name="ui_screenlayouts_4">Security</string>
+    <string name="ui_screenlayouts_5">Loading</string>
+    <string name="ui_screenlayouts_6">No alerts</string>
+
+    <string name="ui_entryscreen_8">GO Suraksha</string>
+    <string name="ui_historyscreen_4">Back</string>
+    <string name="ui_historyscreen_5">Delete</string>
+    <string name="ui_homescreen_16">Scans Done</string>
+    <string name="ui_homescreen_17">Threats Detected</string>
+    <string name="ui_alertsscreen_12">TRUSTED CONTACTS</string>
+    <string name="ui_alertsscreen_13">FAMILY ALERTS</string>
+    <string name="ui_alertsscreen_14">No alerts right now.\nYou are all clear.</string>
+    <string name="ui_alertsscreen_15">No trusted contacts yet.\nAdd someone to protect.</string>
+    <string name="ui_alertsscreen_16">No family alerts yet.</string>
+    <string name="ui_alertsscreen_17">Full Name</string>
+    <string name="ui_alertsscreen_18">Email Address</string>
+    <string name="ui_alertsscreen_19">Phone Number</string>
+    <string name="ui_mainshell_8">Scan</string>
+    <string name="ui_mainshell_9">Home</string>
+    <string name="ui_mainshell_10">News</string>
+    <string name="ui_mainshell_11">Alerts</string>
+    <string name="ui_mainshell_12">Profile</string>
+    <string name="ui_newsscreen_11">Bookmark</string>
+    <string name="ui_realityscanscreen_20">EXIF Forensics</string>
+    <string name="ui_realityscanscreen_21">AI Vision</string>
+    <string name="ui_realityscanscreen_22">Hybrid Engine</string>
+    <string name="ui_realityscanscreen_23">1</string>
+    <string name="ui_realityscanscreen_24">2</string>
+    <string name="ui_realityscanscreen_25">3</string>
+    <string name="ui_realityscanscreen_26">4</string>
+    <string name="reality_action_choose">Choose</string>
+    <string name="reality_action_change">Change</string>
+    <string name="reality_scan_reality">Scan Reality</string>
+    <string name="reality_scanning">Scanning...</string>
+    <string name="reality_error_read_image">Could not read image</string>
+    <string name="reality_result_ai_generated">AI Generated</string>
+    <string name="reality_result_ai_generated_subtitle">High probability this image was created by AI</string>
+    <string name="reality_result_real_photo">Real Photo</string>
+    <string name="reality_result_real_photo_subtitle">This appears to be an authentic photograph</string>
+    <string name="reality_result_uncertain">Uncertain</string>
+    <string name="reality_result_uncertain_subtitle">Inconclusive, mixed signals detected</string>
+    <string name="reality_step_1">Upload any photo or screenshot</string>
+    <string name="reality_step_2">EXIF metadata scanned for AI tool fingerprints</string>
+    <string name="reality_step_3">Neural vision model analyzes textures and artifacts</string>
+    <string name="reality_step_4">Hybrid confidence score returned instantly</string>
+    <string name="ui_scanscreen_21">Findings</string>
+    <string name="ui_scanscreen_22">Breached Sites</string>
+    <string name="ui_scanscreen_23">Affected Domains</string>
+    <string name="ui_cybersosscreen_19">Call Helpline</string>
+    <string name="ui_cybersosscreen_20">Freeze Account</string>
+    <string name="ui_cybersosscreen_21">Block SIM</string>
+    <string name="ui_cybersosscreen_22">Report Online</string>
+    <string name="ui_cybersosscreen_23">UPI Fraud</string>
+    <string name="ui_cybersosscreen_24">Phishing</string>
+    <string name="ui_cybersosscreen_25">OTP Scam</string>
+    <string name="ui_cybersosscreen_26">Investment</string>
+    <string name="ui_cybersosscreen_27">Disconnect and secure your device.</string>
+    <string name="ui_cybersosscreen_28">Freeze accounts and change passwords.</string>
+    <string name="ui_cybersosscreen_29">Report to official portals immediately.</string>
+    <string name="home_user_fallback">User</string>
+    <string name="home_tip_1">Never reuse passwords across accounts.</string>
+    <string name="home_tip_2">Enable 2FA on all your important accounts.</string>
+    <string name="home_tip_3">Be cautious of unsolicited emails asking for info.</string>
+    <string name="home_tip_4">Update your apps regularly to patch vulnerabilities.</string>
+    <string name="home_tip_5">Use a VPN on public Wi-Fi networks.</string>
+    <string name="alerts_tab_alerts">Alerts</string>
+    <string name="alerts_tab_family">Family</string>
+    <string name="alerts_cancel">Cancel</string>
+    <string name="alerts_add_contact">Add Trusted Contact</string>
+    <string name="alerts_unknown_initial">?</string>
+    <string name="alerts_contact_unnamed">Unnamed</string>
+    <string name="alerts_status_active">ACTIVE</string>
+    <string name="alerts_status_pending">PENDING</string>
+    <string name="cybersos_quick_call">Call Helpline</string>
+    <string name="cybersos_quick_freeze">Freeze Account</string>
+    <string name="cybersos_quick_block_sim">Block SIM</string>
+    <string name="cybersos_quick_report_online">Report Online</string>
+    <string name="cybersos_scam_upi">UPI Fraud</string>
+    <string name="cybersos_scam_phishing">Phishing</string>
+    <string name="cybersos_scam_otp">OTP Scam</string>
+    <string name="cybersos_scam_investment">Investment</string>
+    <string name="cybersos_submit">Submit</string>
+    <string name="cybersos_submitting">Submitting...</string>
+    <string name="trusted_contacts_title">Trusted Contacts</string>
+    <string name="profile_group_app_settings">App Settings</string>
+    <string name="profile_language_and_locale">Language and locale</string>
+    <string name="profile_user_role_default">User</string>
+    <string name="profile_guest">Guest</string>
+    <string name="profile_initial_fallback">U</string>
+    <string name="profile_cyber_profile">Cyber Profile</string>
+    <string name="profile_tap_to_flip">Tap to flip for account details</string>
+    <string name="profile_account_snapshot">Account Snapshot</string>
+    <string name="profile_snapshot_name">Name: %1$s</string>
+    <string name="profile_snapshot_contact">Contact: %1$s</string>
+    <string name="profile_snapshot_role">Role: %1$s</string>
+    <string name="profile_not_available">-</string>
+    <string name="profile_protected_identity">Protected identity and device session</string>
+    <string name="profile_message_updated">Profile updated</string>
+    <string name="security_message_sessions_logged_out">All sessions logged out</string>
+    <string name="security_message_password_changed">Password changed successfully</string>
+    <string name="security_message_report_submitted">Report submitted: %1$s</string>
+    <string name="news_category_all">ALL</string>
+    <string name="news_category_ai">AI</string>
+    <string name="news_category_cyber">CYBER</string>
+    <string name="news_category_tech">TECH</string>
+    <string name="login_logo_content_desc">WELCOME</string>
+    <string name="login_mode_email">Email</string>
+    <string name="login_mode_phone">Phone</string>
+    <string name="login_send_otp">Send OTP</string>
+    <string name="signup_trust_1">End-to-end encrypted authentication</string>
+    <string name="signup_trust_2">We never store plaintext passwords</string>
+    <string name="signup_trust_3">Privacy-first, zero data selling</string>
+
+    <!-- Home quick labels -->
+    <string name="home_quick_risk_intel">Risk Intel</string>
+    <string name="home_quick_reality_scan">Reality\nScan</string>
+    <string name="home_quick_message_scan">Message\nScan</string>
+    <string name="home_quick_email_scan">Email\nScan</string>
+    <string name="home_quick_link_scanner">Link\nScanner</string>
+    <string name="home_quick_qr_scanner">QR\nScanner</string>
+    <string name="home_quick_history">History</string>
+    <string name="home_quick_reports">Reports</string>
+    <string name="home_quick_language">Language</string>
+    <string name="home_quick_theme">Theme</string>
+    <string name="home_quick_tips">Tips</string>
+    <string name="home_quick_premium">Premium</string>
+    <string name="home_quick_refer">Refer</string>
+    <string name="home_section_urgent_help">Urgent Cyber Help</string>
+    <string name="home_section_scan_detect">Scan &amp; Detect</string>
+    <string name="home_section_settings_profile">Settings &amp; Profile</string>
+    <string name="home_section_more_services">More Services</string>
+
+    <!-- Profile -->
+    <string name="profile_delete_title">Delete Account</string>
+    <string name="profile_delete_message">This will permanently delete your account and all data. This action cannot be undone!</string>
+    <string name="profile_delete_confirm">DELETE PERMANENTLY</string>
+    <string name="profile_premium_pro">PRO</string>
+    <string name="profile_score_label">SCORE</string>
+    <string name="profile_snapshot_status">Status: %1$s</string>
+    <string name="profile_snapshot_member_since">Member Since: %1$s</string>
+    <string name="profile_premium_active">Premium Active</string>
+    <string name="profile_premium_active_subtitle">Unlimited scans &amp; advanced features</string>
+    <string name="profile_upgrade_title">Upgrade to Premium</string>
+    <string name="profile_upgrade_subtitle">Unlock unlimited scans &amp; AI features</string>
+    <string name="profile_help_support">Help &amp; Support</string>
+    <string name="profile_about_us">About Us</string>
+    <string name="profile_refer_earn">Refer &amp; Earn ₹100</string>
+
+    <!-- CyberSOS -->
+    <string name="cybersos_emergency_help">Emergency Cyber Help</string>
+    <string name="cybersos_emergency_title">Cyber Fraud Emergency?</string>
+    <string name="cybersos_emergency_subtitle">Report immediately to prevent further loss</string>
+    <string name="cybersos_quick_call_1930">Call 1930</string>
+    <string name="cybersos_helpline">Cyber Helpline</string>
+    <string name="cybersos_contact_bank">Contact Bank</string>
+    <string name="cybersos_select_fraud_type">Select Type of Fraud</string>
+    <string name="cybersos_scam_job">Job Scam</string>
+    <string name="cybersos_scam_other">Other</string>
+    <string name="cybersos_describe_required">Describe what happened *</string>
+    <string name="cybersos_loss_placeholder">₹ 0</string>
+    <string name="cybersos_source_placeholder">e.g., Phone call, WhatsApp, Email</string>
+
+    <!-- QR Analyzer -->
+    <string name="qr_error_camera_permission_required">Camera permission is required to scan QR codes.</string>
+    <string name="qr_error_weekly_scan_limit_reached">Weekly QR scan limit reached.</string>
+    <string name="qr_error_weekly_report_limit_reached">Weekly QR report limit reached.</string>
+    <string name="qr_error_invalid_upi">Invalid UPI QR. Please scan a valid payment QR.</string>
+    <string name="qr_error_unable_scan_now">Unable to scan QR right now.</string>
+    <string name="qr_scan_upi_title">Scan UPI QR</string>
+    <string name="qr_scan_upi_subtitle">Point camera at the QR to auto-detect</string>
+    <string name="qr_camera_permission_required">Camera permission required</string>
+    <string name="qr_camera_permission_message">Allow camera access for real-time QR scanning, or import a QR image from gallery.</string>
+    <string name="qr_import">Import</string>
+    <string name="qr_allow_camera">Allow Camera</string>
+    <string name="qr_analyzer_title">QR Analyzer</string>
+    <string name="qr_scan_complete">Scan complete</string>
+    <string name="qr_scan_another">Scan Another</string>
+    <string name="qr_detected">QR detected</string>
+    <string name="qr_verifying_payment">Verifying payment request...</string>
+    <string name="qr_analysis">QR Analysis</string>
+    <string name="qr_suspicious_detected">Suspicious payment request detected</string>
+    <string name="qr_no_scam_signal">No scam signal detected</string>
+    <string name="qr_business">Business</string>
+    <string name="qr_personal">Personal</string>
+    <string name="qr_merchant_name">Merchant Name</string>
+    <string name="qr_upi_id">UPI ID</string>
+    <string name="qr_amount_requested">Amount Requested</string>
+    <string name="qr_not_requested">Not requested</string>
+    <string name="qr_reported_count">Reported Count</string>
+    <string name="qr_scam_warning">Scam warning: multiple risk signals found.</string>
+    <string name="qr_advice">Advice</string>
+    <string name="qr_reporting">Reporting...</string>
+    <string name="qr_report_qr">Report QR</string>
+    <string name="qr_proceed_payment">Proceed to Payment</string>
+    <string name="qr_no_qr_found">No QR code found in selected image.</string>
+    <string name="qr_unable_read_selected">Unable to read QR from selected image.</string>
+    <string name="qr_unable_open_selected">Unable to open selected image.</string>
+    <string name="qr_no_upi_app">No UPI app found to complete payment.</string>
+    <string name="qr_unable_launch_upi">Unable to launch payment app.</string>
+    <string name="qr_unable_start_camera">Unable to start camera scanner.</string>
+
+    <!-- CyberCard Back -->
+    <string name="cybercard_back_validation_compliance">VALIDATION &amp; COMPLIANCE</string>
+    <string name="cybercard_back_generated_using">This Cyber Card score is generated using:</string>
+    <string name="cybercard_back_item_risk_behavior">• Digital risk behavior analysis</string>
+    <string name="cybercard_back_item_link_domain">• Link and domain scan results</string>
+    <string name="cybercard_back_item_exposure">• Exposure indicators</string>
+    <string name="cybercard_back_item_unreported_events">• Unreported security events</string>
+    <string name="cybercard_back_item_pattern_anomaly">• Pattern anomaly detection</string>
+    <string name="cybercard_back_dynamic_score_note">This score is dynamic and may change based on activity.</string>
+    <string name="cybercard_back_data_privacy_commitment">Data &amp; Privacy Commitment</string>
+    <string name="cybercard_back_does_not">GO Suraksha does NOT:</string>
+    <string name="cybercard_back_item_no_gov_db">• Access government databases</string>
+    <string name="cybercard_back_item_no_biometrics">• Collect Aadhaar, PAN, or biometric data</string>
+    <string name="cybercard_back_item_no_sell_share">• Sell or share personal information</string>
+    <string name="cybercard_back_data_handling_principles">Data handling principles:</string>
+    <string name="cybercard_back_item_encrypted_comm">• Encrypted communication</string>
+    <string name="cybercard_back_item_minimal_storage">• Minimal necessary data storage</string>
+    <string name="cybercard_back_item_privacy_first">• Privacy-first architecture</string>
+    <string name="cybercard_back_item_user_controlled">• User-controlled security activity</string>
+    <string name="cybercard_back_legal_compliance">Legal &amp; Compliance:</string>
+    <string name="cybercard_back_alignment_with">GO Suraksha is designed in alignment with:</string>
+    <string name="cybercard_back_laws_standards">DPDP Act 2023 and applicable data protection and cybersecurity standards.</string>
+    <string name="cybercard_back_logo_go">GO</string>
+    <string name="cybercard_back_logo_suraksha">Suraksha</string>
 </resources>
+
+
+

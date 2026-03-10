@@ -1,12 +1,13 @@
 package com.gosuraksha.app.network
 
 import com.gosuraksha.app.alerts.model.*
+import retrofit2.Response
 import retrofit2.http.*
 
 interface AlertsApi {
 
-    @GET("alerts/")
-    suspend fun getAlerts(): AlertsResponse
+    @GET("alerts")
+    suspend fun getAlerts(): Response<List<AlertEvent>>
 
     @GET("alerts/summary")
     suspend fun getAlertsSummary(): AlertsSummaryResponse

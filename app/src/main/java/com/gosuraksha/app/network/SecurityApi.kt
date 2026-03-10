@@ -55,13 +55,6 @@ interface SecurityApi {
         @Body request: CyberComplaintPreviewRequest
     ): CyberComplaintPreviewResponse
 
-
-    @POST("security/cyber-sos/confirm")
-    suspend fun confirmCyberSOS(
-        @Body request: CyberSOSRequest
-    ): CyberSOSResponse
-
-
     @GET("security/evidence/export")
     suspend fun exportEvidence(): okhttp3.ResponseBody
 
@@ -71,3 +64,5 @@ interface SecurityApi {
     ): Response<CyberSosResponse>
 
 }
+
+

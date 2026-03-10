@@ -42,6 +42,7 @@ dependencies {
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
+    implementation("androidx.appcompat:appcompat:1.7.1")
 
     // Compose
     implementation(platform(libs.androidx.compose.bom))
@@ -72,13 +73,15 @@ dependencies {
     implementation("androidx.biometric:biometric:1.2.0-alpha05")
     implementation("androidx.biometric:biometric:1.1.0")
     implementation("io.coil-kt:coil-compose:2.5.0")
+    implementation("com.google.mlkit:barcode-scanning:17.3.0")
+    implementation("androidx.camera:camera-core:1.4.1")
+    implementation("androidx.camera:camera-camera2:1.4.1")
+    implementation("androidx.camera:camera-lifecycle:1.4.1")
+    implementation("androidx.camera:camera-view:1.4.1")
     implementation("androidx.compose.foundation:foundation")
-
-
-
-
-
-
+    implementation(libs.androidx.tv.material)
+    implementation(libs.compose.material3)
+    implementation(libs.androidx.foundation)
 
 
     // Testing

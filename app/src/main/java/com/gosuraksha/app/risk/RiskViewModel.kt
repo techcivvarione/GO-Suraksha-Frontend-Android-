@@ -40,7 +40,7 @@ class RiskViewModel(application: Application) : AndroidViewModel(application) {
         return try {
             val errorBody = e.response()?.errorBody()?.string()
             if (errorBody.isNullOrEmpty()) {
-                "Server error (${e.code()})"
+                "error_server"
             } else {
                 val json = Gson().fromJson(errorBody, JsonObject::class.java)
 
@@ -48,11 +48,11 @@ class RiskViewModel(application: Application) : AndroidViewModel(application) {
                     json.has("detail") -> json.get("detail").asString
                     json.has("error") -> json.get("error").asString
                     json.has("message") -> json.get("message").asString
-                    else -> "Server error (${e.code()})"
+                    else -> "error_server"
                 }
             }
         } catch (ex: Exception) {
-            "Server error (${e.code()})"
+            "error_server"
         }
     }
 

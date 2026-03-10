@@ -52,7 +52,7 @@ class SecurityViewModel(application: Application) : AndroidViewModel(application
         return try {
             val errorBody = e.response()?.errorBody()?.string()
             if (errorBody.isNullOrEmpty()) {
-                "Server error (${e.code()})"
+                "error_server"
             } else {
                 val json = Gson().fromJson(errorBody, JsonObject::class.java)
 
@@ -60,11 +60,11 @@ class SecurityViewModel(application: Application) : AndroidViewModel(application
                     json.has("detail") -> json.get("detail").asString
                     json.has("error") -> json.get("error").asString
                     json.has("message") -> json.get("message").asString
-                    else -> "Server error (${e.code()})"
+                    else -> "error_server"
                 }
             }
         } catch (ex: Exception) {
-            "Server error (${e.code()})"
+            "error_server"
         }
     }
 
@@ -132,7 +132,7 @@ class SecurityViewModel(application: Application) : AndroidViewModel(application
             try {
                 _loading.value = true
                 ApiClient.securityApi.logoutAll()
-                _message.value = "All sessions logged out"
+                _message.value = "security_sessions_logged_out"
             } catch (e: HttpException) {
                 _error.value = parseHttpError(e)
             } catch (e: Exception) {
@@ -160,7 +160,7 @@ class SecurityViewModel(application: Application) : AndroidViewModel(application
                     )
                 )
 
-                _message.value = "Password changed successfully"
+                _message.value = "security_password_changed"
 
             } catch (e: HttpException) {
                 _error.value = parseHttpError(e)

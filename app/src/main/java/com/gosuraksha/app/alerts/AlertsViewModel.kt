@@ -1,6 +1,7 @@
 package com.gosuraksha.app.alerts
 
 import android.app.Application
+import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.gosuraksha.app.alerts.model.*
@@ -12,8 +13,8 @@ import retrofit2.HttpException
 
 class AlertsViewModel(application: Application) : AndroidViewModel(application) {
 
-    private val _alerts = MutableStateFlow<List<AlertItem>>(emptyList())
-    val alerts: StateFlow<List<AlertItem>> = _alerts
+    private val _alerts = MutableStateFlow<List<AlertEvent>>(emptyList())
+    val alerts: StateFlow<List<AlertEvent>> = _alerts
 
     private val _summary = MutableStateFlow<AlertsSummaryResponse?>(null)
     val summary: StateFlow<AlertsSummaryResponse?> = _summary
@@ -32,8 +33,21 @@ class AlertsViewModel(application: Application) : AndroidViewModel(application) 
         viewModelScope.launch {
             try {
                 _loading.value = true
+                Log.d("AlertsViewModel", "Requesting endpoint: GET /alerts")
                 val response = ApiClient.alertsApi.getAlerts()
-                _alerts.value = response.alerts
+                when {
+                    response.isSuccessful -> {
+                        _alerts.value = response.body().orEmpty()
+                        _error.value = null
+                    }
+                    response.code() == 404 -> {
+                        _alerts.value = emptyList()
+                        _error.value = null
+                    }
+                    else -> {
+                        _error.value = "error_server"
+                    }
+                }
             } catch (e: Exception) {
                 _error.value = e.message
             } finally {
@@ -80,7 +94,7 @@ class AlertsViewModel(application: Application) : AndroidViewModel(application) 
                 ApiClient.alertsApi.markTrustedAlertRead(id)
                 loadTrusted()
             } catch (e: HttpException) {
-                _error.value = "Trusted alert not found"
+                _error.value = "error_trusted_alert_not_found"
             } catch (e: Exception) {
                 _error.value = e.message
             }

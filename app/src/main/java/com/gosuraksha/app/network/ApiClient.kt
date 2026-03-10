@@ -1,6 +1,7 @@
 package com.gosuraksha.app.network
 
 import android.content.Context
+import android.util.Log
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
@@ -40,6 +41,9 @@ object ApiClient {
     lateinit var trustedContactsApi: TrustedContactsApi
         private set
 
+    lateinit var qrApi: QrApi
+        private set
+
 
 
     fun init(context: Context) {
@@ -48,9 +52,18 @@ object ApiClient {
             level = HttpLoggingInterceptor.Level.BODY
         }
 
+        val loginUrlLogger = { chain: okhttp3.Interceptor.Chain ->
+            val request = chain.request()
+            if (request.url.encodedPath.endsWith("/auth/login")) {
+                Log.d("ApiClient", "Login request URL: ${request.url}")
+            }
+            chain.proceed(request)
+        }
+
         val client = OkHttpClient.Builder()
             .addInterceptor(AuthInterceptor(context))
             .addInterceptor(UnauthorizedInterceptor(context))
+            .addInterceptor(loginUrlLogger)
             .addInterceptor(logging)
             .build()
 
@@ -70,6 +83,7 @@ object ApiClient {
         alertsApi = retrofit.create(AlertsApi::class.java)
         riskApi = retrofit.create(RiskApi::class.java)
         trustedContactsApi = retrofit.create(TrustedContactsApi::class.java)
+        qrApi = retrofit.create(QrApi::class.java)
 
 
 

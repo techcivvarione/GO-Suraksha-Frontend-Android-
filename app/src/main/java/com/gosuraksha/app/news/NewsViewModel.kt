@@ -3,7 +3,7 @@ package com.gosuraksha.app.news
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import com.gosuraksha.app.data.LanguageDataStore
+import com.gosuraksha.app.core.LanguagePrefs
 import com.gosuraksha.app.network.ApiClient
 import com.gosuraksha.app.news.model.NewsItem
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -28,8 +28,8 @@ class NewsViewModel(application: Application) : AndroidViewModel(application) {
     private fun observeLanguage() {
         viewModelScope.launch {
 
-            LanguageDataStore
-                .getSelectedLanguage(getApplication())
+            LanguagePrefs
+                .getLanguage(getApplication())
                 .collect { lang ->
 
                     loadNews(lang ?: "en")
@@ -47,7 +47,7 @@ class NewsViewModel(application: Application) : AndroidViewModel(application) {
                 _news.value = response.news
 
             } catch (e: Exception) {
-                _error.value = e.message ?: "Failed to load news"
+                _error.value = e.message ?: "error_news_load_failed"
             } finally {
                 _loading.value = false
             }

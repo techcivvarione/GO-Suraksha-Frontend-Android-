@@ -8,68 +8,152 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
 import com.gosuraksha.app.R
 
-// Inter Font Family
-val InterFont = FontFamily(
-    Font(R.font.inter_regular, FontWeight.Normal),
-    Font(R.font.inter_medium, FontWeight.Medium),
-    Font(R.font.inter_semibold, FontWeight.SemiBold),
-    Font(R.font.inter_bold, FontWeight.Bold)
+// ─────────────────────────────────────────────────────────────────────────────
+// Manrope font family
+// Files required in res/font/:
+//   manrope_light.ttf        (300)
+//   manrope_regular.ttf      (400)
+//   manrope_medium.ttf       (500)
+//   manrope_semibold.ttf     (600)
+//   manrope_bold.ttf         (700)
+//   manrope_extrabold.ttf    (800)
+// ─────────────────────────────────────────────────────────────────────────────
+val Manrope = FontFamily(
+    Font(R.font.manrope_light,     FontWeight.Light),
+    Font(R.font.manrope_regular,   FontWeight.Normal),
+    Font(R.font.manrope_medium,    FontWeight.Medium),
+    Font(R.font.manrope_semibold,  FontWeight.SemiBold),
+    Font(R.font.manrope_bold,      FontWeight.Bold),
+    Font(R.font.manrope_extrabold, FontWeight.ExtraBold),
 )
 
-val AppTypography = Typography(
+// ─────────────────────────────────────────────────────────────────────────────
+// Material 3 type scale — all 15 roles mapped to Manrope
+//
+// Design decisions:
+//   Display*   → ExtraBold   — hero numbers, screen titles
+//   Headline*  → Bold        — section headers, card titles
+//   Title*     → SemiBold    — list item titles, tab labels
+//   Body*      → Regular     — content text, descriptions
+//   Label*     → Medium/Semi — chips, badges, captions
+//
+// Line heights: 1.25× for display, 1.35× for body
+// Letter spacing: slight negative for display, neutral for body
+// ─────────────────────────────────────────────────────────────────────────────
+val GoSurakshaTypography = Typography(
 
-    // Large score numbers / Hero
+    // ── Display ──────────────────────────────────────────────────────────────
     displayLarge = TextStyle(
-        fontFamily = InterFont,
-        fontWeight = FontWeight.Bold,
-        fontSize = 40.sp,
-        letterSpacing = 0.sp
+        fontFamily    = Manrope,
+        fontWeight    = FontWeight.ExtraBold,
+        fontSize      = 57.sp,
+        lineHeight    = 64.sp,
+        letterSpacing = (-0.5).sp
+    ),
+    displayMedium = TextStyle(
+        fontFamily    = Manrope,
+        fontWeight    = FontWeight.ExtraBold,
+        fontSize      = 45.sp,
+        lineHeight    = 52.sp,
+        letterSpacing = (-0.3).sp
+    ),
+    displaySmall = TextStyle(
+        fontFamily    = Manrope,
+        fontWeight    = FontWeight.ExtraBold,
+        fontSize      = 36.sp,
+        lineHeight    = 44.sp,
+        letterSpacing = (-0.2).sp
     ),
 
-    // Major screen titles
+    // ── Headline ─────────────────────────────────────────────────────────────
     headlineLarge = TextStyle(
-        fontFamily = InterFont,
-        fontWeight = FontWeight.Bold,
-        fontSize = 30.sp,
-        letterSpacing = 0.sp
+        fontFamily    = Manrope,
+        fontWeight    = FontWeight.Bold,
+        fontSize      = 32.sp,
+        lineHeight    = 40.sp,
+        letterSpacing = (-0.3).sp
     ),
-
-    // Section titles
     headlineMedium = TextStyle(
-        fontFamily = InterFont,
-        fontWeight = FontWeight.SemiBold,
-        fontSize = 22.sp,
+        fontFamily    = Manrope,
+        fontWeight    = FontWeight.Bold,
+        fontSize      = 28.sp,
+        lineHeight    = 36.sp,
+        letterSpacing = (-0.2).sp
+    ),
+    headlineSmall = TextStyle(
+        fontFamily    = Manrope,
+        fontWeight    = FontWeight.Bold,
+        fontSize      = 24.sp,
+        lineHeight    = 32.sp,
+        letterSpacing = (-0.1).sp
+    ),
+
+    // ── Title ─────────────────────────────────────────────────────────────────
+    titleLarge = TextStyle(
+        fontFamily    = Manrope,
+        fontWeight    = FontWeight.SemiBold,
+        fontSize      = 22.sp,
+        lineHeight    = 28.sp,
+        letterSpacing = (-0.1).sp
+    ),
+    titleMedium = TextStyle(
+        fontFamily    = Manrope,
+        fontWeight    = FontWeight.SemiBold,
+        fontSize      = 16.sp,
+        lineHeight    = 24.sp,
+        letterSpacing = 0.sp
+    ),
+    titleSmall = TextStyle(
+        fontFamily    = Manrope,
+        fontWeight    = FontWeight.SemiBold,
+        fontSize      = 14.sp,
+        lineHeight    = 20.sp,
         letterSpacing = 0.sp
     ),
 
-    // Card titles
-    titleLarge = TextStyle(
-        fontFamily = InterFont,
-        fontWeight = FontWeight.SemiBold,
-        fontSize = 18.sp
-    ),
-
-    // Primary content
+    // ── Body ──────────────────────────────────────────────────────────────────
     bodyLarge = TextStyle(
-        fontFamily = InterFont,
-        fontWeight = FontWeight.Normal,
-        fontSize = 16.sp,
-        lineHeight = 24.sp
+        fontFamily    = Manrope,
+        fontWeight    = FontWeight.Normal,
+        fontSize      = 16.sp,
+        lineHeight    = 26.sp,
+        letterSpacing = 0.sp
     ),
-
-    // Secondary content
     bodyMedium = TextStyle(
-        fontFamily = InterFont,
-        fontWeight = FontWeight.Normal,
-        fontSize = 14.sp,
-        lineHeight = 20.sp
+        fontFamily    = Manrope,
+        fontWeight    = FontWeight.Normal,
+        fontSize      = 14.sp,
+        lineHeight    = 22.sp,
+        letterSpacing = 0.sp
+    ),
+    bodySmall = TextStyle(
+        fontFamily    = Manrope,
+        fontWeight    = FontWeight.Normal,
+        fontSize      = 12.sp,
+        lineHeight    = 18.sp,
+        letterSpacing = 0.1.sp
     ),
 
-    // Buttons / Labels
+    // ── Label ─────────────────────────────────────────────────────────────────
     labelLarge = TextStyle(
-        fontFamily = InterFont,
-        fontWeight = FontWeight.Medium,
-        fontSize = 13.sp,
-        letterSpacing = 0.4.sp
-    )
+        fontFamily    = Manrope,
+        fontWeight    = FontWeight.SemiBold,
+        fontSize      = 14.sp,
+        lineHeight    = 20.sp,
+        letterSpacing = 0.1.sp
+    ),
+    labelMedium = TextStyle(
+        fontFamily    = Manrope,
+        fontWeight    = FontWeight.Medium,
+        fontSize      = 12.sp,
+        lineHeight    = 16.sp,
+        letterSpacing = 0.5.sp
+    ),
+    labelSmall = TextStyle(
+        fontFamily    = Manrope,
+        fontWeight    = FontWeight.Medium,
+        fontSize      = 10.sp,
+        lineHeight    = 14.sp,
+        letterSpacing = 0.5.sp
+    ),
 )

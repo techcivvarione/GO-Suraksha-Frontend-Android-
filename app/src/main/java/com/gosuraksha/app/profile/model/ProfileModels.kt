@@ -1,16 +1,23 @@
 package com.gosuraksha.app.profile.model
 
-data class ProfileResponse(
+data class UserProfile(
     val id: String,
     val name: String,
-    val email: String,
+    val email: String? = null,
     val phone: String,
-    val role: String,
-    val created_at: String,
-    val updated_at: String
+    val role: String? = null,
+    val created_at: String? = null,
+    val updated_at: String? = null,
+    val plan: String? = null
 )
 
 data class UpdateProfileRequest(
     val name: String,
     val phone: String
 )
+
+data class UpgradePlanRequest(
+    val plan: String
+)
+
+typealias ProfileResponse = UserProfile

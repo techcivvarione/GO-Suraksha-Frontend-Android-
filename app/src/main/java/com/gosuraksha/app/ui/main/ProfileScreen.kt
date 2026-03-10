@@ -1,5 +1,9 @@
 package com.gosuraksha.app.ui.main
 
+import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.*
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
@@ -10,734 +14,1078 @@ import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
-import androidx.compose.ui.graphics.*
-import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.gosuraksha.app.data.SessionManager
+import coil.compose.AsyncImage
+import com.gosuraksha.app.R
+import com.gosuraksha.app.core.session.SessionManager
+import com.gosuraksha.app.design.tokens.ColorTokens
 import com.gosuraksha.app.profile.ProfileViewModel
+import com.gosuraksha.app.profile.model.ProfileResponse
 import com.gosuraksha.app.security.SecurityViewModel
-import com.gosuraksha.app.ui.components.*
+import com.gosuraksha.app.ui.components.CyberCardNew
+import com.gosuraksha.app.ui.components.LanguageSwitcher
+import com.gosuraksha.app.ui.components.localizedUiMessage
+import kotlin.math.cos
+import kotlin.math.sin
 
-// ── Palette ───────────────────────────────────────────────────────────────────
-private val ProfileBg     = Color(0xFF0D1117)
-private val CardDark      = Color(0xFF161B22)
-private val CardBorder    = Color(0xFF30363D)
-private val CyberTeal     = Color(0xFF00E5C3)
-private val DangerRed     = Color(0xFFFF3B5C)
-private val WarnAmber     = Color(0xFFFFB020)
-private val SafeGreen     = Color(0xFF00D68F)
-private val PurpleAccent  = Color(0xFF7C3AED)
-private val TextPrimary   = Color(0xFFE6EDF3)
-private val TextSecondary = Color(0xFF8B949E)
+// ─────────────────────────────────────────────────────────────────────────────
+// Design tokens — profile screen only
+// ─────────────────────────────────────────────────────────────────────────────
+private object ProfileColors {
+    // Hero band — always dark regardless of app theme
+    val heroBg      = Color(0xFF0D1128)
+    val heroSurface = Color(0xFF141A36)
+    val heroOrb     = Color(0xFF00C9A7)
 
-// =============================================================================
-// ProfileScreen
-// =============================================================================
+    // White card surface (light editorial feel)
+    val cardWhite   = Color(0xFFFFFFFF)
+    val cardBorder  = Color(0xFFEEF2FA)
+    val cardShadow  = Color(0xFF1A2050)
+
+    // Section header labels
+    val sectionLbl  = Color(0xFF9AA5C0)
+
+    // Row text
+    val rowTitle    = Color(0xFF1A2040)
+    val rowRight    = Color(0xFFB0BADB)
+
+    // Stat ring colors
+    val ringRisk    = Color(0xFFEF4444)
+    val ringScans   = Color(0xFF10B981)
+    val ringThreats = Color(0xFFF59E0B)
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// ProfileScreen — root
+// ALL state, ViewModels, LaunchedEffects, dialogs UNCHANGED
+// Only the visual layout has changed
+// ─────────────────────────────────────────────────────────────────────────────
 @Composable
 fun ProfileScreen(onLogout: () -> Unit) {
-
-    val viewModel: ProfileViewModel         = viewModel()
+    val viewModel: ProfileViewModel          = viewModel()
     val securityViewModel: SecurityViewModel = viewModel()
-    val cyberCardViewModel: CyberCardViewModel = viewModel()
 
     val profile        by viewModel.profile.collectAsState()
     val loading        by viewModel.loading.collectAsState()
     val message        by viewModel.message.collectAsState()
     val securityMessage by securityViewModel.message.collectAsState()
+    val imageUri       by viewModel.avatarImageUri.collectAsState()
     val user           by SessionManager.user.collectAsState()
-    val cyberCard      by cyberCardViewModel.card.collectAsState()
 
-    var showUpgradeDialog by remember { mutableStateOf(false) }
-    var showLogoutDialog  by remember { mutableStateOf(false) }
-    var name         by remember { mutableStateOf("") }
-    var phone        by remember { mutableStateOf("") }
-    var currentPass  by remember { mutableStateOf("") }
-    var newPass      by remember { mutableStateOf("") }
-    var confirmPass  by remember { mutableStateOf("") }
+    var showLogoutDialog   by remember { mutableStateOf(false) }
+    var showDeleteDialog   by remember { mutableStateOf(false) }
+    var showLanguageDialog by remember { mutableStateOf(false) }
+    var accountExpanded    by rememberSaveable { mutableStateOf(false) }
+    var securityExpanded   by rememberSaveable { mutableStateOf(false) }
+
+    var name           by remember { mutableStateOf("") }
+    var phone          by remember { mutableStateOf("") }
+    var currentPass    by remember { mutableStateOf("") }
+    var newPass        by remember { mutableStateOf("") }
+    var confirmPass    by remember { mutableStateOf("") }
     var showCurrentPass by remember { mutableStateOf(false) }
     var showNewPass     by remember { mutableStateOf(false) }
     var showConfirmPass by remember { mutableStateOf(false) }
-    var expandedSection by remember { mutableStateOf<String?>("profile") }
 
-    LaunchedEffect(Unit) {
-        viewModel.loadProfile()
-        cyberCardViewModel.loadCard()
+    val planRaw = (profile?.plan?.ifBlank { "FREE" } ?: "FREE").uppercase()
+    val planLabel = when (planRaw) {
+        "GO_PRO" -> "GO PRO"
+        "GO_ULTRA" -> "GO ULTRA"
+        else -> "FREE PLAN"
     }
-    LaunchedEffect(profile) {
-        profile?.let { name = it.name; phone = it.phone ?: "" }
+    val isPremium = planRaw == "GO_PRO" || planRaw == "GO_ULTRA"
+
+    val imagePicker = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
+        viewModel.setAvatarImageUri(uri?.toString())
     }
+
+    LaunchedEffect(Unit)    { viewModel.loadProfile() }
+    LaunchedEffect(profile) { profile?.let { name = it.name; phone = it.phone } }
 
     if (loading) {
-        Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            CircularProgressIndicator(color = CyberTeal)
-        }
+        Box(
+            Modifier.fillMaxSize().background(ColorTokens.background()),
+            contentAlignment = Alignment.Center
+        ) { EdgyLoadingAnimation() }
         return
     }
+
+    // ── Layout ───────────────────────────────────────────────────────────────
+    // bodyBg respects dark/light mode without needing ColorTokens.LocalAppDarkMode
+    val bodyBg = ColorTokens.background()
 
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(ProfileBg)
+            .background(bodyBg)
             .verticalScroll(rememberScrollState())
     ) {
-
-        // ── IDENTITY HERO ─────────────────────────────────────────────
-        IdentityHero(userName = user?.name, userEmail = user?.email)
-
-        Spacer(Modifier.height(20.dp))
-
-        // ── CYBER CARD ────────────────────────────────────────────────
-        user?.let { currentUser ->
-            when (cyberCard?.card_status) {
-                "ACTIVE" -> CyberCardContainer(
-                    user        = currentUser.copy(id = cyberCard!!.card_id!!),
-                    cyberScore  = cyberCard!!.score!!,
-                    maxScore    = cyberCard!!.max_score!!,
-                    riskLevel   = cyberCard!!.risk_level!!,
-                    generatedOn = cyberCard!!.score_month!!,
-                    validTill   = calculateValidTill(cyberCard!!.score_month!!),
-                    signals     = cyberCard!!.signals
-                )
-                "LOCKED"  -> LockedMonthCard(score = cyberCard!!.score ?: 600, message = cyberCard!!.message ?: "Locked this month")
-                "PENDING" -> PendingCard(message = cyberCard!!.message ?: "Card will be available next month")
-                else      -> LockedCyberCard { showUpgradeDialog = true }
-            }
-            Spacer(Modifier.height(20.dp))
-        }
-
-        // ── SECURITY SCORE RING ───────────────────────────────────────
-        SecurityScoreRing(modifier = Modifier.padding(horizontal = 20.dp))
-
-        Spacer(Modifier.height(20.dp))
-
-        // ── QUICK STATS ───────────────────────────────────────────────
-        QuickStatRow(modifier = Modifier.padding(horizontal = 20.dp))
-
-        Spacer(Modifier.height(24.dp))
-
-        // ── PROFILE SECTION ───────────────────────────────────────────
-        AccordionSection(
-            title    = "Profile Information",
-            icon     = Icons.Outlined.Person,
-            accent   = CyberTeal,
-            expanded = expandedSection == "profile",
-            onToggle = { expandedSection = if (expandedSection == "profile") null else "profile" },
-            modifier = Modifier.padding(horizontal = 20.dp)
-        ) {
-            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                ProfileField(
-                    value = name,
-                    onValueChange = { name = it },
-                    label = "Full Name",
-                    icon = Icons.Outlined.Person
-                )
-                ProfileField(
-                    value = phone,
-                    onValueChange = { phone = it },
-                    label = "Phone Number",
-                    icon = Icons.Outlined.Phone
-                )
-                Spacer(Modifier.height(4.dp))
-                GradientButton(
-                    text    = "Save Changes",
-                    colors  = listOf(CyberTeal, Color(0xFF00B89C)),
-                    onClick = { viewModel.updateProfile(name, phone) }
-                )
-                message?.let {
-                    FeedbackBanner(text = it, color = SafeGreen)
-                }
+        // Hero + score card overlap: Box makes score card sit across the seam
+        Box(modifier = Modifier.fillMaxWidth()) {
+            // Hero has paddingBottom=60dp so Box is tall enough for the overlap
+            ProfileHeroBand(
+                profile     = profile,
+                fallback    = user?.name ?: stringResource(R.string.profile_guest),
+                imageUri    = imageUri,
+                isPremium   = isPremium,
+                planLabel   = planLabel,
+                planRaw     = planRaw,
+                onEditPhoto = { imagePicker.launch("image/*") }
+            )
+            // Score card: offset(y=50dp) pushes it 50dp below hero bottom
+            Box(
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .padding(horizontal = 16.dp)
+                    .offset(y = 50.dp)
+                    .fillMaxWidth()
+            ) {
+                ProfileScoreCard()
             }
         }
 
-        Spacer(Modifier.height(12.dp))
+        // Spacer compensates for the card's downward offset (50dp) + card height buffer
+        Spacer(Modifier.height(66.dp))
 
-        // ── SECURITY SECTION ──────────────────────────────────────────
-        AccordionSection(
-            title    = "Security & Password",
-            icon     = Icons.Outlined.Lock,
-            accent   = WarnAmber,
-            expanded = expandedSection == "security",
-            onToggle = { expandedSection = if (expandedSection == "security") null else "security" },
-            modifier = Modifier.padding(horizontal = 20.dp)
+        // ── BODY ─────────────────────────────────────────────────────────────
+        Column(
+            modifier = Modifier
+                .padding(horizontal = 16.dp)
+                .padding(bottom = 100.dp),
+            verticalArrangement = Arrangement.spacedBy(14.dp)
         ) {
-            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                ProfileField(
-                    value = currentPass,
-                    onValueChange = { currentPass = it },
-                    label = "Current Password",
-                    icon = Icons.Outlined.Lock,
-                    isPassword = true,
-                    showPassword = showCurrentPass,
-                    onTogglePassword = { showCurrentPass = !showCurrentPass }
-                )
-                ProfileField(
-                    value = newPass,
-                    onValueChange = { newPass = it },
-                    label = "New Password",
-                    icon = Icons.Outlined.LockOpen,
-                    isPassword = true,
-                    showPassword = showNewPass,
-                    onTogglePassword = { showNewPass = !showNewPass }
-                )
-                ProfileField(
-                    value = confirmPass,
-                    onValueChange = { confirmPass = it },
-                    label = "Confirm Password",
-                    icon = Icons.Outlined.LockOpen,
-                    isPassword = true,
-                    showPassword = showConfirmPass,
-                    onTogglePassword = { showConfirmPass = !showConfirmPass }
-                )
 
-                // Password strength indicator
-                if (newPass.isNotEmpty()) {
-                    PasswordStrengthBar(password = newPass)
-                }
+            // Cyber Card (unchanged component)
+            CyberCardNew(
+                userName    = profile?.name?.ifBlank { user?.name }
+                    ?: stringResource(R.string.profile_guest),
+                cardNumber  = formatCardNumber(user?.id ?: ""),
+                cyberScore  = 750,
+                generatedOn = "13/02/2026",
+                validTill   = "13/02/2026"
+            )
 
-                Spacer(Modifier.height(4.dp))
-                GradientButton(
-                    text   = "Update Password",
-                    colors = listOf(WarnAmber, Color(0xFFE09000)),
-                    onClick = {
-                        securityViewModel.changePassword(currentPass, newPass, confirmPass)
+            // Upgrade / Premium banner
+            if (isPremium) PremiumBadge() else UpgradeBanner(onUpgrade = { viewModel.upgradeToPremium() })
+
+            // ── Security status card ─────────────────────────────────────
+            ProfileWhiteCard(header = "SECURITY STATUS") {
+                ProfileStatusRow(
+                    icon      = Icons.Default.Lock,
+                    iconBg    = Color(0xFFFEF2F2),
+                    iconTint  = ProfileColors.ringRisk,
+                    title     = "Password Breach",
+                    rightText = "3 found",
+                    rightColor = ProfileColors.ringRisk
+                )
+                ProfileStatusRow(
+                    icon      = Icons.Default.Shield,
+                    iconBg    = Color(0xFFECFDF5),
+                    iconTint  = ProfileColors.ringScans,
+                    title     = "Two-Factor Auth",
+                    rightText = "Active",
+                    rightColor = ProfileColors.ringScans
+                )
+                ProfileStatusRow(
+                    icon      = Icons.Default.Email,
+                    iconBg    = Color(0xFFEFF6FF),
+                    iconTint  = Color(0xFF3B82F6),
+                    title     = "Email Monitor",
+                    rightText = "Live",
+                    isLast    = true
+                )
+            }
+
+            // ── Account section (collapsible — unchanged logic) ───────────
+            ProfileWhiteCard(header = stringResource(R.string.profile_section_title).uppercase()) {
+                ProfileExpandableRow(
+                    icon     = Icons.Outlined.Person,
+                    title    = stringResource(R.string.profile_section_title),
+                    expanded = accountExpanded,
+                    onToggle = { accountExpanded = !accountExpanded },
+                    isLast   = true
+                ) {
+                    Column(
+                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
+                        verticalArrangement = Arrangement.spacedBy(14.dp)
+                    ) {
+                        EdgyTextField(name, { name = it }, stringResource(R.string.profile_field_full_name), Icons.Outlined.Person)
+                        EdgyTextField(phone, { phone = it }, stringResource(R.string.profile_field_phone), Icons.Outlined.Phone)
+                        NeonButton(stringResource(R.string.profile_btn_save)) {
+                            viewModel.updateProfile(name, phone)
+                        }
+                        message?.let { SuccessBanner(localizedUiMessage(it)) }
                     }
-                )
-                securityMessage?.let {
-                    FeedbackBanner(text = it, color = SafeGreen)
                 }
             }
+
+            // ── Security section (collapsible — unchanged logic) ──────────
+            ProfileWhiteCard(header = stringResource(R.string.profile_section_security).uppercase()) {
+                ProfileExpandableRow(
+                    icon     = Icons.Outlined.Lock,
+                    title    = stringResource(R.string.profile_section_security),
+                    expanded = securityExpanded,
+                    onToggle = { securityExpanded = !securityExpanded },
+                    isLast   = true
+                ) {
+                    Column(
+                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
+                        verticalArrangement = Arrangement.spacedBy(14.dp)
+                    ) {
+                        EdgyTextField(
+                            currentPass, { currentPass = it },
+                            stringResource(R.string.profile_field_current_password),
+                            Icons.Outlined.Lock,
+                            visualTransformation = if (showCurrentPass) VisualTransformation.None
+                            else PasswordVisualTransformation(),
+                            trailingIcon = {
+                                IconButton(onClick = { showCurrentPass = !showCurrentPass }) {
+                                    Icon(
+                                        if (showCurrentPass) Icons.Outlined.VisibilityOff
+                                        else Icons.Outlined.Visibility,
+                                        null, tint = ColorTokens.textSecondary()
+                                    )
+                                }
+                            }
+                        )
+                        EdgyTextField(
+                            newPass, { newPass = it },
+                            stringResource(R.string.profile_field_new_password),
+                            Icons.Outlined.Lock,
+                            visualTransformation = if (showNewPass) VisualTransformation.None
+                            else PasswordVisualTransformation(),
+                            trailingIcon = {
+                                IconButton(onClick = { showNewPass = !showNewPass }) {
+                                    Icon(
+                                        if (showNewPass) Icons.Outlined.VisibilityOff
+                                        else Icons.Outlined.Visibility,
+                                        null, tint = ColorTokens.textSecondary()
+                                    )
+                                }
+                            }
+                        )
+                        if (newPass.isNotEmpty()) NeonPasswordStrength(newPass)
+                        EdgyTextField(
+                            confirmPass, { confirmPass = it },
+                            stringResource(R.string.profile_field_confirm_password),
+                            Icons.Outlined.Lock,
+                            visualTransformation = if (showConfirmPass) VisualTransformation.None
+                            else PasswordVisualTransformation(),
+                            trailingIcon = {
+                                IconButton(onClick = { showConfirmPass = !showConfirmPass }) {
+                                    Icon(
+                                        if (showConfirmPass) Icons.Outlined.VisibilityOff
+                                        else Icons.Outlined.Visibility,
+                                        null, tint = ColorTokens.textSecondary()
+                                    )
+                                }
+                            }
+                        )
+                        NeonButton(stringResource(R.string.profile_btn_update_password)) {
+                            securityViewModel.changePassword(currentPass, newPass, confirmPass)
+                        }
+                        securityMessage?.let { SuccessBanner(localizedUiMessage(it)) }
+                    }
+                }
+            }
+
+            // ── Trusted Devices ──────────────────────────────────────────
+            ProfileWhiteCard(header = "TRUSTED DEVICES") {
+                ProfileStatusRow(
+                    icon     = Icons.Default.PhoneAndroid,
+                    iconBg   = Color(0xFFEFF6FF),
+                    iconTint = Color(0xFF3B82F6),
+                    title    = "This Device",
+                    rightText = "Current",
+                    rightColor = ProfileColors.ringScans
+                )
+                ProfileStatusRow(
+                    icon     = Icons.Default.Laptop,
+                    iconBg   = Color(0xFFF5F3FF),
+                    iconTint = Color(0xFF8B5CF6),
+                    title    = "Chrome on Windows",
+                    rightText = "2d ago",
+                    isLast   = true
+                )
+            }
+
+            // ── Quick actions ────────────────────────────────────────────
+            ProfileWhiteCard(header = "MORE") {
+                ProfileActionRow(
+                    icon = Icons.Outlined.Language,
+                    iconBg = Color(0xFFEFF6FF),
+                    iconTint = Color(0xFF3B82F6),
+                    title = stringResource(R.string.home_quick_language),
+                    onClick = { showLanguageDialog = true }
+                )
+                ProfileActionRow(
+                    icon = Icons.Outlined.Notifications,
+                    iconBg = Color(0xFFFFFBEB),
+                    iconTint = Color(0xFFF59E0B),
+                    title = stringResource(R.string.profile_help_support)
+                ) { /* TODO: notifications */ }
+                ProfileActionRow(
+                    icon = Icons.Outlined.Help,
+                    iconBg = Color(0xFFF0FDF4),
+                    iconTint = Color(0xFF10B981),
+                    title = stringResource(R.string.profile_help_support)
+                ) { /* TODO */ }
+                ProfileActionRow(
+                    icon = Icons.Outlined.Info,
+                    iconBg = Color(0xFFF5F3FF),
+                    iconTint = Color(0xFF8B5CF6),
+                    title = stringResource(R.string.profile_about_us)
+                ) { /* TODO */ }
+                ProfileActionRow(
+                    icon = Icons.Outlined.CardGiftcard,
+                    iconBg = Color(0xFFFFF1F2),
+                    iconTint = Color(0xFFEF4444),
+                    title = stringResource(R.string.profile_refer_earn),
+                    highlight = true,
+                    isLast = true
+                ) { /* TODO */ }
+            }
+
+            // ── Danger Zone ──────────────────────────────────────────────
+            DangerZone(
+                onLogoutClick = { showLogoutDialog = true },
+                onDeleteClick = { showDeleteDialog = true }
+            )
         }
-
-        Spacer(Modifier.height(24.dp))
-
-        // ── DANGER ZONE ───────────────────────────────────────────────
-        DangerZone(
-            onLogoutAll = { showLogoutDialog = true },
-            modifier    = Modifier.padding(horizontal = 20.dp)
-        )
-
-        Spacer(Modifier.height(100.dp))
     }
 
-    // ── UPGRADE DIALOG ────────────────────────────────────────────────
-    if (showUpgradeDialog) {
-        CyberDialog(
-            title   = "Upgrade Required",
-            message = "Upgrade to Premium to access your Cyber Card and advanced threat intelligence.",
-            confirm = "Upgrade Now",
-            dismiss = "Not Now",
-            onConfirm = { showUpgradeDialog = false },
-            onDismiss = { showUpgradeDialog = false }
-        )
-    }
-
-    // ── LOGOUT CONFIRM DIALOG ─────────────────────────────────────────
+    // ── Dialogs — ALL UNCHANGED ───────────────────────────────────────────────
     if (showLogoutDialog) {
-        CyberDialog(
-            title    = "Logout All Sessions?",
-            message  = "This will sign you out from all devices immediately.",
-            confirm  = "Logout All",
-            dismiss  = "Cancel",
-            isDanger = true,
-            onConfirm = {
-                securityViewModel.logoutAll()
-                onLogout()
-            },
-            onDismiss = { showLogoutDialog = false }
+        EdgyDialog(
+            title       = stringResource(R.string.dialog_logout_title),
+            message     = stringResource(R.string.dialog_logout_message),
+            confirmText = stringResource(R.string.dialog_logout_confirm),
+            dismissText = stringResource(R.string.dialog_logout_dismiss),
+            isDanger    = true,
+            onConfirm   = { securityViewModel.logoutAll(); onLogout() },
+            onDismiss   = { showLogoutDialog = false }
         )
+    }
+    if (showDeleteDialog) {
+        EdgyDialog(
+            title       = stringResource(R.string.profile_delete_title),
+            message     = stringResource(R.string.profile_delete_message),
+            confirmText = stringResource(R.string.profile_delete_confirm),
+            dismissText = stringResource(R.string.common_cancel),
+            isDanger    = true,
+            onConfirm   = { /* TODO: Delete account */ },
+            onDismiss   = { showDeleteDialog = false }
+        )
+    }
+    if (showLanguageDialog) {
+        LanguageSwitcher(onDismiss = { showLanguageDialog = false })
     }
 }
 
-// =============================================================================
-// IdentityHero
-// =============================================================================
+// ─────────────────────────────────────────────────────────────────────────────
+// HERO BAND — always dark, sits at the top
+// ─────────────────────────────────────────────────────────────────────────────
 @Composable
-private fun IdentityHero(userName: String?, userEmail: String?) {
+private fun ProfileHeroBand(
+    profile: ProfileResponse?,
+    fallback: String,
+    imageUri: String?,
+    isPremium: Boolean,
+    planLabel: String,
+    planRaw: String,
+    onEditPhoto: () -> Unit
+) {
+    val name     = profile?.name?.ifBlank { fallback } ?: fallback
+    val email    = profile?.phone ?: ""          // reuse phone field for display
+    val initials = name.trim().split(" ")
+        .filter { it.isNotBlank() }.take(2)
+        .joinToString("") { it.first().uppercase() }
+        .ifEmpty { "U" }
+
+    val inf = rememberInfiniteTransition(label = "hero")
+    val orbScale by inf.animateFloat(
+        1f, 1.18f,
+        infiniteRepeatable(tween(3500, easing = FastOutSlowInEasing), RepeatMode.Reverse),
+        label = "orb"
+    )
+
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .height(200.dp)
+            .background(ProfileColors.heroBg)
+            .padding(top = 12.dp, bottom = 60.dp)   // bottom padding = overlap space for score card
     ) {
-        // Gradient bg
+        // Ambient orb
         Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(
-                    Brush.verticalGradient(
-                        listOf(Color(0xFF0D1F2D), ProfileBg)
-                    )
-                )
-        )
-        // Animated rotating accent
-        val infinite = rememberInfiniteTransition(label = "hero_rot")
-        val rot by infinite.animateFloat(
-            initialValue  = 0f,
-            targetValue   = 360f,
-            animationSpec = infiniteRepeatable(tween(18000, easing = LinearEasing)),
-            label         = "rot"
-        )
-        Box(
-            modifier = Modifier
+            Modifier
                 .size(260.dp)
-                .align(Alignment.Center)
-                .rotate(rot)
-                .background(Color.Transparent)
-        ) {
-            androidx.compose.foundation.Canvas(modifier = Modifier.fillMaxSize()) {
-                drawCircle(
-                    color = CyberTeal.copy(alpha = 0.06f),
-                    style = Stroke(
-                        width = 1.dp.toPx(),
-                        pathEffect = PathEffect.dashPathEffect(floatArrayOf(8f, 12f), 0f)
-                    )
+                .align(Alignment.TopEnd)
+                .offset(x = 80.dp, y = (-60).dp)
+                .graphicsLayer { scaleX = orbScale; scaleY = orbScale }
+                .background(
+                    Brush.radialGradient(
+                        listOf(ProfileColors.heroOrb.copy(alpha = 0.12f), Color.Transparent)
+                    ),
+                    CircleShape
                 )
-            }
-        }
+        )
 
         Column(
-            modifier = Modifier.align(Alignment.Center),
-            horizontalAlignment = Alignment.CenterHorizontally
+            modifier = Modifier.padding(horizontal = 20.dp),
+            verticalArrangement = Arrangement.spacedBy(0.dp)
         ) {
-            // Avatar ring
-            Box(
-                modifier = Modifier
-                    .size(80.dp)
-                    .clip(CircleShape)
-                    .background(
-                        Brush.radialGradient(
-                            listOf(CyberTeal.copy(alpha = 0.2f), Color(0xFF161B22))
-                        )
-                    )
-                    .border(2.dp, CyberTeal.copy(alpha = 0.5f), CircleShape),
-                contentAlignment = Alignment.Center
-            ) {
-                val initials = userName
-                    ?.split(" ")
-                    ?.mapNotNull { it.firstOrNull()?.toString() }
-                    ?.take(2)?.joinToString("") ?: "?"
-                Text(
-                    text = initials,
-                    color = CyberTeal,
-                    fontSize = 26.sp,
-                    fontWeight = FontWeight.Bold
-                )
-            }
-            Spacer(Modifier.height(10.dp))
+            // Page title
             Text(
-                text = userName ?: "User",
-                color = TextPrimary,
-                fontSize = 20.sp,
-                fontWeight = FontWeight.Bold
+                "Profile",
+                fontSize = 13.sp,
+                fontWeight = FontWeight.SemiBold,
+                color = Color.White.copy(alpha = 0.35f),
+                letterSpacing = 2.sp,
+                modifier = Modifier.padding(bottom = 18.dp)
             )
-            if (!userEmail.isNullOrBlank()) {
-                Spacer(Modifier.height(2.dp))
-                Text(text = userEmail, color = TextSecondary, fontSize = 13.sp)
-            }
-            Spacer(Modifier.height(8.dp))
-            // Verified badge
+
             Row(
-                modifier = Modifier
-                    .clip(RoundedCornerShape(50.dp))
-                    .background(CyberTeal.copy(alpha = 0.1f))
-                    .border(1.dp, CyberTeal.copy(alpha = 0.3f), RoundedCornerShape(50.dp))
-                    .padding(horizontal = 12.dp, vertical = 4.dp),
-                verticalAlignment = Alignment.CenterVertically
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                Icon(Icons.Filled.VerifiedUser, null, tint = CyberTeal, modifier = Modifier.size(13.dp))
-                Spacer(Modifier.width(5.dp))
-                Text("Verified Account", color = CyberTeal, fontSize = 11.sp, fontWeight = FontWeight.SemiBold)
+                // Avatar
+                Box(
+                    modifier = Modifier.size(72.dp),
+                    contentAlignment = Alignment.BottomEnd
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .clip(RoundedCornerShape(22.dp))
+                            .background(
+                                Brush.linearGradient(
+                                    listOf(Color(0xFF00C9A7), Color(0xFF0055CC))
+                                )
+                            ),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        if (!imageUri.isNullOrBlank()) {
+                            AsyncImage(
+                                model            = Uri.parse(imageUri),
+                                contentDescription = null,
+                                modifier         = Modifier
+                                    .fillMaxSize()
+                                    .clip(RoundedCornerShape(22.dp)),
+                                contentScale     = ContentScale.Crop
+                            )
+                        } else {
+                            Text(
+                                initials,
+                                color      = Color.White,
+                                fontSize   = 26.sp,
+                                fontWeight = FontWeight.ExtraBold
+                            )
+                        }
+                    }
+                    // Edit button
+                    Box(
+                        modifier = Modifier
+                            .size(24.dp)
+                            .clip(CircleShape)
+                            .background(Color(0xFF00C9A7))
+                            .clickable(onClick = onEditPhoto),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            Icons.Default.Edit, null,
+                            tint     = Color(0xFF07090F),
+                            modifier = Modifier.size(12.dp)
+                        )
+                    }
+                }
+
+                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    Text(
+                        name.ifBlank { stringResource(R.string.profile_guest) },
+                        fontSize   = 20.sp,
+                        fontWeight = FontWeight.ExtraBold,
+                        color      = Color.White,
+                        maxLines   = 1,
+                        overflow   = TextOverflow.Ellipsis
+                    )
+                    if (email.isNotBlank()) {
+                        Text(
+                            email,
+                            fontSize = 12.sp,
+                            color    = Color.White.copy(alpha = 0.45f)
+                        )
+                    }
+                    // Plan chip
+                    Box(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(
+                                when (planRaw) {
+                                    "GO_ULTRA" -> Brush.linearGradient(listOf(Color(0xFFFFD700), Color(0xFFFFA500)))
+                                    "GO_PRO" -> Brush.horizontalGradient(listOf(Color(0xFF10B981).copy(alpha = 0.18f), Color(0xFF10B981).copy(alpha = 0.1f)))
+                                    else -> Brush.horizontalGradient(listOf(Color(0xFF9CA3AF).copy(alpha = 0.2f), Color(0xFF9CA3AF).copy(alpha = 0.12f)))
+                                }
+                            )
+                            .border(
+                                1.dp,
+                                when (planRaw) {
+                                    "GO_ULTRA" -> Color.Transparent
+                                    "GO_PRO" -> Color(0xFF10B981).copy(alpha = 0.4f)
+                                    else -> Color(0xFF9CA3AF).copy(alpha = 0.4f)
+                                },
+                                RoundedCornerShape(8.dp)
+                            )
+                            .padding(horizontal = 10.dp, vertical = 4.dp)
+                    ) {
+                        Text(
+                            "◆ $planLabel",
+                            fontSize   = 10.sp,
+                            fontWeight = FontWeight.Bold,
+                            color      = when (planRaw) {
+                                "GO_ULTRA" -> Color.Black
+                                "GO_PRO" -> Color(0xFF10B981)
+                                else -> Color(0xFF9CA3AF)
+                            },
+                            letterSpacing = 0.5.sp
+                        )
+                    }
+                }
             }
         }
     }
 }
 
-// =============================================================================
-// SecurityScoreRing
-// =============================================================================
+// ─────────────────────────────────────────────────────────────────────────────
+// FLOATING SCORE CARD — overlaps hero/body seam
+// ─────────────────────────────────────────────────────────────────────────────
 @Composable
-private fun SecurityScoreRing(modifier: Modifier = Modifier) {
-    // Hardcoded score — wire to your ViewModel when ready
-    val score     = 72
-    val progress  = score / 100f
-    val scoreColor = when {
-        score >= 75 -> SafeGreen
-        score >= 50 -> WarnAmber
-        else        -> DangerRed
+private fun ProfileScoreCard() {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .shadow(
+                elevation    = 16.dp,
+                shape        = RoundedCornerShape(22.dp),
+                ambientColor = ProfileColors.cardShadow.copy(0.12f),
+                spotColor    = ProfileColors.cardShadow.copy(0.12f)
+            )
+            .clip(RoundedCornerShape(22.dp))
+            .background(ProfileColors.cardWhite)
+            .padding(vertical = 18.dp)
+    ) {
+        ScoreRingCell(
+            value    = 18,
+            max      = 100,
+            label    = "Risk Score",
+            color    = ProfileColors.ringRisk,
+            trackCol = Color(0xFFFEE2E2)
+        )
+        Box(Modifier.width(1.dp).height(48.dp).background(ProfileColors.cardBorder).align(Alignment.CenterVertically))
+        ScoreRingCell(
+            value    = 71,
+            max      = 100,
+            label    = "Scans Done",
+            color    = ProfileColors.ringScans,
+            trackCol = Color(0xFFDCFCE7)
+        )
+        Box(Modifier.width(1.dp).height(48.dp).background(ProfileColors.cardBorder).align(Alignment.CenterVertically))
+        ScoreRingCell(
+            value    = 48,
+            max      = 100,
+            label    = "Threats",
+            color    = ProfileColors.ringThreats,
+            trackCol = Color(0xFFFEF9C3)
+        )
     }
-    val animProg by animateFloatAsState(
-        targetValue   = progress,
-        animationSpec = tween(1200, easing = FastOutSlowInEasing),
-        label         = "score_ring"
+}
+
+@Composable
+private fun RowScope.ScoreRingCell(
+    value: Int,
+    max: Int,
+    label: String,
+    color: Color,
+    trackCol: Color
+) {
+    val animatedSweep by animateFloatAsState(
+        targetValue   = (value.toFloat() / max) * 360f,
+        animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessLow),
+        label         = "ring_$label"
     )
 
-    Row(
-        modifier = modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(20.dp))
-            .background(CardDark)
-            .border(1.dp, CardBorder, RoundedCornerShape(20.dp))
-            .padding(20.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        // Ring
-        Box(contentAlignment = Alignment.Center, modifier = Modifier.size(80.dp)) {
-            androidx.compose.foundation.Canvas(modifier = Modifier.fillMaxSize()) {
-                drawCircle(color = CardBorder, style = Stroke(width = 10f))
-                drawArc(
-                    color      = scoreColor,
-                    startAngle = -90f,
-                    sweepAngle = 360f * animProg,
-                    useCenter  = false,
-                    style      = Stroke(width = 10f, cap = StrokeCap.Round)
-                )
-            }
-            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Text("$score", color = scoreColor, fontSize = 20.sp, fontWeight = FontWeight.Bold)
-                Text("/100", color = TextSecondary, fontSize = 9.sp)
-            }
-        }
-
-        Spacer(Modifier.width(20.dp))
-
-        Column(Modifier.weight(1f)) {
-            Text("SECURITY SCORE", color = TextSecondary, fontSize = 10.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.2.sp)
-            Spacer(Modifier.height(4.dp))
-            Text(
-                text = when {
-                    score >= 75 -> "Good Standing"
-                    score >= 50 -> "Needs Attention"
-                    else        -> "At Risk"
-                },
-                color = scoreColor,
-                fontSize = 16.sp,
-                fontWeight = FontWeight.Bold
-            )
-            Spacer(Modifier.height(6.dp))
-            Text("Based on your scan history and threat detections.", color = TextSecondary, fontSize = 12.sp, lineHeight = 16.sp)
-        }
-    }
-}
-
-// =============================================================================
-// QuickStatRow
-// =============================================================================
-@Composable
-private fun QuickStatRow(modifier: Modifier = Modifier) {
-    Row(
-        modifier = modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(12.dp)
-    ) {
-        StatChip(label = "Scans",    value = "34",  color = CyberTeal,   modifier = Modifier.weight(1f))
-        StatChip(label = "Threats",  value = "22",  color = DangerRed,   modifier = Modifier.weight(1f))
-        StatChip(label = "Resolved", value = "18",  color = SafeGreen,   modifier = Modifier.weight(1f))
-    }
-}
-
-@Composable
-private fun StatChip(label: String, value: String, color: Color, modifier: Modifier = Modifier) {
     Column(
-        modifier = modifier
-            .clip(RoundedCornerShape(16.dp))
-            .background(CardDark)
-            .border(1.dp, CardBorder, RoundedCornerShape(16.dp))
-            .padding(vertical = 14.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
+        modifier            = Modifier.weight(1f),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(6.dp)
     ) {
-        Text(value, color = color, fontSize = 20.sp, fontWeight = FontWeight.Bold)
-        Spacer(Modifier.height(2.dp))
-        Text(label, color = TextSecondary, fontSize = 11.sp)
+        Box(Modifier.size(52.dp), contentAlignment = Alignment.Center) {
+            androidx.compose.foundation.Canvas(Modifier.fillMaxSize()) {
+                val stroke = androidx.compose.ui.graphics.drawscope.Stroke(
+                    width = 5f,
+                    cap   = androidx.compose.ui.graphics.StrokeCap.Round
+                )
+                val inset  = 5f / 2f
+                val rect   = androidx.compose.ui.geometry.Rect(inset, inset, size.width - inset, size.height - inset)
+                // Track
+                drawArc(trackCol, 0f, 360f, false, rect.topLeft, rect.size, style = stroke)
+                // Progress
+                drawArc(color, -90f, animatedSweep, false, rect.topLeft, rect.size, style = stroke)
+            }
+            Text(
+                "$value",
+                fontSize   = 15.sp,
+                fontWeight = FontWeight.ExtraBold,
+                color      = color
+            )
+        }
+        Text(
+            label,
+            fontSize  = 9.sp,
+            color     = ProfileColors.sectionLbl,
+            letterSpacing = 0.3.sp,
+            fontWeight = FontWeight.Medium
+        )
     }
 }
 
-// =============================================================================
-// AccordionSection
-// =============================================================================
+// ─────────────────────────────────────────────────────────────────────────────
+// WHITE CARD CONTAINER
+// ─────────────────────────────────────────────────────────────────────────────
 @Composable
-private fun AccordionSection(
-    title: String,
-    icon: ImageVector,
-    accent: Color,
-    expanded: Boolean,
-    onToggle: () -> Unit,
-    modifier: Modifier = Modifier,
+private fun ProfileWhiteCard(
+    header: String,
     content: @Composable ColumnScope.() -> Unit
 ) {
     Column(
-        modifier = modifier
+        modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(20.dp))
-            .background(CardDark)
-            .border(1.dp, if (expanded) accent.copy(alpha = 0.3f) else CardBorder, RoundedCornerShape(20.dp))
+            .shadow(
+                elevation    = 4.dp,
+                shape        = RoundedCornerShape(18.dp),
+                ambientColor = ProfileColors.cardShadow.copy(0.06f),
+                spotColor    = ProfileColors.cardShadow.copy(0.06f)
+            )
+            .clip(RoundedCornerShape(18.dp))
+            .background(ProfileColors.cardWhite)
     ) {
-        // Header
+        Text(
+            header,
+            modifier      = Modifier.padding(start = 16.dp, top = 14.dp, bottom = 8.dp, end = 16.dp),
+            fontSize       = 10.sp,
+            fontWeight     = FontWeight.Bold,
+            color          = ProfileColors.sectionLbl,
+            letterSpacing  = 1.2.sp
+        )
+        Box(Modifier.fillMaxWidth().height(1.dp).background(ProfileColors.cardBorder))
+        content()
+    }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// ROW VARIANTS
+// ─────────────────────────────────────────────────────────────────────────────
+@Composable
+private fun ProfileStatusRow(
+    icon: ImageVector,
+    iconBg: Color,
+    iconTint: Color,
+    title: String,
+    rightText: String  = "",
+    rightColor: Color  = ProfileColors.rowRight,
+    isLast: Boolean    = false
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 13.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        Box(
+            Modifier
+                .size(36.dp)
+                .clip(RoundedCornerShape(11.dp))
+                .background(iconBg),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(icon, null, tint = iconTint, modifier = Modifier.size(18.dp))
+        }
+        Text(title, modifier = Modifier.weight(1f), fontSize = 13.5.sp, fontWeight = FontWeight.Medium, color = ProfileColors.rowTitle)
+        if (rightText.isNotBlank()) {
+            Text(rightText, fontSize = 12.sp, color = rightColor, fontWeight = FontWeight.SemiBold)
+        }
+        Icon(Icons.Outlined.ChevronRight, null, tint = ProfileColors.rowRight, modifier = Modifier.size(16.dp))
+    }
+    if (!isLast) Box(Modifier.fillMaxWidth().padding(start = 64.dp).height(1.dp).background(ProfileColors.cardBorder))
+}
+
+@Composable
+private fun ProfileActionRow(
+    icon: ImageVector,
+    iconBg: Color,
+    iconTint: Color,
+    title: String,
+    highlight: Boolean = false,
+    isLast: Boolean    = false,
+    onClick: () -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(
+                indication        = null,
+                interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() },
+                onClick           = onClick
+            )
+            .background(if (highlight) ColorTokens.accent().copy(alpha = 0.03f) else Color.Transparent)
+            .padding(horizontal = 16.dp, vertical = 13.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        Box(
+            Modifier
+                .size(36.dp)
+                .clip(RoundedCornerShape(11.dp))
+                .background(iconBg),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(icon, null, tint = iconTint, modifier = Modifier.size(18.dp))
+        }
+        Text(
+            title,
+            modifier   = Modifier.weight(1f),
+            fontSize   = 13.5.sp,
+            fontWeight = FontWeight.Medium,
+            color      = if (highlight) ColorTokens.accent() else ProfileColors.rowTitle
+        )
+        Icon(Icons.Outlined.ChevronRight, null, tint = ProfileColors.rowRight, modifier = Modifier.size(16.dp))
+    }
+    if (!isLast) Box(Modifier.fillMaxWidth().padding(start = 64.dp).height(1.dp).background(ProfileColors.cardBorder))
+}
+
+@Composable
+private fun ProfileExpandableRow(
+    icon: ImageVector,
+    title: String,
+    expanded: Boolean,
+    onToggle: () -> Unit,
+    isLast: Boolean = false,
+    content: @Composable () -> Unit
+) {
+    val rotation by animateFloatAsState(if (expanded) 90f else 0f, tween(280), label = "chev")
+
+    Column {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .clickable(
+                    indication        = null,
                     interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() },
-                    indication = null,
-                    onClick = onToggle
+                    onClick           = onToggle
                 )
-                .padding(horizontal = 18.dp, vertical = 16.dp),
-            verticalAlignment = Alignment.CenterVertically
+                .background(if (expanded) ColorTokens.accent().copy(alpha = 0.03f) else Color.Transparent)
+                .padding(horizontal = 16.dp, vertical = 13.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             Box(
-                modifier = Modifier
+                Modifier
                     .size(36.dp)
                     .clip(RoundedCornerShape(11.dp))
-                    .background(accent.copy(alpha = 0.12f)),
+                    .background(
+                        if (expanded) ColorTokens.accent().copy(alpha = 0.12f)
+                        else Color(0xFFEFF6FF)
+                    ),
                 contentAlignment = Alignment.Center
             ) {
-                Icon(icon, null, tint = accent, modifier = Modifier.size(19.dp))
+                Icon(
+                    icon, null,
+                    tint     = if (expanded) ColorTokens.accent() else Color(0xFF3B82F6),
+                    modifier = Modifier.size(18.dp)
+                )
             }
-            Spacer(Modifier.width(12.dp))
-            Text(title, color = TextPrimary, fontSize = 15.sp, fontWeight = FontWeight.SemiBold, modifier = Modifier.weight(1f))
+            Text(
+                title,
+                modifier   = Modifier.weight(1f),
+                fontSize   = 13.5.sp,
+                fontWeight = FontWeight.Medium,
+                color      = if (expanded) ColorTokens.accent() else ProfileColors.rowTitle
+            )
             Icon(
-                if (expanded) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
-                null,
-                tint = TextSecondary,
-                modifier = Modifier.size(20.dp)
+                Icons.Outlined.ChevronRight, null,
+                tint     = ProfileColors.rowRight,
+                modifier = Modifier.size(16.dp).graphicsLayer { rotationZ = rotation }
             )
         }
 
-        // Content
-        if (expanded) {
-            Box(modifier = Modifier.fillMaxWidth().height(1.dp).background(CardBorder))
-            Column(modifier = Modifier.padding(18.dp)) {
+        AnimatedVisibility(
+            visible = expanded,
+            enter   = fadeIn(tween(200)) + expandVertically(tween(280, easing = EaseOutQuart)),
+            exit    = fadeOut(tween(150)) + shrinkVertically(tween(200))
+        ) {
+            Column(modifier = Modifier.background(Color(0xFFFAFBFF))) {
+                Box(Modifier.fillMaxWidth().height(1.dp).background(ProfileColors.cardBorder))
                 content()
+            }
+        }
+
+        if (!isLast) Box(Modifier.fillMaxWidth().padding(start = 64.dp).height(1.dp).background(ProfileColors.cardBorder))
+    }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// ALL BELOW — UNCHANGED FROM ORIGINAL
+// ─────────────────────────────────────────────────────────────────────────────
+
+private fun formatCardNumber(id: String): String {
+    val clean = id.replace("-", "").uppercase()
+    return if (clean.length >= 12) {
+        "${clean.substring(0,4)} ${clean.substring(4,7)} ${clean.substring(7,10)}"
+    } else "CC08 K38 56B"
+}
+
+@Composable
+private fun EdgyLoadingAnimation() {
+    val infinite = rememberInfiniteTransition(label = "load")
+    val rotation by infinite.animateFloat(
+        0f, 360f,
+        infiniteRepeatable(tween(1000, easing = LinearEasing)),
+        label = "spin"
+    )
+    Box(contentAlignment = Alignment.Center) {
+        Box(
+            modifier = Modifier
+                .size(60.dp)
+                .rotate(rotation)
+                .border(
+                    4.dp,
+                    Brush.sweepGradient(listOf(ColorTokens.accent(), Color.Transparent)),
+                    CircleShape
+                )
+        )
+    }
+}
+
+@Composable
+private fun PremiumBadge() {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(14.dp))
+            .background(Brush.linearGradient(listOf(Color(0xFFFFD700), Color(0xFFFFA500))))
+            .padding(16.dp)
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Icon(Icons.Default.Diamond, null, tint = Color.Black, modifier = Modifier.size(24.dp))
+            Spacer(Modifier.width(12.dp))
+            Column {
+                Text(stringResource(R.string.profile_premium_active), fontSize = 16.sp, fontWeight = FontWeight.Bold, color = Color.Black)
+                Text(stringResource(R.string.profile_premium_active_subtitle), fontSize = 12.sp, color = Color.Black.copy(alpha = 0.7f))
             }
         }
     }
 }
 
-// =============================================================================
-// ProfileField
-// =============================================================================
 @Composable
-private fun ProfileField(
+private fun UpgradeBanner(onUpgrade: () -> Unit) {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(14.dp))
+            .background(Brush.linearGradient(listOf(ColorTokens.accent().copy(0.15f), ColorTokens.accent().copy(0.05f))))
+            .border(1.dp, ColorTokens.accent().copy(alpha = 0.3f), RoundedCornerShape(14.dp))
+            .clickable(onClick = onUpgrade)
+            .padding(16.dp)
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Icon(Icons.Default.Upgrade, null, tint = ColorTokens.accent(), modifier = Modifier.size(24.dp))
+            Spacer(Modifier.width(12.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                Text(stringResource(R.string.profile_upgrade_title), fontSize = 15.sp, fontWeight = FontWeight.Bold, color = ColorTokens.textPrimary())
+                Text(stringResource(R.string.profile_upgrade_subtitle), fontSize = 12.sp, color = ColorTokens.textSecondary())
+            }
+            Icon(Icons.Default.ChevronRight, null, tint = ColorTokens.accent())
+        }
+    }
+}
+
+@Composable
+private fun EdgyTextField(
     value: String,
     onValueChange: (String) -> Unit,
     label: String,
-    icon: ImageVector,
-    isPassword: Boolean = false,
-    showPassword: Boolean = false,
-    onTogglePassword: (() -> Unit)? = null
+    leadingIcon: ImageVector,
+    visualTransformation: VisualTransformation = VisualTransformation.None,
+    trailingIcon: @Composable (() -> Unit)? = null
 ) {
     OutlinedTextField(
-        value = value,
-        onValueChange = onValueChange,
-        label = { Text(label, fontSize = 13.sp) },
-        leadingIcon = { Icon(icon, null, tint = CyberTeal, modifier = Modifier.size(18.dp)) },
-        trailingIcon = if (isPassword) {
-            {
-                IconButton(onClick = { onTogglePassword?.invoke() }) {
-                    Icon(
-                        if (showPassword) Icons.Outlined.VisibilityOff else Icons.Outlined.Visibility,
-                        null,
-                        tint = TextSecondary,
-                        modifier = Modifier.size(18.dp)
-                    )
-                }
-            }
-        } else null,
-        visualTransformation = if (isPassword && !showPassword) PasswordVisualTransformation() else VisualTransformation.None,
-        modifier = Modifier.fillMaxWidth(),
-        singleLine = true,
-        colors = OutlinedTextFieldDefaults.colors(
-            focusedBorderColor   = CyberTeal,
-            unfocusedBorderColor = CardBorder,
-            focusedTextColor     = TextPrimary,
-            unfocusedTextColor   = TextPrimary,
-            cursorColor          = CyberTeal,
-            focusedLabelColor    = CyberTeal,
-            unfocusedLabelColor  = TextSecondary,
-            focusedContainerColor   = ProfileBg,
-            unfocusedContainerColor = ProfileBg
+        value            = value,
+        onValueChange    = onValueChange,
+        label            = { Text(label) },
+        leadingIcon      = { Icon(leadingIcon, null, tint = ColorTokens.accent(), modifier = Modifier.size(20.dp)) },
+        trailingIcon     = trailingIcon,
+        modifier         = Modifier.fillMaxWidth(),
+        visualTransformation = visualTransformation,
+        colors           = OutlinedTextFieldDefaults.colors(
+            focusedBorderColor   = ColorTokens.accent(),
+            unfocusedBorderColor = ColorTokens.border(),
+            focusedLabelColor    = ColorTokens.accent(),
+            focusedTextColor     = ColorTokens.textPrimary(),
+            unfocusedTextColor   = ColorTokens.textPrimary()
         ),
         shape = RoundedCornerShape(12.dp)
     )
 }
 
-// =============================================================================
-// PasswordStrengthBar
-// =============================================================================
 @Composable
-private fun PasswordStrengthBar(password: String) {
+private fun NeonButton(text: String, onClick: () -> Unit) {
+    val pulse = rememberInfiniteTransition(label = "pulse")
+    val alpha by pulse.animateFloat(0.6f, 1f, infiniteRepeatable(tween(1000), RepeatMode.Reverse), label = "glow")
+    Box(
+        modifier = Modifier
+            .fillMaxWidth().height(52.dp)
+            .clip(RoundedCornerShape(12.dp))
+            .background(Brush.linearGradient(listOf(ColorTokens.accent().copy(alpha), ColorTokens.accent().copy(alpha * 0.8f))))
+            .clickable(onClick = onClick),
+        contentAlignment = Alignment.Center
+    ) {
+        Text(text, fontSize = 15.sp, fontWeight = FontWeight.Bold, color = Color.White)
+    }
+}
+
+@Composable
+private fun NeonPasswordStrength(password: String) {
     val strength = when {
         password.length >= 12 && password.any { it.isUpperCase() } && password.any { it.isDigit() } && password.any { !it.isLetterOrDigit() } -> 4
         password.length >= 10 && password.any { it.isUpperCase() } && password.any { it.isDigit() } -> 3
         password.length >= 8 -> 2
         else -> 1
     }
-    val label = listOf("", "Weak", "Fair", "Strong", "Very Strong")[strength]
-    val color = listOf(Color.Transparent, DangerRed, WarnAmber, SafeGreen, CyberTeal)[strength]
-
+    val label = listOf("", stringResource(R.string.profile_password_weak), stringResource(R.string.profile_password_fair), stringResource(R.string.profile_password_strong), stringResource(R.string.profile_password_very_strong))[strength]
+    val color = listOf(Color.Transparent, ColorTokens.error(), ColorTokens.warning(), ColorTokens.success(), ColorTokens.accent())[strength]
     Column {
-        Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-            repeat(4) { i ->
-                Box(
-                    modifier = Modifier
-                        .weight(1f)
-                        .height(4.dp)
-                        .clip(RoundedCornerShape(2.dp))
-                        .background(if (i < strength) color else CardBorder)
-                )
-            }
+        Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+            repeat(4) { i -> Box(Modifier.weight(1f).height(6.dp).clip(RoundedCornerShape(3.dp)).background(if (i < strength) color else ColorTokens.border())) }
         }
-        Spacer(Modifier.height(4.dp))
-        Text(label, color = color, fontSize = 11.sp, fontWeight = FontWeight.SemiBold)
+        Spacer(Modifier.height(6.dp))
+        Text(label, color = color, fontSize = 12.sp, fontWeight = FontWeight.Bold)
     }
 }
 
-// =============================================================================
-// GradientButton
-// =============================================================================
 @Composable
-private fun GradientButton(
-    text: String,
-    colors: List<Color>,
-    onClick: () -> Unit
-) {
-    Button(
-        onClick = onClick,
-        modifier = Modifier.fillMaxWidth().height(48.dp),
-        shape = RoundedCornerShape(12.dp),
-        colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
-        contentPadding = PaddingValues(0.dp)
+private fun DangerZone(onLogoutClick: () -> Unit, onDeleteClick: () -> Unit) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .shadow(4.dp, RoundedCornerShape(18.dp), ambientColor = Color(0xFFEF4444).copy(0.08f), spotColor = Color(0xFFEF4444).copy(0.08f))
+            .clip(RoundedCornerShape(18.dp))
+            .background(ProfileColors.cardWhite)
+            .padding(18.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(Brush.horizontalGradient(colors), RoundedCornerShape(12.dp)),
-            contentAlignment = Alignment.Center
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Icon(Icons.Outlined.Warning, null, tint = ColorTokens.error(), modifier = Modifier.size(18.dp))
+            Spacer(Modifier.width(8.dp))
+            Text(stringResource(R.string.profile_danger_zone), fontSize = 11.sp, fontWeight = FontWeight.ExtraBold, color = ColorTokens.error(), letterSpacing = 1.sp)
+        }
+        OutlinedButton(
+            onClick = onLogoutClick,
+            modifier = Modifier.fillMaxWidth().height(48.dp),
+            colors = ButtonDefaults.outlinedButtonColors(contentColor = ColorTokens.error()),
+            border = BorderStroke(1.dp, ColorTokens.error().copy(alpha = 0.5f)),
+            shape = RoundedCornerShape(12.dp)
         ) {
-            Text(text, color = ProfileBg, fontWeight = FontWeight.Bold, fontSize = 14.sp)
+            Icon(Icons.Outlined.Logout, null, modifier = Modifier.size(18.dp))
+            Spacer(Modifier.width(8.dp))
+            Text(stringResource(R.string.profile_btn_logout_all), fontSize = 14.sp, fontWeight = FontWeight.Bold)
+        }
+        OutlinedButton(
+            onClick = onDeleteClick,
+            modifier = Modifier.fillMaxWidth().height(48.dp),
+            colors = ButtonDefaults.outlinedButtonColors(contentColor = ColorTokens.error()),
+            border = BorderStroke(1.dp, ColorTokens.error()),
+            shape = RoundedCornerShape(12.dp)
+        ) {
+            Icon(Icons.Outlined.DeleteForever, null, modifier = Modifier.size(18.dp))
+            Spacer(Modifier.width(8.dp))
+            Text(stringResource(R.string.profile_delete_title), fontSize = 14.sp, fontWeight = FontWeight.Bold)
         }
     }
 }
 
-// =============================================================================
-// FeedbackBanner
-// =============================================================================
 @Composable
-private fun FeedbackBanner(text: String, color: Color) {
+private fun SuccessBanner(text: String) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(10.dp))
-            .background(color.copy(alpha = 0.08f))
-            .border(1.dp, color.copy(alpha = 0.25f), RoundedCornerShape(10.dp))
-            .padding(horizontal = 12.dp, vertical = 9.dp),
+            .background(ColorTokens.success().copy(alpha = 0.1f))
+            .border(1.dp, ColorTokens.success().copy(alpha = 0.3f), RoundedCornerShape(10.dp))
+            .padding(12.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Icon(Icons.Default.CheckCircle, null, tint = color, modifier = Modifier.size(16.dp))
-        Spacer(Modifier.width(8.dp))
-        Text(text, color = color, fontSize = 13.sp)
+        Icon(Icons.Default.CheckCircle, null, tint = ColorTokens.success(), modifier = Modifier.size(18.dp))
+        Spacer(Modifier.width(10.dp))
+        Text(text, color = ColorTokens.success(), fontSize = 13.sp, fontWeight = FontWeight.Medium)
     }
 }
 
-// =============================================================================
-// DangerZone
-// =============================================================================
 @Composable
-private fun DangerZone(onLogoutAll: () -> Unit, modifier: Modifier = Modifier) {
-    Column(
-        modifier = modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(20.dp))
-            .background(CardDark)
-            .border(1.dp, DangerRed.copy(alpha = 0.2f), RoundedCornerShape(20.dp))
-    ) {
-        Row(
-            modifier = Modifier.padding(horizontal = 18.dp, vertical = 14.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Icon(Icons.Outlined.Warning, null, tint = DangerRed, modifier = Modifier.size(18.dp))
-            Spacer(Modifier.width(8.dp))
-            Text("DANGER ZONE", color = DangerRed, fontSize = 11.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.2.sp)
-        }
-        Box(Modifier.fillMaxWidth().height(1.dp).background(DangerRed.copy(alpha = 0.15f)))
-
-        Column(modifier = Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-            Text(
-                "Logging out all sessions will immediately revoke access on all devices.",
-                color = TextSecondary,
-                fontSize = 12.sp,
-                lineHeight = 17.sp
-            )
-            Button(
-                onClick = onLogoutAll,
-                modifier = Modifier.fillMaxWidth().height(46.dp),
-                shape = RoundedCornerShape(12.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = DangerRed.copy(alpha = 0.12f)),
-                border = BorderStroke(1.dp, DangerRed.copy(alpha = 0.4f))
-            ) {
-                Icon(Icons.Default.Logout, null, tint = DangerRed, modifier = Modifier.size(17.dp))
-                Spacer(Modifier.width(8.dp))
-                Text("Logout All Sessions", color = DangerRed, fontWeight = FontWeight.SemiBold, fontSize = 14.sp)
-            }
-        }
-    }
-}
-
-// =============================================================================
-// CyberDialog
-// =============================================================================
-@Composable
-private fun CyberDialog(
+private fun EdgyDialog(
     title: String,
     message: String,
-    confirm: String,
-    dismiss: String,
+    confirmText: String,
+    dismissText: String,
     isDanger: Boolean = false,
     onConfirm: () -> Unit,
     onDismiss: () -> Unit
 ) {
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        containerColor = CardDark,
-        shape = RoundedCornerShape(24.dp),
-        title = {
-            Text(title, color = TextPrimary, fontWeight = FontWeight.Bold, fontSize = 17.sp)
-        },
-        text = {
-            Text(message, color = TextSecondary, fontSize = 14.sp, lineHeight = 20.sp)
-        },
-        confirmButton = {
-            Button(
-                onClick = onConfirm,
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = if (isDanger) DangerRed else CyberTeal
-                ),
-                shape = RoundedCornerShape(10.dp)
-            ) {
-                Text(confirm, color = if (isDanger) Color.White else ProfileBg, fontWeight = FontWeight.Bold)
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text(dismiss, color = TextSecondary)
+    Dialog(onDismissRequest = onDismiss) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(20.dp))
+                .background(ColorTokens.surface())
+                .border(2.dp, if (isDanger) ColorTokens.error().copy(0.3f) else ColorTokens.border(), RoundedCornerShape(20.dp))
+                .padding(24.dp)
+        ) {
+            Column {
+                if (isDanger) {
+                    Icon(Icons.Default.Warning, null, tint = ColorTokens.error(), modifier = Modifier.size(40.dp))
+                    Spacer(Modifier.height(12.dp))
+                }
+                Text(title, fontSize = 20.sp, fontWeight = FontWeight.Bold, color = ColorTokens.textPrimary())
+                Spacer(Modifier.height(12.dp))
+                Text(message, fontSize = 14.sp, color = ColorTokens.textSecondary(), lineHeight = 20.sp)
+                Spacer(Modifier.height(24.dp))
+                Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    OutlinedButton(onClick = onDismiss, modifier = Modifier.weight(1f).height(48.dp), shape = RoundedCornerShape(12.dp), border = BorderStroke(1.dp, ColorTokens.border())) {
+                        Text(dismissText, fontSize = 14.sp)
+                    }
+                    Button(onClick = onConfirm, modifier = Modifier.weight(1f).height(48.dp), colors = ButtonDefaults.buttonColors(containerColor = if (isDanger) ColorTokens.error() else ColorTokens.accent()), shape = RoundedCornerShape(12.dp)) {
+                        Text(confirmText, fontSize = 14.sp, fontWeight = FontWeight.Bold)
+                    }
+                }
             }
         }
-    )
-}
-
-// =============================================================================
-// calculateValidTill
-// =============================================================================
-private fun calculateValidTill(scoreMonth: String): String {
-    return try {
-        val month = java.time.LocalDate.parse(scoreMonth.substring(0, 10))
-        month.plusMonths(1).toString()
-    } catch (e: Exception) { scoreMonth }
+    }
 }

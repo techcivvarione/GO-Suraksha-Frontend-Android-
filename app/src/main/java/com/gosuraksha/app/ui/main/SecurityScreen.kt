@@ -3,13 +3,15 @@ package com.gosuraksha.app.security
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.google.gson.Gson
+import com.google.gson.JsonObject
+import com.gosuraksha.app.data.remote.dto.CyberSosRequest
 import com.gosuraksha.app.network.ApiClient
 import com.gosuraksha.app.security.model.*
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import okhttp3.ResponseBody
-import retrofit2.HttpException
 
 class SecurityViewModel(application: Application) : AndroidViewModel(application) {
 
@@ -33,6 +35,30 @@ class SecurityViewModel(application: Application) : AndroidViewModel(application
 
     private val _healthTrend = MutableStateFlow<List<HealthTrendPoint>>(emptyList())
     val healthTrend: StateFlow<List<HealthTrendPoint>> = _healthTrend
+
+    private fun parseCyberSosError(errorBody: ResponseBody?): String? {
+        return try {
+            val body = errorBody?.string() ?: return null
+            val json = Gson().fromJson(body, JsonObject::class.java)
+
+            if (json.has("detail")) {
+                val detail = json.get("detail")
+                if (detail.isJsonObject) {
+                    val obj = detail.asJsonObject
+                    if (obj.has("message")) return obj.get("message").asString
+                    if (obj.has("error")) return obj.get("error").asString
+                } else if (detail.isJsonPrimitive) {
+                    return detail.asString
+                }
+            }
+
+            if (json.has("message")) return json.get("message").asString
+            if (json.has("error")) return json.get("error").asString
+            null
+        } catch (e: Exception) {
+            null
+        }
+    }
 
     fun loadDashboard() {
         viewModelScope.launch {
@@ -82,7 +108,7 @@ class SecurityViewModel(application: Application) : AndroidViewModel(application
             try {
                 _loading.value = true
                 ApiClient.securityApi.logoutAll()
-                _message.value = "All sessions logged out"
+                _message.value = "security_sessions_logged_out"
             } catch (e: Exception) {
                 _error.value = e.message
             } finally {
@@ -108,7 +134,7 @@ class SecurityViewModel(application: Application) : AndroidViewModel(application
                     )
                 )
 
-                _message.value = "Password changed successfully"
+                _message.value = "security_password_changed"
 
             } catch (e: Exception) {
                 _error.value = e.message
@@ -123,7 +149,7 @@ class SecurityViewModel(application: Application) : AndroidViewModel(application
             try {
                 _loading.value = true
                 val response = ApiClient.securityApi.reportScam(request)
-                _message.value = "Report submitted: ${response.report_id}"
+                _message.value = "security_report_submitted:${response.report_id}"
             } catch (e: Exception) {
                 _error.value = e.message
             } finally {
@@ -152,22 +178,6 @@ class SecurityViewModel(application: Application) : AndroidViewModel(application
                 _loading.value = true
                 val response = ApiClient.securityApi.previewCyberComplaint(request)
                 _message.value = response.complaint_text
-            } catch (e: Exception) {
-                _error.value = e.message
-            } finally {
-                _loading.value = false
-            }
-        }
-    }
-
-    fun confirmCyberSOS(request: CyberSOSRequest) {
-        viewModelScope.launch {
-            try {
-                _loading.value = true
-                val response = ApiClient.securityApi.confirmCyberSOS(request)
-                _message.value = response.message ?: response.detail
-            } catch (e: HttpException) {
-                _error.value = "Cyber SOS already used this month"
             } catch (e: Exception) {
                 _error.value = e.message
             } finally {

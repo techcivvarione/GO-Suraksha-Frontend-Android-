@@ -1,5 +1,7 @@
 package com.gosuraksha.app.ui.main
 
+import com.gosuraksha.app.R
+import androidx.compose.ui.res.stringResource
 import android.content.Intent
 import android.net.Uri
 import androidx.compose.animation.animateColorAsState
@@ -34,6 +36,7 @@ import coil.compose.AsyncImage
 import coil.compose.AsyncImagePainter
 import coil.compose.SubcomposeAsyncImage
 import coil.compose.SubcomposeAsyncImageContent
+import com.gosuraksha.app.design.components.AppCard
 import com.gosuraksha.app.news.NewsViewModel
 import com.gosuraksha.app.news.model.NewsItem
 import kotlinx.coroutines.delay
@@ -46,12 +49,12 @@ fun NewsScreen() {
     val news by viewModel.news.collectAsState()
     val loading by viewModel.loading.collectAsState()
 
-    var selectedCategory by remember { mutableStateOf("ALL") }
-    val categories = listOf("ALL", "AI", "CYBER", "TECH")
+    var selectedCategory by remember { mutableStateOf(NewsCategory.ALL) }
+    val categories = listOf(NewsCategory.ALL, NewsCategory.AI, NewsCategory.CYBER, NewsCategory.TECH)
 
     val filteredNews = remember(news, selectedCategory) {
         news.filter {
-            selectedCategory == "ALL" || it.category.equals(selectedCategory, ignoreCase = true)
+            selectedCategory == NewsCategory.ALL || it.category.equals(selectedCategory.apiValue, ignoreCase = true)
         }
     }
 
@@ -84,7 +87,7 @@ fun NewsScreen() {
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
-                        text = "No news in this category",
+                        text = stringResource(R.string.ui_newsscreen_2),
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         style = MaterialTheme.typography.bodyLarge
                     )
@@ -129,7 +132,7 @@ fun NewsScreen() {
                             dampingRatio = Spring.DampingRatioMediumBouncy,
                             stiffness = Spring.StiffnessMedium
                         ),
-                        label = "card_scale"
+                        label = stringResource(R.string.ui_newsscreen_4)
                     )
 
                     NewsCard(
@@ -174,11 +177,12 @@ fun NewsCard(
 
     val cardHeight = if (isHero) 500.dp else 460.dp
 
-    Card(
+    AppCard(
         shape = RoundedCornerShape(28.dp),
         elevation = CardDefaults.cardElevation(
             defaultElevation = if (isHero) 16.dp else 8.dp
         ),
+        contentPadding = PaddingValues(0.dp),
         modifier = modifier
             .fillMaxWidth()
             .height(cardHeight)
@@ -263,7 +267,7 @@ fun NewsCard(
                         .padding(16.dp)
                 ) {
                     Text(
-                        text = "🔥 TRENDING",
+                        text = stringResource(R.string.ui_newsscreen_3),
                         color = Color.White,
                         fontSize = 10.sp,
                         fontWeight = FontWeight.Bold,
@@ -352,7 +356,7 @@ fun NewsCard(
                     ) {
                         Icon(
                             imageVector = if (bookmarked) Icons.Filled.Bookmark else Icons.Outlined.BookmarkBorder,
-                            contentDescription = "Bookmark",
+                            contentDescription = stringResource(R.string.ui_newsscreen_11),
                             tint = if (bookmarked) MaterialTheme.colorScheme.primary else Color.White,
                             modifier = Modifier.size(18.dp)
                         )
@@ -389,7 +393,7 @@ fun NewsCard(
                             modifier = Modifier.padding(horizontal = 14.dp, vertical = 7.dp)
                         ) {
                             Text(
-                                "Read",
+                                stringResource(R.string.ui_newsscreen_1),
                                 color = Color.White,
                                 fontSize = 12.sp,
                                 fontWeight = FontWeight.SemiBold
@@ -412,10 +416,10 @@ fun NewsCard(
 // ── CATEGORY FILTER BAR ────────────────────────────────────────────────────────
 
 @Composable
-fun CategoryFilterBar(
-    categories: List<String>,
-    selected: String,
-    onSelect: (String) -> Unit
+private fun CategoryFilterBar(
+    categories: List<NewsCategory>,
+    selected: NewsCategory,
+    onSelect: (NewsCategory) -> Unit
 ) {
     Row(
         modifier = Modifier
@@ -433,7 +437,7 @@ fun CategoryFilterBar(
                 else
                     MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f),
                 animationSpec = tween(200),
-                label = "chip_bg"
+                label = stringResource(R.string.ui_newsscreen_5)
             )
 
             val textColor by animateColorAsState(
@@ -442,7 +446,7 @@ fun CategoryFilterBar(
                 else
                     MaterialTheme.colorScheme.onSurfaceVariant,
                 animationSpec = tween(200),
-                label = "chip_text"
+                label = stringResource(R.string.ui_newsscreen_6)
             )
 
             Surface(
@@ -451,8 +455,14 @@ fun CategoryFilterBar(
                 shadowElevation = if (isSelected) 6.dp else 0.dp,
                 modifier = Modifier.clickable { onSelect(category) }
             ) {
+                val label = when (category) {
+                    NewsCategory.ALL -> stringResource(R.string.news_category_all)
+                    NewsCategory.AI -> stringResource(R.string.news_category_ai)
+                    NewsCategory.CYBER -> stringResource(R.string.news_category_cyber)
+                    NewsCategory.TECH -> stringResource(R.string.news_category_tech)
+                }
                 Text(
-                    text = category,
+                    text = label,
                     color = textColor,
                     fontSize = 13.sp,
                     fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
@@ -484,7 +494,7 @@ fun CapsulePageIndicator(
                     dampingRatio = Spring.DampingRatioMediumBouncy,
                     stiffness = Spring.StiffnessMedium
                 ),
-                label = "dot_width"
+                label = stringResource(R.string.ui_newsscreen_7)
             )
 
             val color by animateColorAsState(
@@ -493,7 +503,7 @@ fun CapsulePageIndicator(
                 else
                     MaterialTheme.colorScheme.onSurface.copy(alpha = 0.2f),
                 animationSpec = tween(200),
-                label = "dot_color"
+                label = stringResource(R.string.ui_newsscreen_8)
             )
 
             Box(
@@ -512,7 +522,7 @@ fun CapsulePageIndicator(
 @Composable
 fun ShimmerNewsLoading() {
 
-    val transition = rememberInfiniteTransition(label = "shimmer")
+    val transition = rememberInfiniteTransition(label = stringResource(R.string.ui_newsscreen_9))
 
     val shimmerX by transition.animateFloat(
         initialValue = -1000f,
@@ -521,7 +531,7 @@ fun ShimmerNewsLoading() {
             animation = tween(1200, easing = LinearEasing),
             repeatMode = RepeatMode.Restart
         ),
-        label = "shimmer_x"
+        label = stringResource(R.string.ui_newsscreen_10)
     )
 
     val shimmerBrush = Brush.linearGradient(
@@ -605,4 +615,11 @@ fun ShimmerNewsLoading() {
             }
         }
     }
+}
+
+private enum class NewsCategory(val apiValue: String) {
+    ALL("ALL"),
+    AI("AI"),
+    CYBER("CYBER"),
+    TECH("TECH")
 }

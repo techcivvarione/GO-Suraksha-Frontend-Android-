@@ -1,12 +1,14 @@
 package com.gosuraksha.app.data.remote.dto
 
 data class CyberSosRequest(
-    val scam_type: String,
+    val scam_type: String,   // 🔥 CHANGE THIS
     val incident_date: String,
     val description: String,
     val loss_amount: String? = null,
     val source: String? = null
 )
+
+
 
 data class CyberSosResponse(
     val status: String,

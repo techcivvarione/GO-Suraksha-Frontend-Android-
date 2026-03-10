@@ -5,11 +5,14 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.google.gson.Gson
+import com.google.gson.JsonObject
 import com.gosuraksha.app.data.remote.dto.CyberSosRequest
 import com.gosuraksha.app.data.remote.dto.CyberSosResponse
 import com.gosuraksha.app.data.repository.SecurityRepository
 import com.gosuraksha.app.network.ApiClient
 import kotlinx.coroutines.launch
+import okhttp3.ResponseBody
 import retrofit2.Response
 
 class CyberSosViewModel : ViewModel() {
@@ -20,8 +23,31 @@ class CyberSosViewModel : ViewModel() {
     var uiState by mutableStateOf(CyberSosState())
         private set
 
-    fun triggerSos(request: CyberSosRequest) {
+    private fun parseCyberSosError(errorBody: ResponseBody?): String? {
+        return try {
+            val body = errorBody?.string() ?: return null
+            val json = Gson().fromJson(body, JsonObject::class.java)
 
+            if (json.has("detail")) {
+                val detail = json.get("detail")
+                if (detail.isJsonObject) {
+                    val obj = detail.asJsonObject
+                    if (obj.has("message")) return obj.get("message").asString
+                    if (obj.has("error")) return obj.get("error").asString
+                } else if (detail.isJsonPrimitive) {
+                    return detail.asString
+                }
+            }
+
+            if (json.has("message")) return json.get("message").asString
+            if (json.has("error")) return json.get("error").asString
+            null
+        } catch (e: Exception) {
+            null
+        }
+    }
+
+    fun triggerSos(request: CyberSosRequest) {
         uiState = uiState.copy(isLoading = true)
 
         viewModelScope.launch {
@@ -35,23 +61,17 @@ class CyberSosViewModel : ViewModel() {
                         data = response.body()
                     )
                 } else {
-                    if (response.code() == 429) {
-                        uiState = uiState.copy(
-                            isLoading = false,
-                            error = "Please wait 30 seconds before triggering again."
-                        )
-                    } else {
-                        uiState = uiState.copy(
-                            isLoading = false,
-                            error = "Something went wrong."
-                        )
-                    }
+                    val parsed = parseCyberSosError(response.errorBody())
+                    uiState = uiState.copy(
+                        isLoading = false,
+                        error = parsed ?: "error_cybersos_failed:${response.code()}"
+                    )
                 }
 
             } catch (e: Exception) {
                 uiState = uiState.copy(
                     isLoading = false,
-                    error = "Network error."
+                    error = "error_network"
                 )
             }
         }

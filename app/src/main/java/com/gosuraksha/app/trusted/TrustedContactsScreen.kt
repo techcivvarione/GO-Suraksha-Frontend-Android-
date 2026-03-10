@@ -1,5 +1,6 @@
 package com.gosuraksha.app.ui.trusted
 
+import androidx.compose.ui.res.stringResource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -11,7 +12,9 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.gosuraksha.app.R
 import com.gosuraksha.app.trusted.TrustedContactsViewModel
+import com.gosuraksha.app.ui.components.localizedUiMessage
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -35,10 +38,10 @@ fun TrustedContactsScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Trusted Contacts") },
+                title = { Text(stringResource(R.string.trusted_contacts_title)) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Back")
+                        Icon(Icons.Default.ArrowBack, contentDescription = stringResource(R.string.common_back))
                     }
                 }
             )
@@ -55,7 +58,7 @@ fun TrustedContactsScreen(
             OutlinedTextField(
                 value = name,
                 onValueChange = { name = it },
-                label = { Text("Name") },
+                label = { Text(stringResource(R.string.profile_field_full_name)) },
                 modifier = Modifier.fillMaxWidth()
             )
 
@@ -64,7 +67,7 @@ fun TrustedContactsScreen(
             OutlinedTextField(
                 value = email,
                 onValueChange = { email = it },
-                label = { Text("Email") },
+                label = { Text(stringResource(R.string.ui_alertsscreen_18)) },
                 modifier = Modifier.fillMaxWidth()
             )
 
@@ -73,7 +76,7 @@ fun TrustedContactsScreen(
             OutlinedTextField(
                 value = phone,
                 onValueChange = { phone = it },
-                label = { Text("Phone") },
+                label = { Text(stringResource(R.string.profile_field_phone)) },
                 modifier = Modifier.fillMaxWidth()
             )
 
@@ -87,7 +90,7 @@ fun TrustedContactsScreen(
                     phone = ""
                 }
             ) {
-                Text("Add Contact")
+                Text(stringResource(R.string.ui_alertsscreen_5))
             }
 
             Spacer(Modifier.height(16.dp))
@@ -97,7 +100,7 @@ fun TrustedContactsScreen(
             }
 
             error?.let {
-                Text(it, color = MaterialTheme.colorScheme.error)
+                Text(localizedUiMessage(it), color = MaterialTheme.colorScheme.error)
             }
 
             LazyColumn(
@@ -112,7 +115,7 @@ fun TrustedContactsScreen(
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
                             Column {
-                                Text(text = contact.contact_name ?: "Unnamed Contact")
+                                Text(text = contact.contact_name ?: stringResource(R.string.alerts_contact_unnamed))
                                 contact.contact_email?.let { Text(it) }
                                 contact.contact_phone?.let { Text(it) }
                             }
@@ -126,7 +129,7 @@ fun TrustedContactsScreen(
                             ) {
                                 Icon(
                                     imageVector = Icons.Default.Delete,
-                                    contentDescription = "Delete"
+                                    contentDescription = stringResource(R.string.common_delete)
                                 )
                             }
                         }

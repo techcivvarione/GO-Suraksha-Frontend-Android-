@@ -36,7 +36,7 @@ class TrustedContactsViewModel(application: Application) :
 
             } catch (e: Exception) {
                 e.printStackTrace()
-                _error.value = e.message ?: "Failed to load contacts"
+                _error.value = e.message ?: "error_trusted_contacts_load_failed"
             } finally {
                 _loading.value = false
             }
@@ -80,7 +80,7 @@ class TrustedContactsViewModel(application: Application) :
 
             } catch (e: Exception) {
                 e.printStackTrace()
-                _error.value = e.message ?: "Failed to load alerts"
+                _error.value = e.message ?: "error_trusted_alerts_load_failed"
             }
         }
     }

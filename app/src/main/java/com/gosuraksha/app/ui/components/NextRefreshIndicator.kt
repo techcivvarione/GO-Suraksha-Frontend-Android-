@@ -1,7 +1,9 @@
 package com.gosuraksha.app.ui.components
 
+import com.gosuraksha.app.R
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.res.stringResource
 import java.time.LocalDate
 import java.time.temporal.ChronoUnit
 
@@ -15,6 +17,6 @@ fun NextRefreshIndicator(scoreMonth: String) {
     val daysLeft = ChronoUnit.DAYS.between(today, nextMonth)
 
     Text(
-        text = "Next score refresh in $daysLeft days"
+        text = stringResource(R.string.ui_nextrefreshindicator_1, daysLeft)
     )
 }

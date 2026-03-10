@@ -116,20 +116,4 @@ data class CyberComplaintPreviewResponse(
     val note: String
 )
 
-// --------------------
-// CYBER SOS CONFIRM
-// --------------------
 
-data class CyberSOSRequest(
-    val scan_type: String,
-    val incident_date: String,
-    val description: String,
-    val loss_amount: String,
-    val source: String
-)
-
-data class CyberSOSResponse(
-    val detail: String?,
-    val error: String?,
-    val message: String?
-)

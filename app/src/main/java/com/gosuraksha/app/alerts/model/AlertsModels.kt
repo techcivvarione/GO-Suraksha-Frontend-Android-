@@ -1,15 +1,12 @@
 package com.gosuraksha.app.alerts.model
 
-data class AlertsResponse(
-    val count: Int,
-    val alerts: List<AlertItem>
-)
-
-data class AlertItem(
+data class AlertEvent(
     val id: String,
-    val alert_type: String,
-    val created_at: String,
-    val message: String? = null
+    val media_hash: String?,
+    val analysis_type: String?,
+    val risk_score: Int?,
+    val status: String?,
+    val created_at: String
 )
 
 data class RefreshAlertsResponse(
