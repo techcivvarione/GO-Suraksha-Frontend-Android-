@@ -27,9 +27,7 @@ object SessionManager {
     }
 
     fun notifySessionExpired() {
-        if (_user.value != null) {
-            _sessionExpired.tryEmit(Unit)
-        }
+        _sessionExpired.tryEmit(Unit)
     }
 
     fun isLoggedIn(): Boolean = _user.value != null

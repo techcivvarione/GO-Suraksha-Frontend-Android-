@@ -1,5 +1,7 @@
 package com.gosuraksha.app.ui.main
 
+import android.util.Log
+import java.util.Locale
 import com.gosuraksha.app.R
 import androidx.compose.ui.res.stringResource
 import androidx.compose.animation.animateColorAsState
@@ -60,23 +62,31 @@ import com.gosuraksha.app.design.tokens.SpacingTokens
 import com.gosuraksha.app.design.tokens.TypographyTokens
 import com.gosuraksha.app.trusted.TrustedContactsViewModel
 import com.gosuraksha.app.trusted.model.TrustedContact
+import com.gosuraksha.app.scam.ui.ScamAlertHubContent
+import com.gosuraksha.app.scam.ui.rememberScamNetworkViewModel
 import com.gosuraksha.app.ui.components.localizedUiMessage
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 
 @Composable
-fun AlertsScreen() {
+fun AlertsScreen(
+    onOpenScamNetwork: () -> Unit = {},
+    onOpenScamDetail: (String) -> Unit = {}
+) {
     var selectedTab by remember { mutableStateOf(0) }
 
     val alertsViewModel: AlertsViewModel = viewModel()
     val trustedViewModel: TrustedContactsViewModel = viewModel()
+    val scamViewModel = rememberScamNetworkViewModel()
+    val scamUiState by scamViewModel.uiState.collectAsStateWithLifecycle()
 
-    val alerts by alertsViewModel.alerts.collectAsState()
-    val summary by alertsViewModel.summary.collectAsState()
-    val trustedAlerts by alertsViewModel.trusted.collectAsState()
-    val contacts by trustedViewModel.contacts.collectAsState()
-    val loading by alertsViewModel.loading.collectAsState()
-    val error by alertsViewModel.error.collectAsState()
-    val trustedLoading by trustedViewModel.loading.collectAsState()
-    val trustedError by trustedViewModel.error.collectAsState()
+    val alerts by alertsViewModel.alerts.collectAsStateWithLifecycle()
+    val summary by alertsViewModel.summary.collectAsStateWithLifecycle()
+    val trustedAlerts by alertsViewModel.trusted.collectAsStateWithLifecycle()
+    val contacts by trustedViewModel.contacts.collectAsStateWithLifecycle()
+    val loading by alertsViewModel.loading.collectAsStateWithLifecycle()
+    val error by alertsViewModel.error.collectAsStateWithLifecycle()
+    val trustedLoading by trustedViewModel.loading.collectAsStateWithLifecycle()
+    val trustedError by trustedViewModel.error.collectAsStateWithLifecycle()
 
     LaunchedEffect(Unit) {
         alertsViewModel.loadAlerts()
@@ -87,6 +97,8 @@ fun AlertsScreen() {
             trustedViewModel.loadContacts()
             trustedViewModel.loadAlerts()
             alertsViewModel.loadTrusted()
+        } else if (selectedTab == 2) {
+            scamViewModel.loadTrendingScams()
         }
     }
 
@@ -116,6 +128,14 @@ fun AlertsScreen() {
                 onDeleteContact = { id -> trustedViewModel.deleteContact(id) },
                 onAddContact = { name, email, phone -> trustedViewModel.addContact(name, email, phone) },
                 onMarkRead = { id -> alertsViewModel.markTrustedRead(id) }
+            )
+            2 -> ScamAlertHubContent(
+                uiState = scamUiState,
+                onReportScamClick = onOpenScamNetwork,
+                onCheckNumberClick = onOpenScamNetwork,
+                onHeatmapClick = onOpenScamNetwork,
+                onTrendingClick = onOpenScamNetwork,
+                onAlertClick = onOpenScamDetail
             )
         }
     }
@@ -178,7 +198,8 @@ private fun AlertsHeader(
         ) {
             listOf(
                 Pair(stringResource(R.string.alerts_tab_alerts), Icons.Outlined.NotificationsActive),
-                Pair(stringResource(R.string.alerts_tab_family), Icons.Outlined.Groups)
+                Pair(stringResource(R.string.alerts_tab_family), Icons.Outlined.Groups),
+                Pair("Scam Network", Icons.Outlined.Warning)
             ).forEachIndexed { index, (label, icon) ->
                 val isSelected = selectedTab == index
                 val bgColor by animateColorAsState(
@@ -259,10 +280,19 @@ private fun AlertsTab(
 
 @Composable
 private fun AlertsSummaryCard(summary: AlertsSummaryResponse) {
-    val riskColor = when (summary.risk_level_today.lowercase()) {
+    val riskLevel = summary.risk_level_today
+        ?.takeIf { it.isNotBlank() }
+        ?.lowercase(Locale.getDefault())
+        ?: run {
+            Log.w("GO_SURAKSHA_ALERTS", "Summary missing risk_level_today")
+            "unknown"
+        }
+    val unread = summary.unread_alerts
+    val riskColor = when (riskLevel) {
         "high" -> ColorTokens.error()
         "medium" -> ColorTokens.warning()
-        else -> ColorTokens.success()
+        "low" -> ColorTokens.success()
+        else -> ColorTokens.textSecondary()
     }
 
     AppCard(
@@ -294,7 +324,11 @@ private fun AlertsSummaryCard(summary: AlertsSummaryResponse) {
                             .background(riskColor.copy(alpha = 0.12f))
                             .padding(horizontal = SpacingTokens.xs, vertical = SpacingTokens.xxs)
                     ) {
-                        Text(summary.risk_level_today.uppercase(), color = riskColor, style = TypographyTokens.labelSmall)
+                        Text(
+                            text = (summary.risk_level_today ?: "unknown").uppercase(Locale.getDefault()),
+                            color = riskColor,
+                            style = TypographyTokens.labelSmall
+                        )
                     }
                 }
             }
@@ -305,11 +339,11 @@ private fun AlertsSummaryCard(summary: AlertsSummaryResponse) {
                     .padding(SpacingTokens.md),
                 horizontalArrangement = Arrangement.SpaceEvenly
             ) {
-                SummaryPill(label = stringResource(R.string.ui_alertsscreen_9), value = "${summary.unread_alerts.high}", color = ColorTokens.error())
+                SummaryPill(label = stringResource(R.string.ui_alertsscreen_9), value = "${unread?.high ?: 0}", color = ColorTokens.error())
                 VerticalDivider()
-                SummaryPill(label = stringResource(R.string.ui_alertsscreen_10), value = "${summary.unread_alerts.medium}", color = ColorTokens.warning())
+                SummaryPill(label = stringResource(R.string.ui_alertsscreen_10), value = "${unread?.medium ?: 0}", color = ColorTokens.warning())
                 VerticalDivider()
-                SummaryPill(label = stringResource(R.string.ui_alertsscreen_11), value = "${summary.unread_alerts.low}", color = ColorTokens.success())
+                SummaryPill(label = stringResource(R.string.ui_alertsscreen_11), value = "${unread?.low ?: 0}", color = ColorTokens.success())
             }
         }
     }
@@ -330,24 +364,39 @@ private fun SummaryPill(label: String, value: String, color: androidx.compose.ui
 
 @Composable
 private fun AlertCard(alert: AlertEvent) {
-    val severityLabel = when {
-        (alert.risk_score ?: 0) >= 70 -> "HIGH"
-        (alert.risk_score ?: 0) >= 40 -> "MEDIUM"
-        (alert.risk_score ?: 0) > 0 -> "LOW"
-        alert.status.equals("HIGH", ignoreCase = true) -> "HIGH"
-        alert.status.equals("MEDIUM", ignoreCase = true) -> "MEDIUM"
-        else -> "LOW"
+    LaunchedEffect(alert.id, alert.severity, alert.title, alert.description) {
+        if (alert.severity.isNullOrBlank()) {
+            Log.w("GO_SURAKSHA_ALERTS", "Alert missing severity: ${alert.id}")
+        }
+        if (alert.title.isNullOrBlank()) {
+            Log.w("GO_SURAKSHA_ALERTS", "Alert missing title: ${alert.id}")
+        }
+        if (alert.description.isNullOrBlank()) {
+            Log.w("GO_SURAKSHA_ALERTS", "Alert missing description: ${alert.id}")
+        }
     }
-    val severityColor = when {
-        severityLabel == "HIGH" -> ColorTokens.error()
-        severityLabel == "MEDIUM" -> ColorTokens.warning()
-        severityLabel == "LOW" -> ColorTokens.success()
-        else -> ColorTokens.accent()
+
+    val title = alert.title?.takeIf { it.isNotBlank() } ?: "Security Alert"
+    val description = alert.description?.takeIf { it.isNotBlank() } ?: "A security event was detected."
+    val severityRaw = alert.severity?.takeIf { it.isNotBlank() }
+        ?: alert.status?.takeIf { it.isNotBlank() }
+        ?: "unknown"
+    val severity = severityRaw.lowercase(Locale.getDefault())
+    val alertType = alert.alert_type?.takeIf { it.isNotBlank() }
+        ?: alert.analysis_type?.takeIf { it.isNotBlank() }
+        ?: "security"
+    val severityLabel = severity.uppercase(Locale.getDefault())
+    val severityColor = when (severity) {
+        "high" -> ColorTokens.error()
+        "medium" -> ColorTokens.warning()
+        "low" -> ColorTokens.success()
+        else -> ColorTokens.textSecondary()
     }
-    val severityIcon = when {
-        severityLabel == "HIGH" -> Icons.Filled.Warning
-        severityLabel == "MEDIUM" -> Icons.Filled.Info
-        else -> Icons.Filled.CheckCircle
+    val severityIcon = when (severity) {
+        "high" -> Icons.Filled.Warning
+        "medium" -> Icons.Filled.Info
+        "low" -> Icons.Filled.CheckCircle
+        else -> Icons.Filled.Info
     }
 
     AppCard(
@@ -377,10 +426,18 @@ private fun AlertCard(alert: AlertEvent) {
 
             Column(Modifier.weight(1f)) {
                 Text(
-                    text = (alert.analysis_type ?: alert.status ?: "ALERT").replace("_", " ").uppercase(),
+                    text = title,
                     color = ColorTokens.textPrimary(),
                     style = TypographyTokens.labelMedium,
                     maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+                Spacer(Modifier.height(SpacingTokens.xxs))
+                Text(
+                    text = description,
+                    color = ColorTokens.textSecondary(),
+                    style = TypographyTokens.bodySmall,
+                    maxLines = 2,
                     overflow = TextOverflow.Ellipsis
                 )
                 alert.risk_score?.let {
@@ -399,6 +456,14 @@ private fun AlertCard(alert: AlertEvent) {
                             .padding(horizontal = SpacingTokens.xs, vertical = SpacingTokens.xxs)
                     ) {
                         Text(severityLabel, color = severityColor, style = TypographyTokens.labelSmall)
+                    }
+                    Box(
+                        modifier = Modifier
+                            .clip(ShapeTokens.badge)
+                            .background(ColorTokens.accent().copy(alpha = 0.1f))
+                            .padding(horizontal = SpacingTokens.xs, vertical = SpacingTokens.xxs)
+                    ) {
+                        Text(alertType, color = ColorTokens.accent(), style = TypographyTokens.labelSmall)
                     }
                     Spacer(Modifier.weight(1f))
                     Text(formatDate(alert.created_at), color = ColorTokens.textSecondary(), style = TypographyTokens.labelSmall)
@@ -594,6 +659,12 @@ private fun ContactCard(contact: TrustedContact, onDelete: () -> Unit) {
 
 @Composable
 private fun TrustedAlertCard(alert: TrustedAlertItem, onMarkRead: () -> Unit) {
+    val contactName = alert.contact_name?.takeIf { it.isNotBlank() } ?: "Unknown Contact"
+    val alertType = alert.alert_type?.takeIf { it.isNotBlank() } ?: run {
+        Log.w("GO_SURAKSHA_ALERTS", "Trusted alert missing type: ${alert.id}")
+        "security"
+    }
+
     AppCard(
         modifier = Modifier.fillMaxWidth(),
         colors = neutralCardColors(),
@@ -616,7 +687,7 @@ private fun TrustedAlertCard(alert: TrustedAlertItem, onMarkRead: () -> Unit) {
                 contentAlignment = Alignment.Center
             ) {
                 Text(
-                    alert.contact_name.firstOrNull()?.toString() ?: stringResource(R.string.alerts_unknown_initial),
+                    contactName.firstOrNull()?.toString() ?: stringResource(R.string.alerts_unknown_initial),
                     color = ColorTokens.warning(),
                     style = TypographyTokens.labelMedium
                 )
@@ -625,10 +696,10 @@ private fun TrustedAlertCard(alert: TrustedAlertItem, onMarkRead: () -> Unit) {
             Spacer(Modifier.width(SpacingTokens.sm))
 
             Column(Modifier.weight(1f)) {
-                Text(alert.contact_name, color = ColorTokens.textPrimary(), style = TypographyTokens.labelMedium)
+                Text(contactName, color = ColorTokens.textPrimary(), style = TypographyTokens.labelMedium)
                 Spacer(Modifier.height(SpacingTokens.xxs))
                 Text(
-                    alert.alert_type.replace("_", " "),
+                    alertType.replace("_", " "),
                     color = ColorTokens.textSecondary(),
                     style = TypographyTokens.bodySmall
                 )
@@ -649,7 +720,7 @@ private fun TrustedAlertCard(alert: TrustedAlertItem, onMarkRead: () -> Unit) {
                             .background(ColorTokens.warning().copy(alpha = 0.12f))
                             .padding(horizontal = SpacingTokens.xs, vertical = SpacingTokens.xxs)
                     ) {
-                        Text(alert.alert_type.uppercase(), color = ColorTokens.warning(), style = TypographyTokens.labelSmall)
+                        Text(alertType.uppercase(Locale.getDefault()), color = ColorTokens.warning(), style = TypographyTokens.labelSmall)
                     }
                 }
             }
@@ -726,6 +797,10 @@ private fun ErrorBanner(message: String) {
     }
 }
 
-private fun formatDate(dateStr: String): String {
+private fun formatDate(dateStr: String?): String {
+    if (dateStr.isNullOrBlank()) return "-"
     return try { dateStr.substring(0, 10) } catch (e: Exception) { dateStr }
 }
+
+
+

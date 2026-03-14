@@ -13,3 +13,4 @@
 .externalNativeBuild
 .cxx
 local.properties
+app/credentials/firebase_service_account.json

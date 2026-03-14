@@ -8,12 +8,7 @@ data class ScanAnalysisResult(
     val reasons: List<String>,
     val recommendation: String? = null,
     val breachCount: Int? = null,
-    val breaches: List<BreachItem>? = null,
-    val count: Int? = null,
-    val sites: List<String>? = null,
-    val domains: List<String>? = null,
-    val breachAnalysis: BreachAnalysis? = null,
-    val upgrade: UpgradeInfo? = null
+    val breaches: List<BreachItem>? = null
 )
 
 data class BreachItem(
@@ -21,23 +16,6 @@ data class BreachItem(
     val domain: String?,
     val breachDate: String?,
     val compromisedData: List<String>?
-)
-
-data class BreachAnalysis(
-    val totalBreaches: Int,
-    val highestRiskCategory: String?,
-    val categories: Map<String, CategoryDetail>?
-)
-
-data class CategoryDetail(
-    val count: Int,
-    val sites: List<String>,
-    val severity: String
-)
-
-data class UpgradeInfo(
-    val required: Boolean,
-    val message: String
 )
 
 data class AiExplainResult(
@@ -49,4 +27,13 @@ data class AiImageScanResult(
     val confidence: Float?,
     val reasons: List<String>,
     val recommendation: String
+)
+
+data class QrScanAnalysis(
+    val riskScore: Int,
+    val riskLevel: String,
+    val detectedType: String,
+    val reasons: List<String>,
+    val recommendedAction: String,
+    val isFlagged: Boolean
 )

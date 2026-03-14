@@ -2,10 +2,12 @@ package com.gosuraksha.app.navigation
 
 sealed class Screen(val route: String) {
     object Entry : Screen("entry")
+    object Onboarding : Screen("onboarding")
     object Language : Screen("language")
     object Login : Screen("login")
     object Signup : Screen("signup")
     object Home : Screen("home")
+    object CyberCard : Screen("cyberCardScreen")
     object News : Screen("news")
     object Scan : Screen("scan")
     object Alerts : Screen("alerts")
@@ -16,4 +18,12 @@ sealed class Screen(val route: String) {
     object TrustedContacts : Screen("trusted_contacts")
     object CyberSos : Screen("cyber_sos")
     object RiskInternal : Screen("risk_internal")
+    object ScamAlertHub : Screen("scam_alert_hub")
+    object ReportScam : Screen("report_scam")
+    object CheckNumber : Screen("check_number")
+    object ScamHeatmap : Screen("scam_heatmap")
+    object ScamAlertsFeed : Screen("scam_alerts_feed")
+    object ScamAlertDetail : Screen("scam_alert_detail/{alertId}") {
+        fun createRoute(alertId: String): String = "scam_alert_detail/$alertId"
+    }
 }

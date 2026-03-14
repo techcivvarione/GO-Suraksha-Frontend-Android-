@@ -32,6 +32,7 @@ import androidx.compose.material.icons.rounded.Notifications
 import androidx.compose.material.icons.rounded.Person
 import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -59,11 +60,20 @@ import androidx.navigation.compose.rememberNavController
 import com.gosuraksha.app.R
 import com.gosuraksha.app.design.tokens.ColorTokens
 import com.gosuraksha.app.navigation.Screen
+import com.gosuraksha.app.scam.ScamAlertNavigationStore
+import com.gosuraksha.app.scam.ui.ReportScamScreen
+import com.gosuraksha.app.scam.ui.ScamAlertDetailScreen
+import com.gosuraksha.app.scam.ui.ScamAlertHubScreen
+import com.gosuraksha.app.scam.ui.ScamAlertsFeedScreen
+import com.gosuraksha.app.scam.ui.ScamHeatmapScreen
+import com.gosuraksha.app.scam.ui.ScamNumberCheckerScreen
 import com.gosuraksha.app.ui.components.EnterpriseTopBar
 import com.gosuraksha.app.ui.home.HomeScreen
 import com.gosuraksha.app.ui.history.HistoryScreen
+import com.gosuraksha.app.scan.core.ScanScreen
 import com.gosuraksha.app.scan.SharedScanIntentStore
 import com.gosuraksha.app.ui.trusted.TrustedContactsScreen
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Data + Palette
@@ -76,21 +86,20 @@ private data class NavItem(
 )
 
 private object NavPalette {
-    // Active pill — teal→blue gradient (matches scan button, on-brand)
-    val gradientStart    = Color(0xFF00C9A7)
-    val gradientEnd      = Color(0xFF0077FF)
+    val gradientStart = Color(0xFF00C9A7)
+    val gradientEnd   = Color(0xFF0077FF)
+    val onActive      = Color(0xFF07090F)
 
-    // Pill backgrounds
-    val darkSurface      = Color(0xFF12152A)
-    val lightSurface     = Color(0xFFFFFFFF)
-    val lightBorder      = Color(0xFFDDE6F5)
+    @Composable
+    fun surface(): Color = MaterialTheme.colorScheme.surface
 
-    // Inactive icon tint
-    val darkInactive     = Color(0xFF3A4060)
-    val lightInactive    = Color(0xFFB2BDDA)
+    @Composable
+    fun border(): Color = MaterialTheme.colorScheme.outline.copy(alpha = 0.6f)
 
-    // Label + icon color inside active gradient pill
-    val onActive         = Color(0xFF07090F)
+    @Composable
+    fun inactive(isDark: Boolean): Color =
+        if (isDark) MaterialTheme.colorScheme.onSurface.copy(alpha = 0.45f)
+        else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.32f)
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -102,7 +111,8 @@ fun MainShell(onLogout: () -> Unit) {
     val navController = rememberNavController()
     val isDark        = ColorTokens.LocalAppDarkMode.current
     val screenBg      = ColorTokens.background()
-    val sharedPayload by SharedScanIntentStore.pending.collectAsState()
+    val sharedPayload by SharedScanIntentStore.pending.collectAsStateWithLifecycle()
+    val pendingScamRoute by ScamAlertNavigationStore.pending.collectAsStateWithLifecycle()
 
     LaunchedEffect(sharedPayload) {
         if (sharedPayload != null && navController.currentDestination?.route != Screen.Scan.route) {
@@ -112,102 +122,118 @@ fun MainShell(onLogout: () -> Unit) {
         }
     }
 
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(screenBg)
-    ) {
-        // ── Scaffold: topBar + content ────────────────────────────────────────
-        Scaffold(
-            modifier            = Modifier.fillMaxSize(),
-            contentWindowInsets = WindowInsets(0.dp),
-            containerColor      = Color.Transparent,
-            topBar = {
-                EnterpriseTopBar(
-                    onCyberSosClick = {
-                        navController.navigate(Screen.CyberSos.route) {
-                            launchSingleTop = true
-                        }
+    LaunchedEffect(pendingScamRoute) {
+        val route = pendingScamRoute ?: return@LaunchedEffect
+        val destination = if (route.alertId.isNullOrBlank()) {
+            route.route
+        } else {
+            Screen.ScamAlertDetail.createRoute(route.alertId)
+        }
+        navController.navigate(destination) { launchSingleTop = true }
+        ScamAlertNavigationStore.consume()
+    }
+
+    Scaffold(
+        modifier            = Modifier.fillMaxSize(),
+        contentWindowInsets = WindowInsets(0.dp),
+        containerColor      = screenBg,
+        topBar = {
+            EnterpriseTopBar(
+                onCyberSosClick = {
+                    navController.navigate(Screen.CyberSos.route) {
+                        launchSingleTop = true
                     }
+                }
+            )
+        },
+        bottomBar = {
+            LiquidExpanderNav(
+                navController = navController,
+                isDark        = isDark,
+            )
+        }
+    ) { innerPadding ->
+        NavHost(
+            navController    = navController,
+            startDestination = Screen.Home.route,
+            modifier         = Modifier
+                .fillMaxSize()
+                .padding(innerPadding)
+        ) {
+            composable(Screen.Home.route) {
+                HomeScreen(
+                    onNavigateToHistory          = { navController.navigate(Screen.History.route) },
+                    onNavigateToRisk             = { navController.navigate(Screen.RiskInternal.route) },
+                    onNavigateToRealityScan      = { navController.navigate(Screen.Scan.route) },
+                    onNavigateToCyberCard        = { navController.navigate(Screen.CyberCard.route) },
+                    onNavigateToCyberSos         = { navController.navigate(Screen.CyberSos.route) },
+                    onNavigateToAlerts           = { navController.navigate(Screen.Alerts.route) },
+                    onNavigateToHeatmap          = { navController.navigate(Screen.ScamHeatmap.route) },
+                    onNavigateToScamNetwork      = { navController.navigate(Screen.ScamAlertHub.route) },
+                    onNavigateToFamily           = { navController.navigate(Screen.TrustedContacts.route) },
+                    onNavigateToSecuritySettings = { navController.navigate(Screen.Profile.route) },
+                    onNavigateToNews             = { navController.navigate(Screen.News.route) },
+                    onNavigateToScamLookup       = { navController.navigate(Screen.CheckNumber.route) },
+                    onNavigateToReportScam       = { navController.navigate(Screen.ReportScam.route) },
+                    onNavigateToScamAlertsFeed   = { navController.navigate(Screen.ScamAlertsFeed.route) }
                 )
             }
-        ) { innerPadding ->
-            NavHost(
-                navController    = navController,
-                startDestination = Screen.Home.route,
-                modifier         = Modifier
-                    .fillMaxSize()
-                    .padding(innerPadding)
-            ) {
-                composable(Screen.Home.route) {
-                    HomeScreen(
-                        onNavigateToHistory          = { navController.navigate(Screen.History.route) },
-                        onNavigateToRisk             = { navController.navigate(Screen.RiskInternal.route) },
-                        onNavigateToRealityScan      = { navController.navigate(Screen.Scan.route) },
-                        onNavigateToCyberSos         = { navController.navigate(Screen.CyberSos.route) },
-                        onNavigateToAlerts           = { navController.navigate(Screen.Alerts.route) },
-                        onNavigateToFamily           = { navController.navigate(Screen.TrustedContacts.route) },
-                        onNavigateToSecuritySettings = { navController.navigate(Screen.Profile.route) },
-                        onNavigateToNews             = { navController.navigate(Screen.News.route) }
-                    )
-                }
-                composable(Screen.News.route)    { NewsScreen() }
-                composable(Screen.Scan.route)    { ScanScreen() }
-                composable(Screen.Alerts.route)  { AlertsScreen() }
-                composable(Screen.Profile.route) { ProfileScreen(onLogout = onLogout) }
-                composable(Screen.History.route) {
-                    HistoryScreen(onBack = { navController.popBackStack() })
-                }
-                composable(Screen.TrustedContacts.route) {
-                    TrustedContactsScreen(onBack = { navController.popBackStack() })
-                }
-                composable(Screen.RiskInternal.route) { RiskScreen() }
-                composable(Screen.CyberSos.route) {
-                    com.gosuraksha.app.ui.screens.CyberSosScreen()
-                }
+            composable(Screen.News.route)    { NewsScreen() }
+            composable(Screen.Scan.route)    {
+                ScanScreen(onUpgradePlan = { navController.navigate(Screen.Profile.route) })
+            }
+            composable(Screen.Alerts.route)  {
+                AlertsScreen(
+                    onOpenScamNetwork = { navController.navigate(Screen.ScamAlertHub.route) },
+                    onOpenScamDetail = { navController.navigate(Screen.ScamAlertDetail.createRoute(it)) }
+                )
+            }
+            composable(Screen.Profile.route) { ProfileScreen(onLogout = onLogout) }
+            composable(Screen.ScamAlertHub.route) {
+                ScamAlertHubScreen(
+                    onReportScamClick = { navController.navigate(Screen.ReportScam.route) },
+                    onCheckNumberClick = { navController.navigate(Screen.CheckNumber.route) },
+                    onHeatmapClick = { navController.navigate(Screen.ScamHeatmap.route) },
+                    onTrendingClick = { navController.navigate(Screen.ScamAlertsFeed.route) },
+                    onAlertClick = { navController.navigate(Screen.ScamAlertDetail.createRoute(it)) }
+                )
+            }
+            composable(Screen.ReportScam.route) {
+                ReportScamScreen(onBackToHub = { navController.popBackStack() })
+            }
+            composable(Screen.CheckNumber.route) { ScamNumberCheckerScreen() }
+            composable(Screen.ScamHeatmap.route) {
+                ScamHeatmapScreen(onAlertClick = { navController.navigate(Screen.ScamAlertDetail.createRoute(it)) })
+            }
+            composable(Screen.ScamAlertsFeed.route) {
+                ScamAlertsFeedScreen(onAlertClick = { navController.navigate(Screen.ScamAlertDetail.createRoute(it)) })
+            }
+            composable(Screen.ScamAlertDetail.route) { backStackEntry ->
+                ScamAlertDetailScreen(alertId = backStackEntry.arguments?.getString("alertId"))
+            }
+            composable(Screen.CyberCard.route) {
+                CyberCardScreen(
+                    onBack = { navController.popBackStack() },
+                    onNavigateToScan = { navController.navigate(Screen.Scan.route) },
+                    onUpgradePlan = { navController.navigate(Screen.Profile.route) }
+                )
+            }
+            composable(Screen.History.route) {
+                HistoryScreen(onBack = { navController.popBackStack() })
+            }
+            composable(Screen.TrustedContacts.route) {
+                TrustedContactsScreen(onBack = { navController.popBackStack() })
+            }
+            composable(Screen.RiskInternal.route) { RiskScreen() }
+            composable(Screen.CyberSos.route) {
+                com.gosuraksha.app.ui.screens.CyberSosScreen()
             }
         }
-
-        // ── Scrim: fade screen content behind nav ─────────────────────────────
-        // Thin gradient — just enough to lift the pill off the content
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(88.dp)
-                .align(Alignment.BottomCenter)
-                .background(
-                    Brush.verticalGradient(
-                        listOf(Color.Transparent, screenBg.copy(alpha = 0.96f))
-                    )
-                )
-        )
-
-        // ── Liquid Expander Nav ───────────────────────────────────────────────
-        LiquidExpanderNav(
-            navController = navController,
-            isDark        = isDark,
-            modifier      = Modifier
-                .align(Alignment.BottomCenter)
-                .navigationBarsPadding()
-                .padding(horizontal = 16.dp)
-                .padding(bottom = 10.dp)
-        )
     }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
 // LiquidExpanderNav
-//
-// Layout: Row with mixed sizing.
-//   • Inactive tabs → fixed 52×52dp squares (icon only)
-//   • Active tab    → Modifier.weight(1f) fills the leftover space
-//
-// This is identical to the CSS preview:
-//   inactive: flex: 0 0 52px
-//   active:   flex: 1 (expands)
-//
-// Spring animation handles the width transition via weight recomposition —
-// Compose interpolates between weight(0) and weight(1) each frame.
 // ─────────────────────────────────────────────────────────────────────────────
 @Composable
 private fun LiquidExpanderNav(
@@ -225,12 +251,15 @@ private fun LiquidExpanderNav(
         NavItem(Screen.Profile.route, stringResource(R.string.ui_mainshell_12), Icons.Rounded.Person)
     )
 
-    val pillSurface = if (isDark) NavPalette.darkSurface else NavPalette.lightSurface
+    val pillSurface = NavPalette.surface()
 
     Row(
         modifier = modifier
             .fillMaxWidth()
             .wrapContentHeight()
+            .background(screenBgColor(isDark))        // solid bg behind the pill row
+            .navigationBarsPadding()
+            .padding(horizontal = 16.dp, vertical = 8.dp)
             .shadow(
                 elevation    = if (isDark) 28.dp else 12.dp,
                 shape        = RoundedCornerShape(26.dp),
@@ -240,23 +269,19 @@ private fun LiquidExpanderNav(
             .clip(RoundedCornerShape(26.dp))
             .background(pillSurface)
             .then(
-                // Light mode: 1dp border via inset background layering
                 if (!isDark) Modifier
                     .padding(1.dp)
-                    .background(NavPalette.lightBorder, RoundedCornerShape(25.dp))
+                    .background(NavPalette.border(), RoundedCornerShape(25.dp))
                     .padding(1.dp)
                     .background(pillSurface, RoundedCornerShape(24.dp))
                 else Modifier
             )
-            .padding(6.dp),
+            .padding(8.dp),
         horizontalArrangement = Arrangement.spacedBy(4.dp),
         verticalAlignment     = Alignment.CenterVertically
     ) {
         navItems.forEach { item ->
-            val isSelected = currentRoute == item.route
-
-            // weight() is a RowScope modifier — must be applied HERE inside the
-            // Row lambda, not inside LiquidTab where RowScope is lost.
+            val isSelected  = currentRoute == item.route
             val tabModifier = if (isSelected)
                 Modifier.weight(1f).height(52.dp)
             else
@@ -280,28 +305,20 @@ private fun LiquidExpanderNav(
     }
 }
 
+// helper — matches the scaffold containerColor so the bar bg blends flush
+@Composable
+private fun screenBgColor(isDark: Boolean): Color =
+    ColorTokens.background()
+
 // ─────────────────────────────────────────────────────────────────────────────
 // LiquidTab
-//
-// Active state:
-//   • weight(1f) fills remaining Row space — this IS the spring expansion
-//   • Gradient pill: teal → blue
-//   • Top-edge shimmer: subtle white vertical gradient overlay
-//   • Icon: scale spring 1.0 → 1.10
-//   • Label: fades in (alpha tween 180ms), no translate needed — expansion
-//     creates the natural space
-//
-// Inactive state:
-//   • Fixed 52×52 dp — does NOT participate in weight calculation
-//   • Icon at 38% alpha in muted color
-//   • No label, no background
 // ─────────────────────────────────────────────────────────────────────────────
 @Composable
 private fun LiquidTab(
     item: NavItem,
     isSelected: Boolean,
     isDark: Boolean,
-    modifier: Modifier,   // sizing (weight or fixed) passed in from RowScope
+    modifier: Modifier,
     onClick: () -> Unit
 ) {
     val interactionSource = remember { MutableInteractionSource() }
@@ -319,7 +336,7 @@ private fun LiquidTab(
         targetValue   = if (isSelected) 1f else 0f,
         animationSpec = tween(
             durationMillis = if (isSelected) 200 else 100,
-            delayMillis    = if (isSelected) 80  else 0,
+            delayMillis    = if (isSelected) 80 else 0,
             easing         = FastOutSlowInEasing
         ),
         label = "labelAlpha"
@@ -331,10 +348,9 @@ private fun LiquidTab(
         label         = "iconAlpha"
     )
 
-    val inactiveIconColor = if (isDark) NavPalette.darkInactive else NavPalette.lightInactive
+    val inactiveIconColor = NavPalette.inactive(isDark)
 
     if (isSelected) {
-        // ── Active: gradient pill, expands via modifier.weight(1f) ────────────
         Row(
             modifier = modifier
                 .clip(RoundedCornerShape(20.dp))
@@ -378,7 +394,6 @@ private fun LiquidTab(
             }
         }
     } else {
-        // ── Inactive: fixed 52dp square icon-only ────────────────────────────
         Box(
             modifier = modifier
                 .clip(RoundedCornerShape(18.dp))
@@ -400,3 +415,5 @@ private fun LiquidTab(
         }
     }
 }
+
+

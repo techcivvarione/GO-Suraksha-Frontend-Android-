@@ -19,6 +19,7 @@ import com.gosuraksha.app.domain.usecase.LoginUseCase
 import com.gosuraksha.app.domain.usecase.RestoreSessionUseCase
 import com.gosuraksha.app.domain.usecase.SignupUseCase
 import com.gosuraksha.app.domain.usecase.ScanUseCases
+import com.gosuraksha.app.domain.usecase.AnalyzeQrUseCase
 import com.gosuraksha.app.domain.usecase.AnalyzeTextUseCase
 import com.gosuraksha.app.domain.usecase.ExplainScanUseCase
 import com.gosuraksha.app.domain.usecase.ScanAiImageUseCase
@@ -38,7 +39,7 @@ class AppContainer(
     private val authRepository = AuthRepositoryImpl(authRemoteDataSource, tokenLocalDataSource)
     private val sessionRepository = SessionRepositoryImpl(tokenLocalDataSource)
     private val homeRepository = HomeRepositoryImpl(homeRemoteDataSource)
-    private val scanRepository = ScanRepositoryImpl(scanRemoteDataSource)
+    private val scanRepository = ScanRepositoryImpl(scanRemoteDataSource, ApiClient.qrApi)
 
     val authUseCases: AuthUseCases by lazy {
         AuthUseCases(
@@ -58,6 +59,7 @@ class AppContainer(
     val scanUseCases: ScanUseCases by lazy {
         ScanUseCases(
             analyze = AnalyzeTextUseCase(scanRepository, dispatchers),
+            analyzeQr = AnalyzeQrUseCase(scanRepository, dispatchers),
             explain = ExplainScanUseCase(scanRepository, dispatchers),
             scanAiImage = ScanAiImageUseCase(scanRepository, dispatchers)
         )

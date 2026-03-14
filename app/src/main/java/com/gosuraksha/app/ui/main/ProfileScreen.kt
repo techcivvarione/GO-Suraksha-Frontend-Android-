@@ -40,12 +40,15 @@ import com.gosuraksha.app.core.session.SessionManager
 import com.gosuraksha.app.design.tokens.ColorTokens
 import com.gosuraksha.app.profile.ProfileViewModel
 import com.gosuraksha.app.profile.model.ProfileResponse
-import com.gosuraksha.app.security.SecurityViewModel
+import com.gosuraksha.app.security.model.SecurityViewModel
+import com.gosuraksha.app.ui.main.CyberCardViewModel
 import com.gosuraksha.app.ui.components.CyberCardNew
 import com.gosuraksha.app.ui.components.LanguageSwitcher
+import com.gosuraksha.app.ui.components.LockedCyberCard
 import com.gosuraksha.app.ui.components.localizedUiMessage
 import kotlin.math.cos
 import kotlin.math.sin
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Design tokens — profile screen only
@@ -57,16 +60,24 @@ private object ProfileColors {
     val heroOrb     = Color(0xFF00C9A7)
 
     // White card surface (light editorial feel)
-    val cardWhite   = Color(0xFFFFFFFF)
-    val cardBorder  = Color(0xFFEEF2FA)
+    @Composable
+    fun cardWhite(): Color = ColorTokens.surface()
+
+    @Composable
+    fun cardBorder(): Color = ColorTokens.border()
+
     val cardShadow  = Color(0xFF1A2050)
 
     // Section header labels
-    val sectionLbl  = Color(0xFF9AA5C0)
+    @Composable
+    fun sectionLbl(): Color = ColorTokens.textSecondary()
 
     // Row text
-    val rowTitle    = Color(0xFF1A2040)
-    val rowRight    = Color(0xFFB0BADB)
+    @Composable
+    fun rowTitle(): Color = ColorTokens.textPrimary()
+
+    @Composable
+    fun rowRight(): Color = ColorTokens.textSecondary()
 
     // Stat ring colors
     val ringRisk    = Color(0xFFEF4444)
@@ -83,13 +94,15 @@ private object ProfileColors {
 fun ProfileScreen(onLogout: () -> Unit) {
     val viewModel: ProfileViewModel          = viewModel()
     val securityViewModel: SecurityViewModel = viewModel()
+    val cyberCardViewModel: CyberCardViewModel = viewModel()
 
-    val profile        by viewModel.profile.collectAsState()
-    val loading        by viewModel.loading.collectAsState()
-    val message        by viewModel.message.collectAsState()
-    val securityMessage by securityViewModel.message.collectAsState()
-    val imageUri       by viewModel.avatarImageUri.collectAsState()
-    val user           by SessionManager.user.collectAsState()
+    val profile        by viewModel.profile.collectAsStateWithLifecycle()
+    val loading        by viewModel.loading.collectAsStateWithLifecycle()
+    val message        by viewModel.message.collectAsStateWithLifecycle()
+    val securityMessage by securityViewModel.message.collectAsStateWithLifecycle()
+    val imageUri       by viewModel.avatarImageUri.collectAsStateWithLifecycle()
+    val user           by SessionManager.user.collectAsStateWithLifecycle()
+    val cyberCard      by cyberCardViewModel.card.collectAsStateWithLifecycle()
 
     var showLogoutDialog   by remember { mutableStateOf(false) }
     var showDeleteDialog   by remember { mutableStateOf(false) }
@@ -118,8 +131,11 @@ fun ProfileScreen(onLogout: () -> Unit) {
         viewModel.setAvatarImageUri(uri?.toString())
     }
 
-    LaunchedEffect(Unit)    { viewModel.loadProfile() }
-    LaunchedEffect(profile) { profile?.let { name = it.name; phone = it.phone } }
+    LaunchedEffect(Unit)    {
+        viewModel.loadProfile()
+        cyberCardViewModel.loadCard()
+    }
+    LaunchedEffect(profile) { profile?.let { name = it.name; phone = it.phone.orEmpty() } }
 
     if (loading) {
         Box(
@@ -175,14 +191,18 @@ fun ProfileScreen(onLogout: () -> Unit) {
         ) {
 
             // Cyber Card (unchanged component)
-            CyberCardNew(
-                userName    = profile?.name?.ifBlank { user?.name }
-                    ?: stringResource(R.string.profile_guest),
-                cardNumber  = formatCardNumber(user?.id ?: ""),
-                cyberScore  = 750,
-                generatedOn = "13/02/2026",
-                validTill   = "13/02/2026"
-            )
+            if (isPremium && cyberCard?.card_status?.uppercase() == "ACTIVE") {
+                CyberCardNew(
+                    userName = profile?.name?.ifBlank { user?.name }
+                        ?: stringResource(R.string.profile_guest),
+                    cardNumber = cyberCard?.card_id ?: formatCardNumber(user?.id ?: ""),
+                    cyberScore = cyberCard?.score ?: 0,
+                    generatedOn = cyberCard?.score_month ?: "--",
+                    validTill = cyberCard?.score_version ?: "--"
+                )
+            } else {
+                LockedCyberCard(onUpgradeClick = { viewModel.upgradeToPremium() })
+            }
 
             // Upgrade / Premium banner
             if (isPremium) PremiumBadge() else UpgradeBanner(onUpgrade = { viewModel.upgradeToPremium() })
@@ -207,8 +227,8 @@ fun ProfileScreen(onLogout: () -> Unit) {
                 )
                 ProfileStatusRow(
                     icon      = Icons.Default.Email,
-                    iconBg    = Color(0xFFEFF6FF),
-                    iconTint  = Color(0xFF3B82F6),
+                    iconBg    = ColorTokens.infoLight(),
+                    iconTint  = ColorTokens.info(),
                     title     = "Email Monitor",
                     rightText = "Live",
                     isLast    = true
@@ -312,8 +332,8 @@ fun ProfileScreen(onLogout: () -> Unit) {
             ProfileWhiteCard(header = "TRUSTED DEVICES") {
                 ProfileStatusRow(
                     icon     = Icons.Default.PhoneAndroid,
-                    iconBg   = Color(0xFFEFF6FF),
-                    iconTint = Color(0xFF3B82F6),
+                    iconBg   = ColorTokens.infoLight(),
+                    iconTint = ColorTokens.info(),
                     title    = "This Device",
                     rightText = "Current",
                     rightColor = ProfileColors.ringScans
@@ -332,8 +352,8 @@ fun ProfileScreen(onLogout: () -> Unit) {
             ProfileWhiteCard(header = "MORE") {
                 ProfileActionRow(
                     icon = Icons.Outlined.Language,
-                    iconBg = Color(0xFFEFF6FF),
-                    iconTint = Color(0xFF3B82F6),
+                    iconBg = ColorTokens.infoLight(),
+                    iconTint = ColorTokens.info(),
                     title = stringResource(R.string.home_quick_language),
                     onClick = { showLanguageDialog = true }
                 )
@@ -450,7 +470,7 @@ private fun ProfileHeroBand(
         )
 
         Column(
-            modifier = Modifier.padding(horizontal = 20.dp),
+            modifier = Modifier.padding(horizontal = 16.dp),
             verticalArrangement = Arrangement.spacedBy(0.dp)
         ) {
             // Page title
@@ -554,7 +574,7 @@ private fun ProfileHeroBand(
                                 },
                                 RoundedCornerShape(8.dp)
                             )
-                            .padding(horizontal = 10.dp, vertical = 4.dp)
+                            .padding(horizontal = 12.dp, vertical = 8.dp)
                     ) {
                         Text(
                             "◆ $planLabel",
@@ -589,8 +609,8 @@ private fun ProfileScoreCard() {
                 spotColor    = ProfileColors.cardShadow.copy(0.12f)
             )
             .clip(RoundedCornerShape(22.dp))
-            .background(ProfileColors.cardWhite)
-            .padding(vertical = 18.dp)
+            .background(ProfileColors.cardWhite())
+            .padding(vertical = 16.dp)
     ) {
         ScoreRingCell(
             value    = 18,
@@ -599,7 +619,7 @@ private fun ProfileScoreCard() {
             color    = ProfileColors.ringRisk,
             trackCol = Color(0xFFFEE2E2)
         )
-        Box(Modifier.width(1.dp).height(48.dp).background(ProfileColors.cardBorder).align(Alignment.CenterVertically))
+        Box(Modifier.width(1.dp).height(48.dp).background(ProfileColors.cardBorder()).align(Alignment.CenterVertically))
         ScoreRingCell(
             value    = 71,
             max      = 100,
@@ -607,7 +627,7 @@ private fun ProfileScoreCard() {
             color    = ProfileColors.ringScans,
             trackCol = Color(0xFFDCFCE7)
         )
-        Box(Modifier.width(1.dp).height(48.dp).background(ProfileColors.cardBorder).align(Alignment.CenterVertically))
+        Box(Modifier.width(1.dp).height(48.dp).background(ProfileColors.cardBorder()).align(Alignment.CenterVertically))
         ScoreRingCell(
             value    = 48,
             max      = 100,
@@ -660,7 +680,7 @@ private fun RowScope.ScoreRingCell(
         Text(
             label,
             fontSize  = 9.sp,
-            color     = ProfileColors.sectionLbl,
+            color     = ProfileColors.sectionLbl(),
             letterSpacing = 0.3.sp,
             fontWeight = FontWeight.Medium
         )
@@ -685,17 +705,17 @@ private fun ProfileWhiteCard(
                 spotColor    = ProfileColors.cardShadow.copy(0.06f)
             )
             .clip(RoundedCornerShape(18.dp))
-            .background(ProfileColors.cardWhite)
+            .background(ProfileColors.cardWhite())
     ) {
         Text(
             header,
             modifier      = Modifier.padding(start = 16.dp, top = 14.dp, bottom = 8.dp, end = 16.dp),
             fontSize       = 10.sp,
             fontWeight     = FontWeight.Bold,
-            color          = ProfileColors.sectionLbl,
+            color          = ProfileColors.sectionLbl(),
             letterSpacing  = 1.2.sp
         )
-        Box(Modifier.fillMaxWidth().height(1.dp).background(ProfileColors.cardBorder))
+        Box(Modifier.fillMaxWidth().height(1.dp).background(ProfileColors.cardBorder()))
         content()
     }
 }
@@ -710,7 +730,7 @@ private fun ProfileStatusRow(
     iconTint: Color,
     title: String,
     rightText: String  = "",
-    rightColor: Color  = ProfileColors.rowRight,
+    rightColor: Color  = ProfileColors.rowRight(),
     isLast: Boolean    = false
 ) {
     Row(
@@ -729,13 +749,13 @@ private fun ProfileStatusRow(
         ) {
             Icon(icon, null, tint = iconTint, modifier = Modifier.size(18.dp))
         }
-        Text(title, modifier = Modifier.weight(1f), fontSize = 13.5.sp, fontWeight = FontWeight.Medium, color = ProfileColors.rowTitle)
+        Text(title, modifier = Modifier.weight(1f), fontSize = 13.5.sp, fontWeight = FontWeight.Medium, color = ProfileColors.rowTitle())
         if (rightText.isNotBlank()) {
             Text(rightText, fontSize = 12.sp, color = rightColor, fontWeight = FontWeight.SemiBold)
         }
-        Icon(Icons.Outlined.ChevronRight, null, tint = ProfileColors.rowRight, modifier = Modifier.size(16.dp))
+        Icon(Icons.Outlined.ChevronRight, null, tint = ProfileColors.rowRight(), modifier = Modifier.size(16.dp))
     }
-    if (!isLast) Box(Modifier.fillMaxWidth().padding(start = 64.dp).height(1.dp).background(ProfileColors.cardBorder))
+    if (!isLast) Box(Modifier.fillMaxWidth().padding(start = 64.dp).height(1.dp).background(ProfileColors.cardBorder()))
 }
 
 @Composable
@@ -775,11 +795,11 @@ private fun ProfileActionRow(
             modifier   = Modifier.weight(1f),
             fontSize   = 13.5.sp,
             fontWeight = FontWeight.Medium,
-            color      = if (highlight) ColorTokens.accent() else ProfileColors.rowTitle
+            color      = if (highlight) ColorTokens.accent() else ProfileColors.rowTitle()
         )
-        Icon(Icons.Outlined.ChevronRight, null, tint = ProfileColors.rowRight, modifier = Modifier.size(16.dp))
+        Icon(Icons.Outlined.ChevronRight, null, tint = ProfileColors.rowRight(), modifier = Modifier.size(16.dp))
     }
-    if (!isLast) Box(Modifier.fillMaxWidth().padding(start = 64.dp).height(1.dp).background(ProfileColors.cardBorder))
+    if (!isLast) Box(Modifier.fillMaxWidth().padding(start = 64.dp).height(1.dp).background(ProfileColors.cardBorder()))
 }
 
 @Composable
@@ -813,13 +833,13 @@ private fun ProfileExpandableRow(
                     .clip(RoundedCornerShape(11.dp))
                     .background(
                         if (expanded) ColorTokens.accent().copy(alpha = 0.12f)
-                        else Color(0xFFEFF6FF)
+                        else ColorTokens.infoLight()
                     ),
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
                     icon, null,
-                    tint     = if (expanded) ColorTokens.accent() else Color(0xFF3B82F6),
+                    tint     = if (expanded) ColorTokens.accent() else ColorTokens.info(),
                     modifier = Modifier.size(18.dp)
                 )
             }
@@ -828,11 +848,11 @@ private fun ProfileExpandableRow(
                 modifier   = Modifier.weight(1f),
                 fontSize   = 13.5.sp,
                 fontWeight = FontWeight.Medium,
-                color      = if (expanded) ColorTokens.accent() else ProfileColors.rowTitle
+                color      = if (expanded) ColorTokens.accent() else ProfileColors.rowTitle()
             )
             Icon(
                 Icons.Outlined.ChevronRight, null,
-                tint     = ProfileColors.rowRight,
+                tint     = ProfileColors.rowRight(),
                 modifier = Modifier.size(16.dp).graphicsLayer { rotationZ = rotation }
             )
         }
@@ -842,13 +862,13 @@ private fun ProfileExpandableRow(
             enter   = fadeIn(tween(200)) + expandVertically(tween(280, easing = EaseOutQuart)),
             exit    = fadeOut(tween(150)) + shrinkVertically(tween(200))
         ) {
-            Column(modifier = Modifier.background(Color(0xFFFAFBFF))) {
-                Box(Modifier.fillMaxWidth().height(1.dp).background(ProfileColors.cardBorder))
+            Column(modifier = Modifier.background(ColorTokens.surfaceVariant())) {
+                Box(Modifier.fillMaxWidth().height(1.dp).background(ProfileColors.cardBorder()))
                 content()
             }
         }
 
-        if (!isLast) Box(Modifier.fillMaxWidth().padding(start = 64.dp).height(1.dp).background(ProfileColors.cardBorder))
+        if (!isLast) Box(Modifier.fillMaxWidth().padding(start = 64.dp).height(1.dp).background(ProfileColors.cardBorder()))
     }
 }
 
@@ -998,8 +1018,8 @@ private fun DangerZone(onLogoutClick: () -> Unit, onDeleteClick: () -> Unit) {
             .fillMaxWidth()
             .shadow(4.dp, RoundedCornerShape(18.dp), ambientColor = Color(0xFFEF4444).copy(0.08f), spotColor = Color(0xFFEF4444).copy(0.08f))
             .clip(RoundedCornerShape(18.dp))
-            .background(ProfileColors.cardWhite)
-            .padding(18.dp),
+            .background(ProfileColors.cardWhite())
+            .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
@@ -1089,3 +1109,5 @@ private fun EdgyDialog(
         }
     }
 }
+
+

@@ -52,6 +52,7 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -71,10 +72,13 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.lifecycle.repeatOnLifecycle
+import com.gosuraksha.app.core.periodicTickFlow
 import com.gosuraksha.app.R
 import com.gosuraksha.app.design.tokens.ColorTokens
 import com.gosuraksha.app.ui.theme.LocalThemeState
-import kotlinx.coroutines.delay
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Design constants — local to this file only
@@ -82,7 +86,7 @@ import kotlinx.coroutines.delay
 private val BrandBlue     = Color(0xFF4F8AFF)
 private val SosRed        = Color(0xFFEF4444)
 private val TopBarHeight  = 64.dp
-private val HorizontalPad = 20.dp
+private val HorizontalPad = 16.dp
 
 // =============================================================================
 // Public entry-points — same signatures as before, fully backward-compatible
@@ -104,10 +108,12 @@ fun EnterpriseTopBar(onCyberSosClick: () -> Unit) {
         listOf(R.drawable.logo, R.drawable.go_safe, R.drawable.go_secure)
     }
     var currentLogo by remember { mutableIntStateOf(0) }
-    LaunchedEffect(Unit) {
-        while (true) {
-            delay(2_500)
-            currentLogo = (currentLogo + 1) % logos.size
+    val lifecycleOwner = LocalLifecycleOwner.current
+    LaunchedEffect(lifecycleOwner, logos.size) {
+        lifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+            periodicTickFlow(periodMillis = 2_500L).collect {
+                currentLogo = (currentLogo + 1) % logos.size
+            }
         }
     }
 
@@ -226,7 +232,7 @@ private fun VerticalDivider(isDark: Boolean) {
                 color = if (isDark)
                     Color.White.copy(alpha = 0.10f)
                 else
-                    Color(0xFF0D0F1A).copy(alpha = 0.10f),
+                    MaterialTheme.colorScheme.onSurface.copy(alpha = 0.10f),
                 shape = RoundedCornerShape(1.dp)
             )
     )
@@ -248,7 +254,7 @@ private fun ThemeToggleButton(
     else
         BrandBlue.copy(alpha = 0.08f)
 
-    val iconTint  = if (isDark) BrandBlue else Color(0xFF2563EB)
+    val iconTint  = if (isDark) BrandBlue else MaterialTheme.colorScheme.primary
 
     IconButton(
         onClick  = onClick,
@@ -301,7 +307,7 @@ private fun CyberSosButton(
                 containerColor = SosRed,
                 contentColor   = Color.White
             ),
-            contentPadding = PaddingValues(horizontal = 13.dp, vertical = 0.dp),
+            contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp),
             elevation      = ButtonDefaults.buttonElevation(
                 defaultElevation = 0.dp,
                 pressedElevation = 0.dp
@@ -313,7 +319,7 @@ private fun CyberSosButton(
                 modifier           = Modifier.size(13.dp),
                 tint               = Color.White
             )
-            Spacer(Modifier.width(5.dp))
+            Spacer(Modifier.width(8.dp))
             Text(
                 text          = stringResource(R.string.ui_apptopbar_1),
                 fontSize      = 13.sp,
@@ -323,3 +329,4 @@ private fun CyberSosButton(
         }
     }
 }
+

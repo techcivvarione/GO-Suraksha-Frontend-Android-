@@ -16,6 +16,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.gosuraksha.app.design.components.AppCard
 import com.gosuraksha.app.history.HistoryViewModel
 import com.gosuraksha.app.history.model.HistoryItem
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -23,9 +24,9 @@ fun HistoryScreen(
     onBack: () -> Unit
 ) {
     val viewModel: HistoryViewModel = viewModel()
-    val history by viewModel.history.collectAsState()
-    val loading by viewModel.loading.collectAsState()
-    val error by viewModel.error.collectAsState()
+    val history by viewModel.history.collectAsStateWithLifecycle()
+    val loading by viewModel.loading.collectAsStateWithLifecycle()
+    val error by viewModel.error.collectAsStateWithLifecycle()
 
     LaunchedEffect(Unit) {
         viewModel.loadHistory()
@@ -120,3 +121,5 @@ private fun HistoryCard(
         }
     }
 }
+
+

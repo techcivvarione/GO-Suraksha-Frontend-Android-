@@ -1,6 +1,7 @@
 package com.gosuraksha.app.profile
 
 import android.app.Application
+import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.gosuraksha.app.network.ApiClient
@@ -12,6 +13,10 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 
 class ProfileViewModel(application: Application) : AndroidViewModel(application) {
+
+    private companion object {
+        private const val TAG = "ProfileViewModel"
+    }
 
     private val _profile = MutableStateFlow<ProfileResponse?>(null)
     val profile: StateFlow<ProfileResponse?> = _profile
@@ -44,7 +49,8 @@ class ProfileViewModel(application: Application) : AndroidViewModel(application)
                     _message.value = "error_server"
                 }
             } catch (e: Exception) {
-                _message.value = e.message
+                Log.e(TAG, "Failed to load profile", e)
+                _message.value = "error_generic"
             } finally {
                 _loading.value = false
             }
@@ -61,7 +67,8 @@ class ProfileViewModel(application: Application) : AndroidViewModel(application)
                 _message.value = "profile_updated"
                 loadProfile()
             } catch (e: Exception) {
-                _message.value = e.message
+                Log.e(TAG, "Failed to update profile", e)
+                _message.value = "profile_update_failed"
             } finally {
                 _loading.value = false
             }
@@ -86,7 +93,8 @@ class ProfileViewModel(application: Application) : AndroidViewModel(application)
                     _message.value = "error_server"
                 }
             } catch (e: Exception) {
-                _message.value = e.message
+                Log.e(TAG, "Failed to upgrade plan", e)
+                _message.value = "error_generic"
             } finally {
                 _loading.value = false
             }

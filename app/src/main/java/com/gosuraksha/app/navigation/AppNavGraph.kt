@@ -1,6 +1,6 @@
 package com.gosuraksha.app.navigation
-import com.gosuraksha.app.navigation.Screen
 
+import com.gosuraksha.app.navigation.Screen
 import com.gosuraksha.app.ui.screens.CyberSosScreen
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -12,6 +12,8 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.*
 import android.app.Application
+import com.gosuraksha.app.MainActivity
+import com.gosuraksha.app.core.OnboardingPrefs
 import com.gosuraksha.app.presentation.auth.AuthViewModel
 import com.gosuraksha.app.presentation.auth.AuthViewModelFactory
 import com.gosuraksha.app.domain.usecase.AuthUseCaseProvider
@@ -23,12 +25,14 @@ import com.gosuraksha.app.ui.entry.EntryScreen
 import com.gosuraksha.app.ui.history.HistoryScreen
 import com.gosuraksha.app.ui.language.LanguageSelectorScreen
 import com.gosuraksha.app.ui.main.MainShell
+import com.gosuraksha.app.ui.onboarding.IntroOnboardingScreen
 import com.gosuraksha.app.ui.security.PinManager
 import com.gosuraksha.app.ui.security.SetPinScreen
 import com.gosuraksha.app.ui.security.UnlockPinScreen
 import com.gosuraksha.app.ui.trusted.TrustedContactsScreen
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 
 @Composable
 fun AppNavGraph() {
@@ -39,17 +43,20 @@ fun AppNavGraph() {
     val authViewModel: AuthViewModel = viewModel(
         factory = AuthViewModelFactory(appContext as Application, provider.authUseCases())
     )
-    val isLoggedIn by authViewModel.isLoggedIn.collectAsState()
-    val isLoadingSession by authViewModel.isLoadingSession.collectAsState()
+    val isLoggedIn by authViewModel.isLoggedIn.collectAsStateWithLifecycle()
+    val isLoadingSession by authViewModel.isLoadingSession.collectAsStateWithLifecycle()
     val context = LocalContext.current
     val pinManager = remember(context) { PinManager(context) }
     val scope = rememberCoroutineScope()
 
     val hasSelectedLanguage by LanguagePrefs
         .hasSelectedLanguage(context)
-        .collectAsState(initial = false)
+        .collectAsStateWithLifecycle(initialValue = false)
+    val hasCompletedOnboarding by OnboardingPrefs
+        .isCompleted(context)
+        .collectAsStateWithLifecycle(initialValue = null)
 
-    if (isLoadingSession) {
+    if (isLoadingSession || hasCompletedOnboarding == null) {
         Box(
             modifier = Modifier.fillMaxSize(),
             contentAlignment = Alignment.Center
@@ -74,28 +81,46 @@ fun AppNavGraph() {
 
         composable(Screen.Entry.route) {
             EntryScreen {
-                if (!hasSelectedLanguage) {
+                if (isLoggedIn) {
+                    if (pinManager.isPinSet()) {
+                        navController.navigate(Screen.UnlockPin.route) {
+                            popUpTo(Screen.Entry.route) { inclusive = true }
+                        }
+                    } else {
+                        navController.navigate(Screen.SetPin.route) {
+                            popUpTo(Screen.Entry.route) { inclusive = true }
+                        }
+                    }
+                } else if (hasCompletedOnboarding == false) {
+                    navController.navigate(Screen.Onboarding.route) {
+                        popUpTo(Screen.Entry.route) { inclusive = true }
+                    }
+                } else if (!hasSelectedLanguage) {
                     navController.navigate(Screen.Language.route) {
                         popUpTo(Screen.Entry.route) { inclusive = true }
                     }
                 } else {
-                    if (isLoggedIn) {
-                        if (pinManager.isPinSet()) {
-                            navController.navigate(Screen.UnlockPin.route) {
-                                popUpTo(Screen.Entry.route) { inclusive = true }
-                            }
-                        } else {
-                            navController.navigate(Screen.SetPin.route) {
-                                popUpTo(Screen.Entry.route) { inclusive = true }
-                            }
-                        }
-                    } else {
-                        navController.navigate(Screen.Login.route) {
-                            popUpTo(Screen.Entry.route) { inclusive = true }
-                        }
+                    navController.navigate(Screen.Login.route) {
+                        popUpTo(Screen.Entry.route) { inclusive = true }
                     }
                 }
             }
+        }
+
+        composable(Screen.Onboarding.route) {
+            IntroOnboardingScreen(
+                onComplete = {
+                    scope.launch {
+                        OnboardingPrefs.setCompleted(context, true)
+                    }
+                    (context as? MainActivity)?.requestCallPermissions()
+                    navController.navigate(
+                        if (hasSelectedLanguage) Screen.Login.route else Screen.Language.route
+                    ) {
+                        popUpTo(Screen.Onboarding.route) { inclusive = true }
+                    }
+                }
+            )
         }
 
         composable(Screen.Language.route) {
@@ -206,3 +231,5 @@ fun AppNavGraph() {
 
     }
 }
+
+

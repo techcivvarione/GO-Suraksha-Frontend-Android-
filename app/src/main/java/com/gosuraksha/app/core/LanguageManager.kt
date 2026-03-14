@@ -4,13 +4,13 @@ import android.content.Context
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.platform.LocalContext
 import androidx.core.os.LocaleListCompat
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
@@ -20,6 +20,9 @@ object LanguagePrefs {
     private val LANGUAGE_KEY = stringPreferencesKey("selected_language")
     private val HAS_SELECTED_LANGUAGE_KEY = androidx.datastore.preferences.core.booleanPreferencesKey("has_selected_language")
     private const val DEFAULT_LANGUAGE = "en"
+    private const val PREFS_NAME = "language_prefs_sync"
+    private const val PREF_LANGUAGE = "selected_language"
+    private const val PREF_HAS_SELECTED = "has_selected_language"
 
     fun getLanguage(context: Context): Flow<String> {
         return context.languageDataStore.data.map { prefs ->
@@ -38,7 +41,21 @@ object LanguagePrefs {
             prefs[LANGUAGE_KEY] = code
             prefs[HAS_SELECTED_LANGUAGE_KEY] = true
         }
+        syncPrefs(context).edit()
+            .putString(PREF_LANGUAGE, code)
+            .putBoolean(PREF_HAS_SELECTED, true)
+            .apply()
     }
+
+    fun getLanguageSync(context: Context): String =
+        syncPrefs(context).getString(PREF_LANGUAGE, DEFAULT_LANGUAGE) ?: DEFAULT_LANGUAGE
+
+    fun hasSelectedLanguageSync(context: Context): Boolean =
+        syncPrefs(context).getBoolean(PREF_HAS_SELECTED, false) ||
+            syncPrefs(context).contains(PREF_LANGUAGE)
+
+    private fun syncPrefs(context: Context) =
+        context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
 }
 
 data class Language(
@@ -63,7 +80,8 @@ val LocalLanguage = androidx.compose.runtime.compositionLocalOf<String> { "en" }
 @Composable
 fun LanguageManager(content: @Composable () -> Unit) {
     val context = LocalContext.current
-    val currentLanguage by LanguagePrefs.getLanguage(context).collectAsState(initial = "en")
+    val currentLanguage by LanguagePrefs.getLanguage(context)
+        .collectAsStateWithLifecycle(initialValue = "en")
 
     androidx.compose.runtime.LaunchedEffect(currentLanguage) {
         AppCompatDelegate.setApplicationLocales(
@@ -88,3 +106,4 @@ fun getCurrentLanguage(): Language {
     val code = LocalLanguage.current
     return SUPPORTED_LANGUAGES.find { it.code == code } ?: SUPPORTED_LANGUAGES.first()
 }
+

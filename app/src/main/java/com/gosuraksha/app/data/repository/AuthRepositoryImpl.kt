@@ -54,7 +54,10 @@ class AuthRepositoryImpl(
                     email = email,
                     phone = phone,
                     password = password,
-                    confirm_password = confirmPassword
+                    confirm_password = confirmPassword,
+                    accepted_terms = true,
+                    terms_version = "v1",
+                    privacy_version = "v1"
                 )
             )
             AppResult.Success(Unit)

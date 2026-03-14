@@ -15,6 +15,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.gosuraksha.app.R
 import com.gosuraksha.app.trusted.TrustedContactsViewModel
 import com.gosuraksha.app.ui.components.localizedUiMessage
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -23,9 +24,9 @@ fun TrustedContactsScreen(
 ) {
     val viewModel: TrustedContactsViewModel = viewModel()
 
-    val contacts by viewModel.contacts.collectAsState()
-    val loading by viewModel.loading.collectAsState()
-    val error by viewModel.error.collectAsState()
+    val contacts by viewModel.contacts.collectAsStateWithLifecycle()
+    val loading by viewModel.loading.collectAsStateWithLifecycle()
+    val error by viewModel.error.collectAsStateWithLifecycle()
 
     var name by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
@@ -139,3 +140,5 @@ fun TrustedContactsScreen(
         }
     }
 }
+
+

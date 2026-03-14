@@ -1,11 +1,4 @@
 package com.gosuraksha.app.ui.home
-import com.gosuraksha.app.design.tokens.ColorTokens
-
-// =============================================================================
-// BannerCarousel.kt — UI-ONLY reusable composable
-// FIXED: theme-aware dot colors, elevation vs border logic.
-// Auto-scroll 4s, pause on drag, animated pill dots.
-// =============================================================================
 
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.spring
@@ -32,10 +25,8 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -49,7 +40,7 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.gosuraksha.app.design.tokens.SpacingTokens
+import com.gosuraksha.app.design.tokens.ColorTokens
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -75,12 +66,11 @@ fun BannerCarousel(
     val isDark = ColorTokens.LocalAppDarkMode.current
     val pagerState = rememberPagerState(pageCount = { banners.size })
     val scope = rememberCoroutineScope()
-    var isDragging by remember { mutableStateOf(false) }
+    var isDragging = false
 
-    // Auto-scroll — LaunchedEffect scoped to pagerState, no leak
-    LaunchedEffect(pagerState) {
+    LaunchedEffect(pagerState, banners.size) {
         while (true) {
-            delay(4000L)
+            delay(6_000L)
             if (!isDragging) {
                 val next = (pagerState.currentPage + 1) % banners.size
                 pagerState.animateScrollToPage(
@@ -96,7 +86,7 @@ fun BannerCarousel(
             state = pagerState,
             modifier = Modifier
                 .fillMaxWidth()
-                .height(176.dp)
+                .height(180.dp)
                 .pointerInput(Unit) {
                     awaitPointerEventScope {
                         while (true) {
@@ -111,7 +101,6 @@ fun BannerCarousel(
 
         Spacer(Modifier.height(10.dp))
 
-        // Pagination dots
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.Center,
@@ -144,18 +133,15 @@ private fun BannerCard(banner: BannerData, isDark: Boolean) {
     Surface(
         modifier = Modifier
             .fillMaxWidth()
-            .height(176.dp)
+            .height(180.dp)
             .clip(RoundedCornerShape(22.dp))
-            .clickable(interactionSource = interactionSource, indication = null,
-                onClick = banner.onClick),
+            .clickable(interactionSource = interactionSource, indication = null, onClick = banner.onClick),
         shape = RoundedCornerShape(22.dp),
-        // Dark: elevation only. Light: slight border to separate from white bg.
         shadowElevation = if (isDark) 6.dp else 3.dp,
         tonalElevation = 0.dp,
         color = banner.gradientStart
     ) {
         Box(Modifier.fillMaxSize()) {
-            // Gradient layer
             Box(
                 modifier = Modifier
                     .fillMaxSize()
@@ -167,13 +153,11 @@ private fun BannerCard(banner: BannerData, isDark: Boolean) {
                         )
                     )
             )
-            // Illustration layer — Canvas, 6% opacity, no recompose cost
             Box(
                 modifier = Modifier
                     .fillMaxSize()
                     .drawBehind { drawBannerIllustration(banner.illustrationType) }
             )
-            // Content
             Column(
                 modifier = Modifier
                     .fillMaxSize()
@@ -195,14 +179,13 @@ private fun BannerCard(banner: BannerData, isDark: Boolean) {
                         lineHeight = 18.sp
                     )
                 }
-                // Frosted CTA pill
                 Box(
                     modifier = Modifier
                         .background(Color.White.copy(alpha = 0.18f), RoundedCornerShape(20.dp))
                         .padding(horizontal = 16.dp, vertical = 8.dp)
                 ) {
                     Text(
-                        text = "${banner.ctaLabel}  →",
+                        text = "${banner.ctaLabel}  ->",
                         fontSize = 13.sp,
                         fontWeight = FontWeight.SemiBold,
                         color = Color.White
@@ -238,34 +221,34 @@ private fun PaginationDot(isActive: Boolean, isDark: Boolean, onClick: () -> Uni
 }
 
 private fun DrawScope.drawBannerIllustration(type: BannerIllustration) {
-    val c = Color.White.copy(alpha = 0.06f)
+    val alpha = 0.08f
     when (type) {
         BannerIllustration.Lock -> {
-            drawCircle(c, radius = size.width * 0.38f,
-                center = Offset(size.width * 0.88f, size.height * 0.18f))
-            drawCircle(c, radius = size.width * 0.22f,
-                center = Offset(size.width * 0.78f, size.height * 0.85f))
-            drawRect(c,
-                topLeft = Offset(size.width * 0.72f, size.height * 0.55f),
-                size = Size(size.width * 0.22f, size.height * 0.35f))
+            drawRoundRect(
+                color = Color.White.copy(alpha = alpha),
+                topLeft = Offset(size.width * 0.74f, size.height * 0.20f),
+                size = Size(size.width * 0.16f, size.height * 0.22f),
+                cornerRadius = androidx.compose.ui.geometry.CornerRadius(26f, 26f)
+            )
         }
         BannerIllustration.Scanner -> {
-            val stripeH = size.height / 15f
-            repeat(6) { i ->
-                drawRect(c,
-                    topLeft = Offset(size.width * 0.55f, i * size.height / 6f + size.height * 0.1f),
-                    size = Size(size.width * 0.42f, stripeH))
-            }
-            drawCircle(c, radius = size.width * 0.28f,
-                center = Offset(size.width * 0.90f, size.height * 0.12f))
+            drawCircle(
+                color = Color.White.copy(alpha = alpha),
+                radius = size.minDimension * 0.18f,
+                center = Offset(size.width * 0.80f, size.height * 0.42f)
+            )
         }
         BannerIllustration.Diamond -> {
-            drawCircle(c, radius = size.width * 0.32f,
-                center = Offset(size.width * 0.85f, size.height * 0.35f))
-            drawCircle(c, radius = size.width * 0.18f,
-                center = Offset(size.width * 0.70f, size.height * 0.78f))
-            drawCircle(c, radius = size.width * 0.10f,
-                center = Offset(size.width * 0.60f, size.height * 0.20f))
+            val w = size.width
+            val h = size.height
+            val path = androidx.compose.ui.graphics.Path().apply {
+                moveTo(w * 0.82f, h * 0.18f)
+                lineTo(w * 0.90f, h * 0.34f)
+                lineTo(w * 0.82f, h * 0.50f)
+                lineTo(w * 0.74f, h * 0.34f)
+                close()
+            }
+            drawPath(path, Color.White.copy(alpha = alpha))
         }
     }
 }

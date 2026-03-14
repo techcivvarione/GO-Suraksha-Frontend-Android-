@@ -51,6 +51,7 @@ private fun DomainError.toMessage(): String {
         DomainError.Network -> "error_network"
         DomainError.Timeout -> "error_timeout"
         DomainError.Unauthorized -> "error_unauthorized"
+        DomainError.ScanLimitReached -> "error_generic"
         DomainError.Forbidden -> "error_forbidden"
         DomainError.NotFound -> "error_not_found"
         DomainError.Server -> "error_server"

@@ -1,28 +1,13 @@
 package com.gosuraksha.app.ui.home
 
-// =============================================================================
-// HomeScreen.kt — "Obsidian Shield" Design  (Production Grade, A++++)
-//
-// Theme strategy (zero ambiguity):
-//   isDark = ColorTokens.LocalAppDarkMode.current
-//   Dark  → no borders, elevated dark surfaces, glow accents
-//   Light → white/near-white surfaces, 1dp #E2EAF8 borders, reduced shadow
-//
-// Layout (vertical scroll, staggered entrance animations):
-//   1. Status bar spacer
-//   2. GreetingRow          — name + search pill
-//   3. SecurityScoreCard    — animated ring, score, badge, 3 stat chips
-//   4. BannerCarousel       — existing BannerData / BannerCarousel composable
-//   5. SectionGrid("Core")  — 2 × 4 icon tiles (Cyber SOS → Risk Intel)
-//   6. SectionGrid("Scan")  — 2 × 4 icon tiles (Link → Reports)
-//   7. SectionRow("Family & Alerts") — 1 × 4
-//   8. SectionRow("Settings & More") — 1 × 4 + divider + 1 × 4
-//   9. NewsRow              — horizontal scroll of news chips
-//
-// All ViewModels, lambdas, SessionManager: UNTOUCHED.
-// New optional lambdas (default = {}): onNavigateToEmailCheck, onNavigateToPremium
-// =============================================================================
-
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.material.icons.rounded.CreditCard
+import androidx.compose.material.icons.rounded.Groups
+import androidx.compose.material.icons.rounded.Security
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.LinearEasing
@@ -117,946 +102,424 @@ import com.gosuraksha.app.presentation.home.HomeViewModel
 import com.gosuraksha.app.presentation.home.HomeViewModelFactory
 import com.gosuraksha.app.presentation.state.UiState
 import kotlinx.coroutines.delay
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Obsidian color palette — accent/brand only.
-// All surface/background values resolved inline via isDark.
-// ─────────────────────────────────────────────────────────────────────────────
-internal object ObsidianColors {
-    // Brand
-    val Brand       = Color(0xFF4F8AFF)
-    val BrandDeep   = Color(0xFF1E3A8A)
-
-    // Accent gradients (used as Brush endpoints)
-    val RingStart   = Color(0xFF4F8AFF)
-    val RingEnd     = Color(0xFFA855F7)
-
-    // Semantic
-    val Safe        = Color(0xFF10C878)
-    val SafeDim     = Color(0xFF047857)
-    val Critical    = Color(0xFFEF4444)
-    val Warning     = Color(0xFFF59E0B)
-    val Rose        = Color(0xFFBE185D)
-    val Sky         = Color(0xFF0EA5E9)
-    val Teal        = Color(0xFF0F766E)
-    val Cyan        = Color(0xFF0891B2)
-    val Emerald     = Color(0xFF059669)
-    val Forest      = Color(0xFF065F46)
-    val Amber       = Color(0xFFB45309)
-    val Gold        = Color(0xFFD97706)
-    val Orange      = Color(0xFFEA580C)
-    val Sand        = Color(0xFFB0891E)
-    val Indigo      = Color(0xFF4338CA)
-    val Violet      = Color(0xFFA855F7)
-    val Neutral     = Color(0xFF6B7280)
-    val Slate       = Color(0xFF334155)
-    val WarmGray    = Color(0xFF78716C)
-
-    // Dark theme surfaces
-    val DarkBg      = Color(0xFF0D0F1A)
-    val DarkSurface = Color(0xFF13162A)  // cards
-    val DarkSurface2= Color(0xFF181B30)  // deeper cards
-    val DarkBorder  = Color(0x12FFFFFF)  // 7% white
-
-    // Light theme surfaces
-    val LightBg     = Color(0xFFF0F4FF)
-    val LightSurface= Color(0xFFFFFFFF)
-    val LightBorder = Color(0xFFE2EAF8)
+internal object DashboardColors {
+    val BackgroundLight = Color(0xFFF4F7FC)
+    val BackgroundDark = Color(0xFF071019)
+    val SurfaceLight = Color(0xFFFFFFFF)
+    val SurfaceDark = Color(0xFF0D1823)
+    val BorderLight = Color(0xFFE3EBF5)
+    val BorderDark = Color(0xFF183040)
+    val TextMutedLight = Color(0xFF64748B)
+    val TextMutedDark = Color(0xFF8FA3B8)
+    val Brand = Color(0xFF0B6BFF)
+    val BrandDark = Color(0xFF0C4FD8)
+    val Mint = Color(0xFF19C37D)
+    val Amber = Color(0xFFF59E0B)
+    val Red = Color(0xFFF04438)
+    val Cyan = Color(0xFF06B6D4)
+    val Violet = Color(0xFF7C3AED)
 }
 
-// Backward-compat alias so sibling files keep compiling
-internal typealias HomePalette = ObsidianColors
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Internal model
-// ─────────────────────────────────────────────────────────────────────────────
-private data class ShortcutItem(
-    val label: String,
-    val icon: ImageVector,
-    val accent: Color,
-    val onClick: () -> Unit
-)
-
-// =============================================================================
-// HomeScreen
-// =============================================================================
 @Composable
 fun HomeScreen(
-    // ── Existing lambdas — UNCHANGED ─────────────────────────────────────────
     onNavigateToHistory: () -> Unit,
     onNavigateToRisk: () -> Unit,
     onNavigateToRealityScan: () -> Unit,
+    onNavigateToCyberCard: () -> Unit = {},
     onNavigateToCyberSos: () -> Unit = {},
     onNavigateToAlerts: () -> Unit = {},
     onNavigateToFamily: () -> Unit = {},
     onNavigateToSecuritySettings: () -> Unit = {},
     onNavigateToNews: () -> Unit = {},
-    // ── New optional lambdas (backward-compatible) ────────────────────────────
     onNavigateToEmailCheck: () -> Unit = {},
-    onNavigateToPremium: () -> Unit = {}
+    onNavigateToPremium: () -> Unit = {},
+    onNavigateToHeatmap: () -> Unit = {},
+    onNavigateToScamNetwork: () -> Unit = {},
+    onNavigateToScamLookup: () -> Unit = {},
+    onNavigateToReportScam: () -> Unit = {},
+    onNavigateToScamAlertsFeed: () -> Unit = {}
 ) {
     val isDark = ColorTokens.LocalAppDarkMode.current
+    val listState = rememberLazyListState()
 
-    // ── ViewModel — UNTOUCHED ────────────────────────────────────────────────
     val appContext = androidx.compose.ui.platform.LocalContext.current.applicationContext
-    val provider   = appContext as HomeUseCaseProvider
-    val viewModel: HomeViewModel = viewModel(
-        factory = HomeViewModelFactory(provider.homeUseCases())
-    )
-    val overviewState by viewModel.overviewState.collectAsState()
-    val user          by SessionManager.user.collectAsState()
+    val provider = appContext as HomeUseCaseProvider
+    val viewModel: HomeViewModel = viewModel(factory = HomeViewModelFactory(provider.homeUseCases()))
+    val overviewState by viewModel.overviewState.collectAsStateWithLifecycle()
+    val user by SessionManager.user.collectAsStateWithLifecycle()
     val overview = (overviewState as? UiState.Success<HomeOverview>)?.data
 
-    // ── Entrance animation ────────────────────────────────────────────────────
-    var visible by remember { mutableStateOf(false) }
-    LaunchedEffect(Unit) { delay(100); visible = true }
-
-    // ── Banner data — existing lambdas wired ─────────────────────────────────
-    val banners = remember(onNavigateToEmailCheck, onNavigateToRealityScan, onNavigateToPremium) {
+    val banners = remember(
+        onNavigateToHeatmap,
+        onNavigateToScamNetwork,
+        onNavigateToReportScam,
+        onNavigateToNews
+    ) {
         listOf(
             BannerData(
-                title = "Password Breach Awareness",
-                subtitle = "Is your email compromised? Check now.",
-                ctaLabel = "Check Now",
-                gradientStart = Color(0xFF1A237E),
-                gradientEnd   = Color(0xFF3949AB),
-                illustrationType = BannerIllustration.Lock,
-                onClick = onNavigateToEmailCheck
-            ),
-            BannerData(
-                title = "Reality Scanner",
-                subtitle = "Detect deepfakes & fake content instantly",
-                ctaLabel = "Scan Now",
-                gradientStart = Color(0xFF0D3B2E),
-                gradientEnd   = Color(0xFF1B6B4A),
+                title = "Cyber Attack Radar",
+                subtitle = "See city to global attack intensity in a live cyber map.",
+                ctaLabel = "Open Radar",
+                gradientStart = Color(0xFF071D49),
+                gradientEnd = Color(0xFF0B6BFF),
                 illustrationType = BannerIllustration.Scanner,
-                onClick = onNavigateToRealityScan
+                onClick = onNavigateToHeatmap
             ),
             BannerData(
-                title = "GoSuraksha Premium",
-                subtitle = "Full protection. Zero worry.",
-                ctaLabel = "Explore Plan",
-                gradientStart = Color(0xFF1A1200),
-                gradientEnd   = Color(0xFF7C4F00),
+                title = "Scam Alert Network",
+                subtitle = "Check trending scams, live warnings, and community reports.",
+                ctaLabel = "Open Network",
+                gradientStart = Color(0xFF0F3A2E),
+                gradientEnd = Color(0xFF19C37D),
+                illustrationType = BannerIllustration.Lock,
+                onClick = onNavigateToScamNetwork
+            ),
+            BannerData(
+                title = "Report a Scam",
+                subtitle = "Help protect others by filing calls, links, or payment fraud reports.",
+                ctaLabel = "Report Now",
+                gradientStart = Color(0xFF4A1607),
+                gradientEnd = Color(0xFFF04438),
                 illustrationType = BannerIllustration.Diamond,
-                onClick = onNavigateToPremium
+                onClick = onNavigateToReportScam
+            ),
+            BannerData(
+                title = "Cyber Awareness",
+                subtitle = "Read fresh security updates and practical scam prevention tips.",
+                ctaLabel = "Read News",
+                gradientStart = Color(0xFF4C1D95),
+                gradientEnd = Color(0xFF7C3AED),
+                illustrationType = BannerIllustration.Diamond,
+                onClick = onNavigateToNews
             )
         )
     }
 
-    // ── Shortcut sections ─────────────────────────────────────────────────────
-    // Row A — Primary tools (Cyber SOS, Reality Scan, Email Check, Password)
-    val primaryRow1 = listOf(
-        ShortcutItem(stringResource(R.string.ui_apptopbar_1),
-            Icons.Rounded.Warning, ObsidianColors.Critical, onNavigateToCyberSos),
-        ShortcutItem(stringResource(R.string.home_quick_reality_scan),
-            Icons.Rounded.CameraAlt, ObsidianColors.Sky, onNavigateToRealityScan),
-        ShortcutItem(stringResource(R.string.home_quick_email_scan),
-            Icons.Rounded.Email, ObsidianColors.Emerald, onNavigateToEmailCheck),
-        ShortcutItem(stringResource(R.string.scan_tab_password),
-            Icons.Rounded.Password, ObsidianColors.Violet, onNavigateToSecuritySettings)
-    )
+    val quickActions = remember(
+        onNavigateToRealityScan,
+        onNavigateToScamLookup,
+        onNavigateToHeatmap,
+        onNavigateToReportScam,
+        onNavigateToScamAlertsFeed,
+        onNavigateToCyberCard,
+        onNavigateToScamNetwork,
+        onNavigateToNews
+    ) {
+        listOf(
+            HomeQuickAction("Scan QR", Icons.Rounded.QrCode, DashboardColors.Brand, onNavigateToRealityScan),
+            HomeQuickAction("Scam Lookup", Icons.Rounded.Search, DashboardColors.Mint, onNavigateToScamLookup),
+            HomeQuickAction("Cyber Radar", Icons.Rounded.Warning, DashboardColors.Red, onNavigateToHeatmap),
+            HomeQuickAction("Report Scam", Icons.Rounded.Report, DashboardColors.Amber, onNavigateToReportScam),
+            HomeQuickAction("Scam Alerts", Icons.Rounded.Notifications, DashboardColors.Violet, onNavigateToScamAlertsFeed),
+            HomeQuickAction("Cyber Card", Icons.Rounded.CreditCard, DashboardColors.BrandDark, onNavigateToCyberCard),
+            HomeQuickAction("Scam Network", Icons.Rounded.Groups, DashboardColors.Cyan, onNavigateToScamNetwork),
+            HomeQuickAction("News", Icons.AutoMirrored.Rounded.Article, DashboardColors.Mint, onNavigateToNews)
+        )
+    }
 
-    // Row B — Scan tools (Link, QR, Risk Intel, Alerts)
-    val primaryRow2 = listOf(
-        ShortcutItem(stringResource(R.string.home_quick_link_scanner),
-            Icons.Rounded.Link, ObsidianColors.Cyan, onNavigateToRealityScan),
-        ShortcutItem(stringResource(R.string.home_quick_qr_scanner),
-            Icons.Rounded.QrCode, ObsidianColors.Teal, onNavigateToRealityScan),
-        ShortcutItem(stringResource(R.string.home_quick_risk_intel),
-            Icons.Rounded.Shield, ObsidianColors.Brand, onNavigateToRisk),
-        ShortcutItem(stringResource(R.string.ui_mainshell_11),
-            Icons.Rounded.Notifications, ObsidianColors.Warning, onNavigateToAlerts)
-    )
+    val sections = remember(
+        onNavigateToRealityScan,
+        onNavigateToScamLookup,
+        onNavigateToHeatmap,
+        onNavigateToRisk,
+        onNavigateToAlerts,
+        onNavigateToReportScam,
+        onNavigateToScamNetwork,
+        onNavigateToHistory,
+        onNavigateToCyberCard,
+        onNavigateToFamily,
+        onNavigateToNews,
+        onNavigateToSecuritySettings,
+        onNavigateToCyberSos
+    ) {
+        listOf(
+            HomeFeatureSection(
+                title = "Security Tools",
+                items = listOf(
+                    HomeFeatureAction("Scam Lookup", "Check suspicious numbers before you trust them.", Icons.Rounded.Search, DashboardColors.Mint, onNavigateToScamLookup),
+                    HomeFeatureAction("Cyber Radar", "Monitor attack spikes from city to global scope.", Icons.Rounded.Warning, DashboardColors.Red, onNavigateToHeatmap),
+                    HomeFeatureAction("QR Scan", "Scan links, QR codes, and suspicious prompts safely.", Icons.Rounded.QrCode, DashboardColors.Brand, onNavigateToRealityScan),
+                    HomeFeatureAction("Fraud Detection", "Open internal risk intelligence and detection tools.", Icons.Rounded.Security, DashboardColors.Violet, onNavigateToRisk)
+                )
+            ),
+            HomeFeatureSection(
+                title = "Reports & Alerts",
+                items = listOf(
+                    HomeFeatureAction("Scam Alerts", "See active scam campaigns and high-risk alerts.", Icons.Rounded.Notifications, DashboardColors.Amber, onNavigateToAlerts),
+                    HomeFeatureAction("Report Scam", "Submit community reports for calls, links, and fraud.", Icons.Rounded.Report, DashboardColors.Red, onNavigateToReportScam),
+                    HomeFeatureAction("Community Reports", "Open the Scam Network intelligence dashboard.", Icons.Rounded.Groups, DashboardColors.Cyan, onNavigateToScamNetwork),
+                    HomeFeatureAction("History", "Review previous scans, checks, and activity summaries.", Icons.Rounded.History, DashboardColors.BrandDark, onNavigateToHistory)
+                )
+            ),
+            HomeFeatureSection(
+                title = "Services",
+                items = listOf(
+                    HomeFeatureAction("Cyber Card", "Open your protection score and personal security card.", Icons.Rounded.CreditCard, DashboardColors.Brand, onNavigateToCyberCard),
+                    HomeFeatureAction("Trusted Circle", "Manage trusted family and emergency contacts.", Icons.Rounded.Groups, DashboardColors.Mint, onNavigateToFamily),
+                    HomeFeatureAction("Awareness", "Read cyber awareness stories and prevention tips.", Icons.AutoMirrored.Rounded.Article, DashboardColors.Violet, onNavigateToNews),
+                    HomeFeatureAction("Profile & Settings", "Manage profile, app settings, and preferences.", Icons.Rounded.Person, DashboardColors.Amber, onNavigateToSecuritySettings),
+                    HomeFeatureAction("Cyber SOS", "Trigger emergency support for urgent cyber incidents.", Icons.Rounded.Shield, DashboardColors.Red, onNavigateToCyberSos)
+                )
+            )
+        )
+    }
 
-    // Row C — Family & history (Family, History, Reports, Messages)
-    val familyRow = listOf(
-        ShortcutItem(stringResource(R.string.alerts_tab_family),
-            Icons.Rounded.FamilyRestroom, ObsidianColors.Rose, onNavigateToFamily),
-        ShortcutItem(stringResource(R.string.home_quick_history),
-            Icons.Rounded.History, ObsidianColors.Amber, onNavigateToHistory),
-        ShortcutItem(stringResource(R.string.home_quick_reports),
-            Icons.Rounded.Report, ObsidianColors.Forest, onNavigateToHistory),
-        ShortcutItem(stringResource(R.string.ui_mainshell_10),
-            Icons.AutoMirrored.Rounded.Article, ObsidianColors.Gold, onNavigateToNews)
-    )
+    val background = if (isDark) DashboardColors.BackgroundDark else DashboardColors.BackgroundLight
+    val horizontalPadding = SpacingTokens.screenPaddingHorizontal
 
-    // Row D1 — Settings tools
-    val settingsRow = listOf(
-        ShortcutItem(stringResource(R.string.ui_mainshell_12),
-            Icons.Rounded.Person, ObsidianColors.Neutral, onNavigateToSecuritySettings),
-        ShortcutItem(stringResource(R.string.ui_navigationconfig_2),
-            Icons.Rounded.Settings, ObsidianColors.Slate, onNavigateToSecuritySettings),
-        ShortcutItem(stringResource(R.string.home_quick_language),
-            Icons.Rounded.Language, ObsidianColors.WarmGray, onNavigateToSecuritySettings),
-        ShortcutItem(stringResource(R.string.home_quick_theme),
-            Icons.Rounded.Palette, ObsidianColors.Indigo, onNavigateToSecuritySettings)
-    )
-
-    // Row D2 — More
-    val moreRow = listOf(
-        ShortcutItem(stringResource(R.string.home_quick_tips),
-            Icons.Rounded.Lightbulb, ObsidianColors.Gold, onNavigateToNews),
-        ShortcutItem(stringResource(R.string.home_quick_premium),
-            Icons.Rounded.Diamond, ObsidianColors.Sand, onNavigateToPremium),
-        ShortcutItem(stringResource(R.string.home_quick_refer),
-            Icons.Rounded.Star, ObsidianColors.Orange, onNavigateToNews),
-        ShortcutItem(stringResource(R.string.home_quick_refer),
-            Icons.AutoMirrored.Rounded.Message, ObsidianColors.Sky, onNavigateToNews)
-    )
-
-    // ── Theme tokens ──────────────────────────────────────────────────────────
-    val screenBg = if (isDark) ObsidianColors.DarkBg else ObsidianColors.LightBg
-    val H = SpacingTokens.screenPaddingHorizontal   // horizontal screen padding
-
-    // =========================================================================
-    // ROOT
-    // =========================================================================
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(screenBg)
+            .background(background)
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .verticalScroll(rememberScrollState())
-                .padding(bottom = 92.dp)
+        LazyColumn(
+            state = listState,
+            modifier = Modifier.fillMaxSize(),
+            contentPadding = PaddingValues(
+                start = horizontalPadding,
+                end = horizontalPadding,
+                top = 18.dp,
+                bottom = 104.dp
+            ),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-
-            // ── 1. Greeting ──────────────────────────────────────────────────
-            AnimatedVisibility(
-                visible = visible,
-                enter = fadeIn(tween(340)) +
-                        slideInVertically(tween(340, easing = FastOutSlowInEasing)) { -20 }
-            ) {
-                GreetingRow(
-                    name = user?.name?.split(" ")?.firstOrNull()
-                        ?: stringResource(R.string.home_user_fallback),
-                    isDark = isDark,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(top = 18.dp, start = H, end = H)
+            item {
+                HomeHeader(
+                    name = user?.name?.split(" ")?.firstOrNull().orEmpty().ifBlank { "Guardian" },
+                    isDark = isDark
                 )
             }
 
-            Spacer(Modifier.height(18.dp))
-
-            // ── 2. Security Score Card ───────────────────────────────────────
-            AnimatedVisibility(
-                visible = visible,
-                enter = fadeIn(tween(320, delayMillis = 60)) +
-                        slideInVertically(tween(320, delayMillis = 60, easing = FastOutSlowInEasing)) { 28 }
-            ) {
+            item {
                 when (overviewState) {
-                    is UiState.Loading ->
-                        LoadingScoreCard(
-                            isDark = isDark,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = H)
-                        )
-                    is UiState.Success ->
-                        SecurityScoreCard(
-                            isDark = isDark,
-                            scans   = overview?.securitySnapshot?.scansDone ?: 0,
-                            threats = overview?.securitySnapshot?.threatsDetected ?: 0,
-                            risk    = overview?.securitySnapshot?.overallRisk ?: "Low",
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = H)
-                        )
-                    else ->
-                        ErrorScoreCard(
-                            isDark = isDark,
-                            onRetry = { viewModel.loadOverview() },
-                            onHistory = onNavigateToHistory,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = H)
-                        )
+                    is UiState.Loading -> HomeSnapshotLoadingCard(isDark = isDark)
+                    is UiState.Success -> SecuritySnapshotCard(
+                        scans = overview?.securitySnapshot?.scansDone ?: 0,
+                        threats = overview?.securitySnapshot?.threatsDetected ?: 0,
+                        risk = overview?.securitySnapshot?.overallRisk ?: "Low"
+                    )
+                    else -> HomeSnapshotErrorCard(
+                        isDark = isDark,
+                        onRetry = viewModel::loadOverview,
+                        onOpenHistory = onNavigateToHistory
+                    )
                 }
             }
 
-            Spacer(Modifier.height(18.dp))
+            item {
+                BannerCarousel(banners = banners)
+            }
 
-            // ── 3. Banner Carousel ───────────────────────────────────────────
-            AnimatedVisibility(
-                visible = visible,
-                enter = fadeIn(tween(300, delayMillis = 100))
-            ) {
-                BannerCarousel(
-                    banners = banners,
-                    modifier = Modifier.padding(horizontal = H)
+            item {
+                QuickActionsGridCard(
+                    actions = quickActions,
+                    isDark = isDark
                 )
             }
 
-            Spacer(Modifier.height(22.dp))
-
-            // ── 4. Core Tools (2 × 4) ────────────────────────────────────────
-            AnimatedVisibility(
-                visible = visible,
-                enter = fadeIn(tween(300, delayMillis = 140))
-            ) {
-                ShortcutSection(
-                    title = "Core Tools",
-                    isDark = isDark,
-                    rows = listOf(primaryRow1, primaryRow2),
-                    modifier = Modifier.padding(horizontal = H)
+            items(sections.size) { index ->
+                FeatureSectionCard(
+                    section = sections[index],
+                    isDark = isDark
                 )
             }
-
-            Spacer(Modifier.height(14.dp))
-
-            // ── 5. Family & Activity (1 × 4) ────────────────────────────────
-            AnimatedVisibility(
-                visible = visible,
-                enter = fadeIn(tween(300, delayMillis = 180))
-            ) {
-                ShortcutSection(
-                    title = "Family & Activity",
-                    isDark = isDark,
-                    rows = listOf(familyRow),
-                    modifier = Modifier.padding(horizontal = H)
-                )
-            }
-
-            Spacer(Modifier.height(14.dp))
-
-            // ── 6. Settings & More (2 × 4 with divider) ─────────────────────
-            AnimatedVisibility(
-                visible = visible,
-                enter = fadeIn(tween(300, delayMillis = 220))
-            ) {
-                ShortcutSection(
-                    title = "Settings & More",
-                    isDark = isDark,
-                    rows = listOf(settingsRow, moreRow),
-                    modifier = Modifier.padding(horizontal = H)
-                )
-            }
-
-            Spacer(Modifier.height(8.dp))
         }
     }
 }
 
-// =============================================================================
-// GreetingRow
-// =============================================================================
 @Composable
-private fun GreetingRow(
+private fun HomeHeader(
     name: String,
-    isDark: Boolean,
-    modifier: Modifier = Modifier
+    isDark: Boolean
 ) {
-    val onBg    = if (isDark) Color(0xFFE6E9F4) else Color(0xFF0D0F1A)
-    val subAlpha = if (isDark) 0.45f else 0.48f
+    val textColor = if (isDark) Color.White else Color(0xFF0F172A)
+    val muted = if (isDark) DashboardColors.TextMutedDark else DashboardColors.TextMutedLight
 
     Row(
-        modifier = modifier,
+        modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
             Text(
                 text = getGreetingText(),
-                fontSize = 12.sp,
-                color = onBg.copy(alpha = subAlpha),
-                letterSpacing = 0.4.sp
+                style = TypographyTokens.bodySmall,
+                color = muted
             )
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(6.dp)
-            ) {
-                Text(
-                    text = name,
-                    fontSize = 22.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = onBg,
-                    letterSpacing = (-0.5).sp
-                )
-                Icon(
-                    imageVector = Icons.Rounded.Shield,
-                    contentDescription = null,
-                    tint = ObsidianColors.Brand.copy(alpha = 0.80f),
-                    modifier = Modifier.size(18.dp)
-                )
-            }
+            Text(
+                text = name,
+                style = TypographyTokens.screenTitle,
+                color = textColor
+            )
         }
-        // Search pill
         Box(
             modifier = Modifier
-                .size(40.dp)
+                .size(44.dp)
                 .background(
-                    color = ObsidianColors.Brand.copy(alpha = if (isDark) 0.12f else 0.09f),
+                    color = DashboardColors.Brand.copy(alpha = if (isDark) 0.22f else 0.10f),
                     shape = CircleShape
-                )
-                .clip(CircleShape)
-                .clickable { },
-            contentAlignment = Alignment.Center
-        ) {
-            Icon(
-                imageVector = Icons.Rounded.Search,
-                contentDescription = "Search",
-                tint = ObsidianColors.Brand,
-                modifier = Modifier.size(20.dp)
-            )
-        }
-    }
-}
-
-// =============================================================================
-// SecurityScoreCard
-// Glass card with animated ring, score number, safe badge, 3 stat chips.
-// =============================================================================
-@Composable
-private fun SecurityScoreCard(
-    isDark: Boolean,
-    scans: Int,
-    threats: Int,
-    risk: String,
-    modifier: Modifier = Modifier
-) {
-    val surface = if (isDark) ObsidianColors.DarkSurface else ObsidianColors.LightSurface
-    val border  = if (isDark) null else BorderStroke(1.dp, ObsidianColors.LightBorder)
-    val onSurf  = if (isDark) Color(0xFFE6E9F4) else Color(0xFF0D0F1A)
-
-    // Gradient overlay for the card background
-    val cardBrush = if (isDark) {
-        Brush.linearGradient(
-            listOf(
-                Color(0xFF1A2040).copy(alpha = 0.95f),
-                Color(0xFF0D1630).copy(alpha = 0.95f)
-            )
-        )
-    } else {
-        Brush.linearGradient(
-            listOf(
-                Color(0xFFEEF3FF),
-                Color(0xFFF8F0FF)
-            )
-        )
-    }
-
-    // Animated ring sweep
-    val infiniteTransition = rememberInfiniteTransition(label = "ring")
-    val glowAlpha by infiniteTransition.animateFloat(
-        initialValue = 0.55f,
-        targetValue  = 0.90f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(2200, easing = FastOutSlowInEasing),
-            repeatMode = RepeatMode.Reverse
-        ),
-        label = "glowAlpha"
-    )
-
-    val safeColor = if (threats == 0) ObsidianColors.Safe else ObsidianColors.Warning
-
-    Surface(
-        modifier  = modifier,
-        shape     = RoundedCornerShape(22.dp),
-        color     = Color.Transparent,
-        border    = border,
-        shadowElevation = if (isDark) 6.dp else 1.dp,
-        tonalElevation  = 0.dp
-    ) {
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .background(cardBrush)
-        ) {
-            // Glow blob top-right
-            if (isDark) {
-                Box(
-                    modifier = Modifier
-                        .size(120.dp)
-                        .align(Alignment.TopEnd)
-                        .background(
-                            brush = Brush.radialGradient(
-                                listOf(
-                                    ObsidianColors.Brand.copy(alpha = glowAlpha * 0.18f),
-                                    Color.Transparent
-                                )
-                            )
-                        )
-                )
-            }
-
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(18.dp)
-            ) {
-                // Top row: ring + info
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(16.dp)
-                ) {
-                    // Score ring
-                    ScoreRing(
-                        score  = 82,
-                        isDark = isDark,
-                        modifier = Modifier.size(76.dp)
-                    )
-
-                    // Info block
-                    Column(
-                        modifier = Modifier.weight(1f),
-                        verticalArrangement = Arrangement.spacedBy(4.dp)
-                    ) {
-                        Text(
-                            text = "Strong Protection",
-                            fontSize = 15.sp,
-                            fontWeight = FontWeight.SemiBold,
-                            color = onSurf,
-                            letterSpacing = (-0.2).sp
-                        )
-                        Text(
-                            text = "2 recommendations to review",
-                            fontSize = 12.sp,
-                            color = onSurf.copy(alpha = 0.50f),
-                            lineHeight = 16.sp
-                        )
-                        // Protected badge
-                        Row(
-                            modifier = Modifier
-                                .clip(RoundedCornerShape(999.dp))
-                                .background(safeColor.copy(alpha = 0.12f))
-                                .padding(horizontal = 10.dp, vertical = 4.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(5.dp)
-                        ) {
-                            Box(
-                                modifier = Modifier
-                                    .size(6.dp)
-                                    .background(safeColor, CircleShape)
-                            )
-                            Text(
-                                text = if (threats == 0) "Protected" else "$threats Threat${if (threats > 1) "s" else ""}",
-                                fontSize = 11.sp,
-                                fontWeight = FontWeight.Medium,
-                                color = safeColor
-                            )
-                        }
-                    }
-                }
-
-                Spacer(Modifier.height(16.dp))
-
-                // Divider
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(1.dp)
-                        .background(
-                            if (isDark) Color.White.copy(0.07f)
-                            else Color(0xFF0D0F1A).copy(0.07f)
-                        )
-                )
-
-                Spacer(Modifier.height(14.dp))
-
-                // 3 stat chips
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    StatChip(
-                        label = "Scans",
-                        value = scans.toString(),
-                        accent = ObsidianColors.Brand,
-                        isDark = isDark,
-                        modifier = Modifier.weight(1f)
-                    )
-                    StatChip(
-                        label = "Threats",
-                        value = threats.toString(),
-                        accent = if (threats == 0) ObsidianColors.Safe else ObsidianColors.Critical,
-                        isDark = isDark,
-                        modifier = Modifier.weight(1f)
-                    )
-                    StatChip(
-                        label = "Risk",
-                        value = risk,
-                        accent = when (risk.lowercase()) {
-                            "low"    -> ObsidianColors.Safe
-                            "medium" -> ObsidianColors.Warning
-                            else     -> ObsidianColors.Critical
-                        },
-                        isDark = isDark,
-                        modifier = Modifier.weight(1f)
-                    )
-                }
-            }
-        }
-    }
-}
-
-// =============================================================================
-// ScoreRing — Canvas drawn arc with gradient simulation
-// =============================================================================
-@Composable
-private fun ScoreRing(
-    score: Int,
-    isDark: Boolean,
-    modifier: Modifier = Modifier
-) {
-    val onSurf = if (isDark) Color(0xFFE6E9F4) else Color(0xFF0D0F1A)
-    val trackColor = if (isDark) Color.White.copy(0.07f) else Color(0xFF0D0F1A).copy(0.07f)
-
-    Box(modifier = modifier, contentAlignment = Alignment.Center) {
-        // Track
-        androidx.compose.foundation.Canvas(modifier = Modifier.fillMaxSize()) {
-            val stroke = Stroke(width = 7.dp.toPx(), cap = StrokeCap.Round)
-            drawArc(
-                color      = trackColor,
-                startAngle = -230f,
-                sweepAngle = 280f,
-                useCenter  = false,
-                style      = stroke
-            )
-        }
-        // Fill arc (blue)
-        androidx.compose.foundation.Canvas(modifier = Modifier.fillMaxSize()) {
-            val stroke = Stroke(width = 7.dp.toPx(), cap = StrokeCap.Round)
-            val sweep  = (score / 100f) * 280f
-            drawArc(
-                color      = ObsidianColors.Brand,
-                startAngle = -230f,
-                sweepAngle = sweep,
-                useCenter  = false,
-                style      = stroke
-            )
-        }
-        // Score text
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Text(
-                text       = "$score",
-                fontSize   = 18.sp,
-                fontWeight = FontWeight.Bold,
-                color      = onSurf,
-                lineHeight = 18.sp
-            )
-            Text(
-                text     = "/ 100",
-                fontSize = 9.sp,
-                color    = onSurf.copy(alpha = 0.40f),
-                letterSpacing = 0.2.sp
-            )
-        }
-    }
-}
-
-// =============================================================================
-// StatChip
-// =============================================================================
-@Composable
-private fun StatChip(
-    label: String,
-    value: String,
-    accent: Color,
-    isDark: Boolean,
-    modifier: Modifier = Modifier
-) {
-    val chipBg  = if (isDark) Color.White.copy(0.04f) else Color(0xFF0D0F1A).copy(0.04f)
-    val onSurf  = if (isDark) Color(0xFFE6E9F4) else Color(0xFF0D0F1A)
-
-    Column(
-        modifier = modifier
-            .clip(RoundedCornerShape(12.dp))
-            .background(chipBg)
-            .padding(vertical = 10.dp, horizontal = 8.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(3.dp)
-    ) {
-        Text(
-            text       = value,
-            fontSize   = 15.sp,
-            fontWeight = FontWeight.Bold,
-            color      = accent,
-            lineHeight = 15.sp
-        )
-        Text(
-            text     = label,
-            fontSize = 10.sp,
-            color    = onSurf.copy(alpha = 0.45f),
-            letterSpacing = 0.3.sp
-        )
-    }
-}
-
-// =============================================================================
-// ShortcutSection
-// Generic bento card that accepts N rows of 4 shortcuts each.
-// Rows are separated by a 1dp tonal divider.
-// =============================================================================
-@Composable
-private fun ShortcutSection(
-    title: String,
-    isDark: Boolean,
-    rows: List<List<ShortcutItem>>,
-    modifier: Modifier = Modifier
-) {
-    val surface  = if (isDark) ObsidianColors.DarkSurface  else ObsidianColors.LightSurface
-    val border   = if (isDark) null                         else BorderStroke(1.dp, ObsidianColors.LightBorder)
-    val divider  = if (isDark) Color.White.copy(0.06f)      else Color(0xFF0D0F1A).copy(0.06f)
-    val titleClr = if (isDark) Color(0xFFE6E9F4).copy(0.38f) else Color(0xFF0D0F1A).copy(0.38f)
-
-    Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        // Section label
-        Text(
-            text = title.uppercase(),
-            fontSize = 10.sp,
-            fontWeight = FontWeight.Medium,
-            letterSpacing = 1.4.sp,
-            color = titleClr
-        )
-        Surface(
-            modifier = Modifier.fillMaxWidth(),
-            shape    = RoundedCornerShape(20.dp),
-            color    = surface,
-            border   = border,
-            shadowElevation = if (isDark) 4.dp else 1.dp,
-            tonalElevation  = 0.dp
-        ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(12.dp),
-                verticalArrangement = Arrangement.spacedBy(0.dp)
-            ) {
-                rows.forEachIndexed { index, row ->
-                    if (index > 0) {
-                        // Tonal divider between rows
-                        Spacer(Modifier.height(10.dp))
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(1.dp)
-                                .background(divider)
-                        )
-                        Spacer(Modifier.height(10.dp))
-                    } else {
-                        Spacer(Modifier.height(4.dp))
-                    }
-                    ShortcutRow(
-                        items  = row,
-                        isDark = isDark
-                    )
-                    if (index == rows.lastIndex) Spacer(Modifier.height(4.dp))
-                }
-            }
-        }
-    }
-}
-
-// =============================================================================
-// ShortcutRow — exactly 4 tiles in a Row, equal weight
-// =============================================================================
-@Composable
-private fun ShortcutRow(
-    items: List<ShortcutItem>,
-    isDark: Boolean
-) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(8.dp)
-    ) {
-        items.forEach { item ->
-            ShortcutTile(
-                item   = item,
-                isDark = isDark,
-                modifier = Modifier.weight(1f)
-            )
-        }
-    }
-}
-
-// =============================================================================
-// ShortcutTile — icon chip + label
-// =============================================================================
-@Composable
-private fun ShortcutTile(
-    item: ShortcutItem,
-    isDark: Boolean,
-    modifier: Modifier = Modifier
-) {
-    val tileBg   = if (isDark) Color.White.copy(0.04f) else item.accent.copy(0.06f)
-    val labelClr = if (isDark) Color(0xFFE6E9F4).copy(0.60f) else Color(0xFF0D0F1A).copy(0.58f)
-
-    Column(
-        modifier = modifier
-            .clip(RoundedCornerShape(14.dp))
-            .background(tileBg)
-            .clickable { item.onClick() }
-            .padding(vertical = 12.dp, horizontal = 4.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(7.dp)
-    ) {
-        // Icon chip
-        Box(
-            modifier = Modifier
-                .size(34.dp)
-                .background(
-                    color = item.accent.copy(alpha = 0.14f),
-                    shape = RoundedCornerShape(10.dp)
                 ),
             contentAlignment = Alignment.Center
         ) {
-            Icon(
-                imageVector = item.icon,
-                contentDescription = item.label,
-                tint = item.accent,
-                modifier = Modifier.size(17.dp)
+            androidx.compose.material3.Icon(
+                imageVector = Icons.Rounded.Shield,
+                contentDescription = null,
+                tint = DashboardColors.Brand,
+                modifier = Modifier.size(22.dp)
             )
         }
-        // Label
-        Text(
-            text      = item.label,
-            fontSize  = 9.5.sp,
-            color     = labelClr,
-            textAlign = TextAlign.Center,
-            lineHeight = 13.sp,
-            maxLines  = 2,
-            overflow  = TextOverflow.Ellipsis
-        )
     }
 }
 
-// =============================================================================
-// LoadingScoreCard
-// =============================================================================
 @Composable
-private fun LoadingScoreCard(isDark: Boolean, modifier: Modifier = Modifier) {
-    val surface = if (isDark) ObsidianColors.DarkSurface else ObsidianColors.LightSurface
-    val border  = if (isDark) null else BorderStroke(1.dp, ObsidianColors.LightBorder)
-    val onSurf  = if (isDark) Color(0xFFE6E9F4) else Color(0xFF0D0F1A)
+private fun QuickActionsGridCard(
+    actions: List<HomeQuickAction>,
+    isDark: Boolean
+) {
+    val surface = if (isDark) DashboardColors.SurfaceDark else DashboardColors.SurfaceLight
+    val border = if (isDark) DashboardColors.BorderDark else DashboardColors.BorderLight
+    val gridHeight = 196.dp
 
     Surface(
-        modifier = modifier,
-        shape    = RoundedCornerShape(22.dp),
-        color    = surface,
-        border   = border,
-        shadowElevation = if (isDark) 4.dp else 1.dp,
-        tonalElevation  = 0.dp
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(24.dp),
+        color = surface,
+        border = BorderStroke(1.dp, border),
+        shadowElevation = if (isDark) 8.dp else 2.dp,
+        tonalElevation = 0.dp
+    ) {
+        Column(
+            modifier = Modifier.padding(horizontal = 14.dp, vertical = 16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            SectionHeader(
+                title = "Quick Actions",
+                subtitle = "Fast access to the most-used protection tools."
+            )
+            LazyVerticalGrid(
+                columns = GridCells.Fixed(4),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(gridHeight),
+                userScrollEnabled = false,
+                horizontalArrangement = Arrangement.spacedBy(10.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                items(actions) { action ->
+                    QuickActionItem(action = action, isDark = isDark)
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun SectionHeader(
+    title: String,
+    subtitle: String
+) {
+    Text(
+        text = title,
+        style = TypographyTokens.titleMedium,
+        color = ColorTokens.textPrimary()
+    )
+    Text(
+        text = subtitle,
+        style = TypographyTokens.bodySmall,
+        color = ColorTokens.textSecondary()
+    )
+}
+
+@Composable
+private fun HomeSnapshotLoadingCard(isDark: Boolean) {
+    val textColor = if (isDark) Color.White else Color(0xFF0F172A)
+    val surface = if (isDark) DashboardColors.SurfaceDark else DashboardColors.SurfaceLight
+    val border = if (isDark) DashboardColors.BorderDark else DashboardColors.BorderLight
+
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(24.dp),
+        color = surface,
+        border = BorderStroke(1.dp, border),
+        shadowElevation = if (isDark) 8.dp else 2.dp,
+        tonalElevation = 0.dp
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 18.dp, vertical = 20.dp),
-            horizontalArrangement = Arrangement.spacedBy(14.dp),
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             CircularProgressIndicator(
-                modifier    = Modifier.size(20.dp),
-                color       = ObsidianColors.Brand,
+                modifier = Modifier.size(22.dp),
+                color = DashboardColors.Brand,
                 strokeWidth = 2.5.dp
             )
-            Column(verticalArrangement = Arrangement.spacedBy(3.dp)) {
-                Text(
-                    text  = stringResource(R.string.common_loading),
-                    style = TypographyTokens.titleSmall,
-                    color = onSurf
-                )
-                Text(
-                    text  = stringResource(R.string.home_snapshot_title),
-                    style = TypographyTokens.bodySmall,
-                    color = onSurf.copy(alpha = 0.45f)
-                )
+            Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                Text("Loading dashboard", style = TypographyTokens.titleSmall, color = textColor)
+                Text("Refreshing your security snapshot", style = TypographyTokens.bodySmall, color = ColorTokens.textSecondary())
             }
         }
     }
 }
 
-// =============================================================================
-// ErrorScoreCard
-// =============================================================================
 @Composable
-private fun ErrorScoreCard(
+private fun HomeSnapshotErrorCard(
     isDark: Boolean,
     onRetry: () -> Unit,
-    onHistory: () -> Unit,
-    modifier: Modifier = Modifier
+    onOpenHistory: () -> Unit
 ) {
-    val surface = if (isDark) ObsidianColors.DarkSurface else ObsidianColors.LightSurface
-    val border  = if (isDark) null else BorderStroke(1.dp, ObsidianColors.LightBorder)
-    val onSurf  = if (isDark) Color(0xFFE6E9F4) else Color(0xFF0D0F1A)
+    val surface = if (isDark) DashboardColors.SurfaceDark else DashboardColors.SurfaceLight
+    val border = if (isDark) DashboardColors.BorderDark else DashboardColors.BorderLight
 
     Surface(
-        modifier = modifier,
-        shape    = RoundedCornerShape(22.dp),
-        color    = surface,
-        border   = border,
-        shadowElevation = if (isDark) 4.dp else 1.dp,
-        tonalElevation  = 0.dp
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(24.dp),
+        color = surface,
+        border = BorderStroke(1.dp, border),
+        shadowElevation = if (isDark) 8.dp else 2.dp,
+        tonalElevation = 0.dp
     ) {
         Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(18.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+            modifier = Modifier.padding(18.dp),
+            verticalArrangement = Arrangement.spacedBy(14.dp)
         ) {
+            Text("Dashboard temporarily unavailable", style = TypographyTokens.titleMedium, color = ColorTokens.textPrimary())
             Text(
-                text  = stringResource(R.string.home_snapshot_title),
-                style = TypographyTokens.titleSmall,
-                color = onSurf
-            )
-            Text(
-                text  = stringResource(R.string.error_generic),
+                "We couldn't refresh your latest security summary. You can retry or open scan history.",
                 style = TypographyTokens.bodyMedium,
-                color = onSurf.copy(alpha = 0.48f)
+                color = ColorTokens.textSecondary()
             )
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
+            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                 Button(
-                    onClick  = onRetry,
-                    modifier = Modifier.weight(1f).height(42.dp),
-                    shape    = RoundedCornerShape(12.dp),
-                    colors   = ButtonDefaults.buttonColors(
-                        containerColor = ObsidianColors.Brand,
-                        contentColor   = Color.White
-                    ),
-                    elevation = ButtonDefaults.buttonElevation(0.dp, 0.dp)
+                    onClick = onRetry,
+                    modifier = Modifier.weight(1f),
+                    colors = ButtonDefaults.buttonColors(containerColor = DashboardColors.Brand)
                 ) {
-                    Text(
-                        text  = stringResource(R.string.ui_screenlayouts_1),
-                        style = TypographyTokens.labelLarge
-                    )
+                    Text("Retry")
                 }
                 OutlinedButton(
-                    onClick  = onHistory,
-                    modifier = Modifier.weight(1f).height(42.dp),
-                    shape    = RoundedCornerShape(12.dp),
-                    border   = BorderStroke(
-                        1.dp,
-                        if (isDark) ObsidianColors.DarkBorder else ObsidianColors.LightBorder
-                    ),
-                    colors   = ButtonDefaults.outlinedButtonColors(
-                        contentColor = ObsidianColors.Slate
-                    )
+                    onClick = onOpenHistory,
+                    modifier = Modifier.weight(1f)
                 ) {
-                    Text(
-                        text  = stringResource(R.string.home_quick_history),
-                        style = TypographyTokens.labelLarge
-                    )
+                    Text("History")
                 }
             }
         }
     }
 }
 
-// =============================================================================
-// Preserved from original — no logic changes
-// =============================================================================
 @Composable
 private fun getGreetingText(): String {
     val hour = java.util.Calendar.getInstance().get(java.util.Calendar.HOUR_OF_DAY)
     return when {
-        hour < 12 -> stringResource(R.string.home_greeting_morning)
-        hour < 17 -> stringResource(R.string.home_greeting_afternoon)
-        else      -> stringResource(R.string.home_greeting_evening)
+        hour < 12 -> "Good morning"
+        hour < 17 -> "Good afternoon"
+        else -> "Good evening"
     }
 }
+
+

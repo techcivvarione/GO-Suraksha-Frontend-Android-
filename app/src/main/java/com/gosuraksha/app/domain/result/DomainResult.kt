@@ -9,6 +9,7 @@ sealed class DomainError {
     data object Network : DomainError()
     data object Timeout : DomainError()
     data object Unauthorized : DomainError()
+    data object ScanLimitReached : DomainError()
     data object Forbidden : DomainError()
     data object NotFound : DomainError()
     data object Server : DomainError()

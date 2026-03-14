@@ -1,5 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <style name="Theme.GOSuraksha" parent="android:Theme.Material.Light.NoActionBar" />
+    <style name="Theme.GOSuraksha" parent="Theme.AppCompat.DayNight.NoActionBar">
+        <item name="android:windowBackground">@color/theme_background</item>
+        <item name="colorPrimary">@color/theme_primary</item>
+        <item name="android:textColorPrimary">@color/theme_on_surface</item>
+    </style>
 </resources>

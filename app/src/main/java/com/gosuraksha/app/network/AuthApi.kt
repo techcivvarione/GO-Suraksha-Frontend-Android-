@@ -1,22 +1,22 @@
 package com.gosuraksha.app.network
 
+import com.gosuraksha.app.data.remote.dto.auth.EmailRequest
+import com.gosuraksha.app.data.remote.dto.auth.GenericResponse
+import com.gosuraksha.app.data.remote.dto.auth.GoogleAuthRequest
+import com.gosuraksha.app.data.remote.dto.auth.GoogleAuthResponse
 import com.gosuraksha.app.data.remote.dto.auth.LoginRequest
 import com.gosuraksha.app.data.remote.dto.auth.LoginResponse
+import com.gosuraksha.app.data.remote.dto.auth.RegisterDeviceRequest
 import com.gosuraksha.app.data.remote.dto.auth.SignupRequest
 import com.gosuraksha.app.data.remote.dto.auth.SignupResponse
 import com.gosuraksha.app.data.remote.dto.auth.UserResponse
-import com.gosuraksha.app.data.remote.dto.auth.GoogleAuthRequest
-import com.gosuraksha.app.data.remote.dto.auth.GoogleAuthResponse
-import com.gosuraksha.app.data.remote.dto.auth.EmailRequest
 import com.gosuraksha.app.data.remote.dto.auth.VerifyOtpRequest
-import com.gosuraksha.app.data.remote.dto.auth.GenericResponse
 import com.gosuraksha.app.data.remote.dto.auth.VerifyOtpResponse
+import com.gosuraksha.app.ui.main.CyberCardResponse
 import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.GET
 import retrofit2.http.POST
-import com.gosuraksha.app.ui.main.CyberCardResponse
-
 
 interface AuthApi {
 
@@ -35,7 +35,6 @@ interface AuthApi {
         @Body request: SignupRequest
     ): SignupResponse
 
-    // OTP WIRING START
     @POST("auth/send-email-otp")
     suspend fun sendEmailOtp(
         @Body request: EmailRequest
@@ -45,7 +44,6 @@ interface AuthApi {
     suspend fun verifyEmailOtp(
         @Body request: VerifyOtpRequest
     ): Response<VerifyOtpResponse>
-    // OTP WIRING END
 
     @GET("auth/me")
     suspend fun getMe(): UserResponse
@@ -53,4 +51,8 @@ interface AuthApi {
     @GET("cyber-card")
     suspend fun getCyberCard(): CyberCardResponse
 
+    @POST("devices/register")
+    suspend fun registerDevice(
+        @Body request: RegisterDeviceRequest
+    ): Response<GenericResponse>
 }

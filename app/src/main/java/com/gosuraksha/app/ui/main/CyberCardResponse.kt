@@ -8,7 +8,8 @@ data class CyberCardResponse(
     val score: Int? = null,
     val max_score: Int? = null,
     val risk_level: String? = null,
-    val signals: Map<String, Any>? = null,
+    val signals: Map<String, Any?>? = null,
     val score_month: String? = null,
+    val score_version: String? = null,
     val message: String? = null
 )

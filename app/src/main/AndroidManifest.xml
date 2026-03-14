@@ -9,25 +9,42 @@
         </intent>
     </queries>
 
-    <!-- Required for API calls -->
     <uses-feature
         android:name="android.hardware.camera"
         android:required="false" />
 
     <uses-permission android:name="android.permission.INTERNET" />
-
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.VIBRATE" />
     <uses-permission android:name="android.permission.CAMERA" />
+    <!-- Needed to observe phone state changes for ringing calls. -->
+    <uses-permission android:name="android.permission.READ_PHONE_STATE" />
+    <!-- Needed to resolve incoming numbers safely when broadcasts omit them. -->
+    <uses-permission android:name="android.permission.READ_CALL_LOG" />
+    <!-- Needed to render the scam warning overlay above the incoming call UI. -->
+    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
+    <uses-permission android:name="android.permission.READ_CONTACTS" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
 
     <application
-        android:name=".infra.GoSurakshaApp"
-        android:usesCleartextTraffic="true"
+        android:name=".GoSurakshaApp"
         android:allowBackup="true"
+        android:dataExtractionRules="@xml/data_extraction_rules"
+        android:fullBackupContent="@xml/backup_rules"
         android:icon="@mipmap/ic_launcher"
         android:label="GO Suraksha"
+        android:networkSecurityConfig="@xml/network_security_config"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.GOSuraksha">
+
+        <meta-data
+            android:name="com.google.android.geo.API_KEY"
+            android:value="${MAPS_API_KEY}" />
+
+        <meta-data
+            android:name="com.mapbox.token"
+            android:value="${MAPBOX_ACCESS_TOKEN}" />
 
         <activity
             android:name=".MainActivity"
@@ -57,6 +74,29 @@
             </intent-filter>
 
         </activity>
+
+        <service
+            android:name=".MyFirebaseMessagingService"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="com.google.firebase.MESSAGING_EVENT" />
+            </intent-filter>
+        </service>
+
+        <service
+            android:name=".services.GosurakshaCallScreeningService"
+            android:permission="android.permission.BIND_SCREENING_SERVICE"
+            android:exported="true">
+
+            <intent-filter>
+                <action android:name="android.telecom.CallScreeningService"/>
+            </intent-filter>
+
+            <meta-data
+                android:name="android.telecom.call_screening_service"
+                android:value="true"/>
+
+        </service>
 
     </application>
 

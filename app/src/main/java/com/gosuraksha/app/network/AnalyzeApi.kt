@@ -4,7 +4,6 @@ import com.gosuraksha.app.data.remote.dto.scan.AiExplainRequestDto
 import com.gosuraksha.app.data.remote.dto.scan.AiExplainResponseDto
 import com.gosuraksha.app.data.remote.dto.scan.EmailScanRequest
 import com.gosuraksha.app.data.remote.dto.scan.PasswordScanRequest
-import com.gosuraksha.app.data.remote.dto.scan.QrScanRequest
 import com.gosuraksha.app.data.remote.dto.scan.ScanResponse
 import com.gosuraksha.app.data.remote.dto.scan.ThreatScanRequest
 import okhttp3.MultipartBody
@@ -24,11 +23,6 @@ interface AnalyzeApi {
     @POST("/scan/email")
     suspend fun scanEmail(
         @Body request: EmailScanRequest
-    ): Response<ScanResponse>
-
-    @POST("/scan/qr")
-    suspend fun scanQr(
-        @Body request: QrScanRequest
     ): Response<ScanResponse>
 
     @POST("/scan/threat")

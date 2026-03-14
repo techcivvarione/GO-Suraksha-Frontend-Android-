@@ -2,6 +2,7 @@ package com.gosuraksha.app.core
 
 import androidx.compose.runtime.*
 import androidx.compose.ui.platform.LocalContext
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 
 /**
  * Theme Manager Composable
@@ -16,10 +17,12 @@ fun ThemeManager(
 
     // Get saved theme preference
     val savedDarkMode by ThemePrefs.isDarkMode(context)
-        .collectAsState(initial = false)
+        .collectAsStateWithLifecycle(initialValue = false)
 
     // Use saved preference, fallback to system
     val isDark = savedDarkMode
 
     content(isDark)
 }
+
+

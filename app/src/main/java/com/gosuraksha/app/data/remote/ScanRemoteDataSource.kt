@@ -3,7 +3,6 @@ package com.gosuraksha.app.data.remote
 import com.gosuraksha.app.data.remote.dto.scan.AiExplainRequestDto
 import com.gosuraksha.app.data.remote.dto.scan.EmailScanRequest
 import com.gosuraksha.app.data.remote.dto.scan.PasswordScanRequest
-import com.gosuraksha.app.data.remote.dto.scan.QrScanRequest
 import com.gosuraksha.app.data.remote.dto.scan.ThreatScanRequest
 import com.gosuraksha.app.network.AnalyzeApi
 import okhttp3.MultipartBody
@@ -18,7 +17,8 @@ class ScanRemoteDataSource(
     suspend fun analyze(type: String, content: String) = when (type.uppercase()) {
         "PASSWORD" -> api.scanPassword(PasswordScanRequest(password = content))
         "EMAIL" -> api.scanEmail(EmailScanRequest(email = content))
-        "QR" -> api.scanQr(QrScanRequest(raw_payload = content))
+        "THREAT", "MESSAGES" -> api.scanThreat(ThreatScanRequest(text = content))
+        "QR" -> throw IllegalArgumentException("QR analyze is handled by /qr/analyze")
         else -> api.scanThreat(ThreatScanRequest(text = content))
     }
 

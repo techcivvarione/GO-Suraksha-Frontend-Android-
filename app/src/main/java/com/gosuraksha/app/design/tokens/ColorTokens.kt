@@ -182,6 +182,14 @@ object ColorTokens {
         if (isDarkMode()) Dark.warningLight else Light.warningLight
 
     @Composable
+    fun info(): Color =
+        if (isDarkMode()) Dark.info else Light.info
+
+    @Composable
+    fun infoLight(): Color =
+        if (isDarkMode()) Dark.infoLight else Light.infoLight
+
+    @Composable
     fun error(): Color =
         if (isDarkMode()) Dark.error else Light.error
 

@@ -19,23 +19,41 @@ class EncryptedTokenStorage(
 ) : SecureTokenStorage {
 
     private val tokenKey = stringPreferencesKey("access_token_enc")
+    private val syncPrefs by lazy {
+        context.getSharedPreferences("secure_token_store_sync", Context.MODE_PRIVATE)
+    }
+    private var cachedToken: String? = null
 
     override suspend fun setToken(token: String) {
         val encrypted = encrypt(token)
         context.secureTokenStore.edit { prefs ->
             prefs[tokenKey] = encrypted
         }
+        syncPrefs.edit().putString(tokenKey.name, encrypted).apply()
+        cachedToken = token
     }
 
     override suspend fun getToken(): String? {
         val stored = context.secureTokenStore.data.firstOrNull()?.get(tokenKey) ?: return null
-        return decrypt(stored)
+        return decrypt(stored)?.also { cachedToken = it }
     }
 
     override suspend fun clearToken() {
         context.secureTokenStore.edit { prefs ->
             prefs.remove(tokenKey)
         }
+        clearTokenSync()
+    }
+
+    override fun getTokenSync(): String? {
+        cachedToken?.let { return it }
+        val stored = syncPrefs.getString(tokenKey.name, null) ?: return null
+        return decrypt(stored)?.also { cachedToken = it }
+    }
+
+    override fun clearTokenSync() {
+        syncPrefs.edit().remove(tokenKey.name).apply()
+        cachedToken = null
     }
 
     private fun encrypt(plainText: String): String {

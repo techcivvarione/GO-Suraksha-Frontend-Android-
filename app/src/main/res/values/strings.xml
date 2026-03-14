@@ -10,9 +10,13 @@
     <string name="error_network">No internet connection</string>
     <string name="error_timeout">Request timed out</string>
     <string name="error_unauthorized">Session expired. Please login again.</string>
+    <string name="error_session_invalid">Session invalid. Please login again.</string>
+    <string name="error_scan_limit_reached_free">You have used your monthly scan. Upgrade to continue.</string>
+    <string name="error_scan_limit_reached_pro">Daily scan limit reached. Try again tomorrow.</string>
     <string name="error_forbidden">Access denied</string>
     <string name="error_not_found">Resource not found</string>
     <string name="error_server">Server issue. Please try again.</string>
+    <string name="scan_upgrade_plan">Upgrade Plan</string>
     <string name="error_generic">Something went wrong</string>
     <string name="error_auth_invalid_credentials">Invalid email or password</string>
     <string name="error_news_load_failed">Failed to load news</string>
@@ -508,6 +512,7 @@
     <string name="profile_not_available">-</string>
     <string name="profile_protected_identity">Protected identity and device session</string>
     <string name="profile_message_updated">Profile updated</string>
+    <string name="profile_message_update_failed">Failed to update profile</string>
     <string name="security_message_sessions_logged_out">All sessions logged out</string>
     <string name="security_message_password_changed">Password changed successfully</string>
     <string name="security_message_report_submitted">Report submitted: %1$s</string>
@@ -635,7 +640,7 @@
     <string name="cybercard_back_laws_standards">DPDP Act 2023 and applicable data protection and cybersecurity standards.</string>
     <string name="cybercard_back_logo_go">GO</string>
     <string name="cybercard_back_logo_suraksha">Suraksha</string>
-    <string name="google_client_id">YOUR_GOOGLE_CLIENT_ID</string>
+    <string name="google_client_id">59820805527-7gf9mq68173o6pm9oeg81qljisuvguj3.apps.googleusercontent.com</string>
     <string name="login_continue_with_google">Continue with Google</string>
     <string name="login_google_loading">Signing in with Google</string>
     <string name="login_or_continue_with">OR</string>

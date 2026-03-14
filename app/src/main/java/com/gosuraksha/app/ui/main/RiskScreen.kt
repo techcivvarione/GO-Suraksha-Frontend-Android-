@@ -48,16 +48,17 @@ import com.gosuraksha.app.design.components.AppCard
 import com.gosuraksha.app.risk.RiskViewModel
 import com.gosuraksha.app.ui.components.localizedUiMessage
 import com.gosuraksha.app.ui.motion.MotionSpec
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 
 @Composable
 fun RiskScreen(
     viewModel: RiskViewModel = viewModel()
 ) {
-    val score by viewModel.score.collectAsState()
-    val timeline by viewModel.timeline.collectAsState()
-    val insights by viewModel.insights.collectAsState()
-    val loading by viewModel.loading.collectAsState()
-    val error by viewModel.error.collectAsState()
+    val score by viewModel.score.collectAsStateWithLifecycle()
+    val timeline by viewModel.timeline.collectAsStateWithLifecycle()
+    val insights by viewModel.insights.collectAsStateWithLifecycle()
+    val loading by viewModel.loading.collectAsStateWithLifecycle()
+    val error by viewModel.error.collectAsStateWithLifecycle()
 
     LaunchedEffect(Unit) {
         viewModel.loadScore()
@@ -96,7 +97,7 @@ fun RiskScreen(
                 defaultElevation = 4.dp,
                 pressedElevation = 4.dp
             ),
-            contentPadding = androidx.compose.foundation.layout.PaddingValues(20.dp)
+            contentPadding = androidx.compose.foundation.layout.PaddingValues(24.dp)
         ) {
             Text(
                 text = stringResource(R.string.ui_riskscreen_2),
@@ -345,3 +346,5 @@ private fun SignalMiniCard(
         }
     }
 }
+
+

@@ -8,10 +8,6 @@ data class EmailScanRequest(
     val email: String
 )
 
-data class QrScanRequest(
-    val raw_payload: String
-)
-
 data class ThreatScanRequest(
     val text: String
 )
@@ -39,23 +35,6 @@ data class BreachItem(
     val compromised_data: List<String>?
 )
 
-data class BreachAnalysisDto(
-    val total_breaches: Int,
-    val highest_risk_category: String?,
-    val categories: Map<String, CategoryDetailDto>?
-)
-
-data class CategoryDetailDto(
-    val count: Int,
-    val sites: List<String>,
-    val severity: String
-)
-
-data class UpgradeInfoDto(
-    val required: Boolean,
-    val message: String
-)
-
 data class AiExplainRequestDto(
     val text: String
 )
@@ -63,13 +42,4 @@ data class AiExplainRequestDto(
 data class AiExplainResponseDto(
     val explanation: String?,
     val ai_explanation: String?
-)
-
-data class AiImageResponseDto(
-    val scan_type: String,
-    val result: String,
-    val confidence: Int,
-    val method: String,
-    val signals: List<String>?,
-    val upgrade: UpgradeInfoDto?
 )

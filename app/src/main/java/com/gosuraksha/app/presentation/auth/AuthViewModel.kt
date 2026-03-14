@@ -135,13 +135,19 @@ class AuthViewModel(
         onError: (String) -> Unit
     ) {
         viewModelScope.launch {
+            Log.d("GoogleSignInFlow", "Starting backend exchange")
             when (val result = googleLoginUseCase(idToken)) {
                 is AppResult.Success -> {
+                    Log.d("GoogleSignInFlow", "Backend exchange succeeded")
                     SessionManager.setUser(result.data.user)
                     _isLoggedIn.value = true
                     onSuccess()
                 }
-                is AppResult.Failure -> onError(result.error.toMessage())
+                is AppResult.Failure -> {
+                    val message = result.error.toMessage()
+                    Log.e("GoogleSignInFlow", "Backend exchange failed")
+                    onError(message)
+                }
             }
         }
     }
@@ -172,7 +178,7 @@ class AuthViewModel(
             val response = ApiClient.authApi.sendEmailOtp(EmailRequest(email))
             _isSendingOtp.value = false
 
-            Log.d("OTP_WIRING", "sendEmailOtp code=${response.code()}")
+            Log.d("OTP_WIRING", "sendEmailOtp completed with code=${response.code()}")
             Log.d("OTP_WIRING", "sendEmailOtp errorBody=${response.errorBody()?.string()}")
 
             if (response.isSuccessful) {
@@ -181,7 +187,7 @@ class AuthViewModel(
             }
         } catch (t: Throwable) {
             _isSendingOtp.value = false
-            Log.d("OTP_WIRING", "sendEmailOtp exception=${t.message}")
+            Log.e("OTP_WIRING", "sendEmailOtp failed", t)
         }
     }
 
@@ -198,7 +204,7 @@ class AuthViewModel(
 
             _isVerifyingOtp.value = false
 
-            Log.d("OTP_WIRING", "verifyEmailOtp code=${response.code()}")
+            Log.d("OTP_WIRING", "verifyEmailOtp completed with code=${response.code()}")
             Log.d("OTP_WIRING", "verifyEmailOtp errorBody=${response.errorBody()?.string()}")
 
             if (response.isSuccessful && response.body()?.success == true) {
@@ -209,7 +215,7 @@ class AuthViewModel(
         } catch (t: Throwable) {
             _isVerifyingOtp.value = false
             _otpError.value = "Invalid code"
-            Log.d("OTP_WIRING", "verifyEmailOtp exception=${t.message}")
+            Log.e("OTP_WIRING", "verifyEmailOtp failed", t)
         }
     }
 
@@ -257,3 +263,4 @@ class AuthViewModelFactory(
         throw IllegalArgumentException("Unknown ViewModel class")
     }
 }
+
