@@ -1,125 +1,62 @@
 package com.gosuraksha.app.ui.history
 
-import com.gosuraksha.app.R
-import androidx.compose.ui.res.stringResource
-import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
-import com.gosuraksha.app.design.components.AppCard
-import com.gosuraksha.app.history.HistoryViewModel
-import com.gosuraksha.app.history.model.HistoryItem
+import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.gosuraksha.app.design.tokens.ColorTokens
+import com.gosuraksha.app.history.HistoryViewModel
+import com.gosuraksha.app.history.HistoryViewModelFactory
+import com.gosuraksha.app.ui.history.components.HistoryEmptyState
+import com.gosuraksha.app.ui.history.components.HistoryErrorState
+import com.gosuraksha.app.ui.history.components.HistoryList
+import com.gosuraksha.app.ui.history.components.HistoryLoadingState
+import com.gosuraksha.app.ui.history.components.HistoryTopBar
+import com.gosuraksha.app.ui.history.model.RiskLevel
+import com.gosuraksha.app.ui.history.model.toGroupedListItems
+import com.gosuraksha.app.ui.history.model.toRiskLevel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun HistoryScreen(
-    onBack: () -> Unit
-) {
-    val viewModel: HistoryViewModel = viewModel()
+fun HistoryScreen(onBack: () -> Unit) {
+    val app = LocalContext.current.applicationContext as android.app.Application
+    val viewModel: HistoryViewModel = viewModel(factory = HistoryViewModelFactory(app))
     val history by viewModel.history.collectAsStateWithLifecycle()
     val loading by viewModel.loading.collectAsStateWithLifecycle()
     val error by viewModel.error.collectAsStateWithLifecycle()
 
-    LaunchedEffect(Unit) {
-        viewModel.loadHistory()
-    }
+    LaunchedEffect(Unit) { viewModel.loadHistory() }
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text(stringResource(R.string.ui_historyscreen_1)) },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = stringResource(R.string.ui_historyscreen_4))
-                    }
-                }
+    val safeHistory = history.orEmpty()
+    val threatCount = safeHistory.count { it.risk.toRiskLevel() == RiskLevel.THREAT }
+    val listItems = remember(safeHistory) { safeHistory.toGroupedListItems() }
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(ColorTokens.background())
+    ) {
+        HistoryTopBar(
+            scanCount = safeHistory.size,
+            threatCount = threatCount,
+            onBack = onBack
+        )
+        when {
+            loading -> HistoryLoadingState()
+            error != null -> HistoryErrorState(message = error ?: "Unknown error")
+            safeHistory.isEmpty() -> HistoryEmptyState()
+            else -> HistoryList(
+                items = listItems,
+                onDelete = { item -> viewModel.deleteHistory(item.id) }
             )
         }
-    ) { padding ->
-
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding)
-                .padding(16.dp)
-        ) {
-
-            when {
-                loading -> {
-                    CircularProgressIndicator()
-                }
-
-                error != null -> {
-                    Text(
-                        text = error ?: "Unknown error",
-                        color = MaterialTheme.colorScheme.error
-                    )
-                }
-
-                history.isEmpty() -> {
-                    Text(stringResource(R.string.ui_historyscreen_2))
-                }
-
-                else -> {
-                    LazyColumn(
-                        verticalArrangement = Arrangement.spacedBy(12.dp)
-                    ) {
-                        items(history) { item ->
-                            HistoryCard(
-                                item = item,
-                                onDelete = {
-                                    viewModel.deleteHistory(item.id)
-                                }
-                            )
-                        }
-                    }
-                }
-            }
-        }
     }
 }
-
-@Composable
-private fun HistoryCard(
-    item: HistoryItem,
-    onDelete: () -> Unit
-) {
-    AppCard(
-        modifier = Modifier.fillMaxWidth()
-    ) {
-        Text(
-            text = item.risk,
-            style = MaterialTheme.typography.titleMedium
-        )
-
-        Spacer(modifier = Modifier.height(4.dp))
-
-        Text(
-            text = item.input_text.take(120),
-            style = MaterialTheme.typography.bodyMedium
-        )
-
-        Spacer(modifier = Modifier.height(8.dp))
-
-        Row(
-            horizontalArrangement = Arrangement.SpaceBetween,
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Text(stringResource(R.string.ui_historyscreen_3, item.score))
-
-            IconButton(onClick = onDelete) {
-                Icon(Icons.Default.Delete, contentDescription = stringResource(R.string.ui_historyscreen_5))
-            }
-        }
-    }
-}
-
-

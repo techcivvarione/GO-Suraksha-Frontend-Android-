@@ -21,6 +21,7 @@ import com.gosuraksha.app.domain.usecase.SignupUseCase
 import com.gosuraksha.app.domain.usecase.ScanUseCases
 import com.gosuraksha.app.domain.usecase.AnalyzeQrUseCase
 import com.gosuraksha.app.domain.usecase.AnalyzeTextUseCase
+import com.gosuraksha.app.domain.usecase.ExplainImageUseCase
 import com.gosuraksha.app.domain.usecase.ExplainScanUseCase
 import com.gosuraksha.app.domain.usecase.ScanAiImageUseCase
 import com.gosuraksha.app.network.ApiClient
@@ -58,10 +59,11 @@ class AppContainer(
 
     val scanUseCases: ScanUseCases by lazy {
         ScanUseCases(
-            analyze = AnalyzeTextUseCase(scanRepository, dispatchers),
-            analyzeQr = AnalyzeQrUseCase(scanRepository, dispatchers),
-            explain = ExplainScanUseCase(scanRepository, dispatchers),
-            scanAiImage = ScanAiImageUseCase(scanRepository, dispatchers)
+            analyze      = AnalyzeTextUseCase(scanRepository, dispatchers),
+            analyzeQr    = AnalyzeQrUseCase(scanRepository, dispatchers),
+            explain      = ExplainScanUseCase(scanRepository, dispatchers),
+            explainImage = ExplainImageUseCase(scanRepository, dispatchers),
+            scanAiImage  = ScanAiImageUseCase(scanRepository, dispatchers),
         )
     }
 }

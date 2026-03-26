@@ -1,5 +1,6 @@
 package com.gosuraksha.app.network
 
+import com.gosuraksha.app.data.remote.dto.auth.ApiResponse
 import com.gosuraksha.app.history.model.*
 import retrofit2.http.*
 
@@ -9,15 +10,15 @@ interface HistoryApi {
     suspend fun listHistory(
         @Query("limit") limit: Int,
         @Query("offset") offset: Int
-    ): HistoryListResponse
+    ): ApiResponse<HistoryListResponse>
 
     @GET("history/{history_id}")
     suspend fun getHistory(
         @Path("history_id") id: String
-    ): HistoryDetailResponse
+    ): ApiResponse<HistoryDetailResponse>
 
     @DELETE("history/{history_id}")
     suspend fun deleteHistory(
         @Path("history_id") id: String
-    ): DeleteHistoryResponse
+    ): ApiResponse<DeleteHistoryResponse>
 }

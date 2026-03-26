@@ -5,15 +5,15 @@ import retrofit2.http.*
 
 interface TrustedContactsApi {
 
-    @GET("trusted-contacts/")
+    @GET("contacts/trusted/")
     suspend fun listTrustedContacts(): TrustedContactsListResponse
 
-    @POST("trusted-contacts/")
+    @POST("contacts/trusted/")
     suspend fun addTrustedContact(
         @Body request: AddTrustedContactRequest
     ): AddTrustedContactResponse
 
-    @DELETE("trusted-contacts/{contact_id}")
+    @DELETE("contacts/trusted/{contact_id}")
     suspend fun deleteTrustedContact(
         @Path("contact_id") contactId: String
     ): DeleteTrustedContactResponse

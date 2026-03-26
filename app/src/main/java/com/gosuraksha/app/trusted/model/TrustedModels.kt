@@ -2,9 +2,11 @@ package com.gosuraksha.app.trusted.model
 
 data class TrustedContact(
     val id: String?,
-    val contact_name: String?,
-    val contact_email: String?,
-    val contact_phone: String?,
+    val name: String?,
+    val email: String?,
+    val phone: String?,
+    val relationship: String?,
+    val is_primary: Boolean?,
     val status: String?,
     val created_at: String?
 )
@@ -15,9 +17,9 @@ data class TrustedContactsListResponse(
 )
 
 data class AddTrustedContactRequest(
-    val contact_name: String,
-    val contact_email: String?,
-    val contact_phone: String?
+    val name: String,
+    val email: String?,
+    val phone: String?
 )
 
 data class AddTrustedContactResponse(

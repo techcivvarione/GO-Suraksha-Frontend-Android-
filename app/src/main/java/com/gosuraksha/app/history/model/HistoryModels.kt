@@ -4,7 +4,7 @@ data class HistoryListResponse(
     val count: Int,
     val limit: Int,
     val offset: Int,
-    val history: List<HistoryItem>
+    val history: List<HistoryItem>? = emptyList()
 )
 
 data class HistoryItem(
@@ -12,7 +12,7 @@ data class HistoryItem(
     val input_text: String,
     val risk: String,
     val score: Int,
-    val reasons: List<String>,
+    val reasons: List<String>? = emptyList(),
     val created_at: String
 )
 
@@ -21,7 +21,7 @@ data class HistoryDetailResponse(
     val input_text: String,
     val risk: String,
     val score: Int,
-    val reasons: List<String>,
+    val reasons: List<String>? = emptyList(),
     val created_at: String
 )
 

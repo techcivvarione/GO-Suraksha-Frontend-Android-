@@ -1,62 +1,68 @@
 package com.gosuraksha.app.navigation
 
-import com.gosuraksha.app.navigation.Screen
-import com.gosuraksha.app.ui.screens.CyberSosScreen
+import android.app.Activity
+import android.util.Log
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.navigation.compose.*
-import android.app.Application
-import com.gosuraksha.app.MainActivity
-import com.gosuraksha.app.core.OnboardingPrefs
+import androidx.navigation.compose.NavHost
+import com.gosuraksha.app.BuildConfig
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
+import com.gosuraksha.app.core.LanguagePrefs
+import com.gosuraksha.app.core.OnboardingManager
+import com.gosuraksha.app.core.session.SessionManager
+import com.gosuraksha.app.domain.usecase.AuthUseCaseProvider
 import com.gosuraksha.app.presentation.auth.AuthViewModel
 import com.gosuraksha.app.presentation.auth.AuthViewModelFactory
-import com.gosuraksha.app.domain.usecase.AuthUseCaseProvider
-import com.gosuraksha.app.core.LanguagePrefs
-import com.gosuraksha.app.core.session.SessionManager
 import com.gosuraksha.app.ui.auth.LoginScreen
-import com.gosuraksha.app.ui.auth.SignupScreen
+import com.gosuraksha.app.ui.auth.OtpScreen
+import com.gosuraksha.app.ui.auth.ProfileSetupScreen
+import com.gosuraksha.app.ui.auth.VerifyPhoneScreen
 import com.gosuraksha.app.ui.entry.EntryScreen
 import com.gosuraksha.app.ui.history.HistoryScreen
 import com.gosuraksha.app.ui.language.LanguageSelectorScreen
 import com.gosuraksha.app.ui.main.MainShell
 import com.gosuraksha.app.ui.onboarding.IntroOnboardingScreen
-import com.gosuraksha.app.ui.security.PinManager
-import com.gosuraksha.app.ui.security.SetPinScreen
-import com.gosuraksha.app.ui.security.UnlockPinScreen
+import com.gosuraksha.app.ui.screens.CyberSosScreen
+import com.gosuraksha.app.ui.security.BiometricUnlockScreen
+import com.gosuraksha.app.ui.signup.SignupScreen
 import com.gosuraksha.app.ui.trusted.TrustedContactsScreen
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 
 @Composable
 fun AppNavGraph() {
-
     val navController = rememberNavController()
     val appContext = LocalContext.current.applicationContext
     val provider = appContext as AuthUseCaseProvider
     val authViewModel: AuthViewModel = viewModel(
-        factory = AuthViewModelFactory(appContext as Application, provider.authUseCases())
+        factory = AuthViewModelFactory(appContext as android.app.Application, provider.authUseCases())
     )
     val isLoggedIn by authViewModel.isLoggedIn.collectAsStateWithLifecycle()
     val isLoadingSession by authViewModel.isLoadingSession.collectAsStateWithLifecycle()
     val context = LocalContext.current
-    val pinManager = remember(context) { PinManager(context) }
+    val onboardingManager = remember(context) { OnboardingManager(context) }
     val scope = rememberCoroutineScope()
+    var isFirstLaunch by remember(context) { mutableStateOf(onboardingManager.isFirstLaunch()) }
 
     val hasSelectedLanguage by LanguagePrefs
         .hasSelectedLanguage(context)
         .collectAsStateWithLifecycle(initialValue = false)
-    val hasCompletedOnboarding by OnboardingPrefs
-        .isCompleted(context)
-        .collectAsStateWithLifecycle(initialValue = null)
 
-    if (isLoadingSession || hasCompletedOnboarding == null) {
+    if (isLoadingSession) {
         Box(
             modifier = Modifier.fillMaxSize(),
             contentAlignment = Alignment.Center
@@ -68,6 +74,7 @@ fun AppNavGraph() {
 
     LaunchedEffect(Unit) {
         SessionManager.sessionExpired.collectLatest {
+            authViewModel.logout()
             navController.navigate(Screen.Login.route) {
                 popUpTo(0) { inclusive = true }
             }
@@ -78,20 +85,13 @@ fun AppNavGraph() {
         navController = navController,
         startDestination = Screen.Entry.route
     ) {
-
         composable(Screen.Entry.route) {
             EntryScreen {
                 if (isLoggedIn) {
-                    if (pinManager.isPinSet()) {
-                        navController.navigate(Screen.UnlockPin.route) {
-                            popUpTo(Screen.Entry.route) { inclusive = true }
-                        }
-                    } else {
-                        navController.navigate(Screen.SetPin.route) {
-                            popUpTo(Screen.Entry.route) { inclusive = true }
-                        }
+                    navController.navigate(Screen.UnlockPin.route) {
+                        popUpTo(Screen.Entry.route) { inclusive = true }
                     }
-                } else if (hasCompletedOnboarding == false) {
+                } else if (isFirstLaunch) {
                     navController.navigate(Screen.Onboarding.route) {
                         popUpTo(Screen.Entry.route) { inclusive = true }
                     }
@@ -110,10 +110,8 @@ fun AppNavGraph() {
         composable(Screen.Onboarding.route) {
             IntroOnboardingScreen(
                 onComplete = {
-                    scope.launch {
-                        OnboardingPrefs.setCompleted(context, true)
-                    }
-                    (context as? MainActivity)?.requestCallPermissions()
+                    onboardingManager.setFirstLaunchCompleted()
+                    isFirstLaunch = false
                     navController.navigate(
                         if (hasSelectedLanguage) Screen.Login.route else Screen.Language.route
                     ) {
@@ -139,14 +137,22 @@ fun AppNavGraph() {
         composable(Screen.Login.route) {
             LoginScreen(
                 viewModel = authViewModel,
-                onLoginSuccess = {
-                    if (!pinManager.isPinSet()) {
-                        navController.navigate(Screen.SetPin.route) {
-                            popUpTo(0) { inclusive = true }
+                onOtpSent = {
+                    if (BuildConfig.DEBUG) {
+                        Log.d("AUTH_DEBUG", "Current route before OTP nav = ${navController.currentBackStackEntry?.destination?.route}")
+                    }
+                    navController.navigate(Screen.Otp.route) {
+                        launchSingleTop = true
+                    }
+                },
+                onLoginResolved = { needsPhoneVerification ->
+                    if (needsPhoneVerification) {
+                        navController.navigate(Screen.VerifyPhone.route) {
+                            launchSingleTop = true
                         }
                     } else {
-                        navController.navigate(Screen.UnlockPin.route) {
-                            popUpTo(0) { inclusive = true }
+                        navController.navigate(Screen.Home.route) {
+                            popUpTo(Screen.Login.route) { inclusive = true }
                         }
                     }
                 },
@@ -156,26 +162,42 @@ fun AppNavGraph() {
             )
         }
 
-        composable(Screen.SetPin.route) {
-            SetPinScreen(
-                pinManager = pinManager,
-                onPinCreated = {
-                    navController.navigate(Screen.Home.route) {
-                        popUpTo(0) { inclusive = true }
+        composable(Screen.Otp.route) {
+            OtpScreen(
+                viewModel = authViewModel,
+                onVerified = { isNewUser ->
+                    if (isNewUser) {
+                        navController.navigate(Screen.ProfileSetup.route) {
+                            popUpTo(Screen.Login.route) { inclusive = true }
+                        }
+                    } else {
+                        navController.navigate(Screen.Home.route) {
+                            popUpTo(Screen.Login.route) { inclusive = true }
+                        }
+                    }
+                },
+                onBack = {
+                    if (!navController.popBackStack()) {
+                        navController.navigate(Screen.Login.route) {
+                            popUpTo(0) { inclusive = true }
+                        }
                     }
                 }
             )
         }
 
-        composable(Screen.UnlockPin.route) {
-            UnlockPinScreen(
-                pinManager = pinManager,
-                onUnlocked = {
-                    navController.navigate(Screen.Home.route) {
-                        popUpTo(0) { inclusive = true }
+        composable(Screen.VerifyPhone.route) {
+            VerifyPhoneScreen(
+                viewModel = authViewModel,
+                onOtpSent = {
+                    if (BuildConfig.DEBUG) {
+                        Log.d("AUTH_DEBUG", "Current route before OTP nav = ${navController.currentBackStackEntry?.destination?.route}")
+                    }
+                    navController.navigate(Screen.Otp.route) {
+                        launchSingleTop = true
                     }
                 },
-                onForceLogout = {
+                onBack = {
                     authViewModel.logout()
                     navController.navigate(Screen.Login.route) {
                         popUpTo(0) { inclusive = true }
@@ -184,8 +206,29 @@ fun AppNavGraph() {
             )
         }
 
-        composable(Screen.Signup.route) {
+        composable(Screen.ProfileSetup.route) {
+            ProfileSetupScreen(
+                authViewModel = authViewModel,
+                onBackToLogin = {
+                    authViewModel.logout()
+                    navController.navigate(Screen.Login.route) {
+                        popUpTo(0) { inclusive = true }
+                    }
+                }
+            )
+        }
 
+        composable(Screen.UnlockPin.route) {
+            BiometricUnlockScreen(
+                onUnlocked = {
+                    navController.navigate(Screen.Home.route) {
+                        popUpTo(0) { inclusive = true }
+                    }
+                }
+            )
+        }
+
+        composable(Screen.Signup.route) {
             SignupScreen(
                 viewModel = authViewModel,
                 onSignupSuccess = {
@@ -201,7 +244,6 @@ fun AppNavGraph() {
             )
         }
 
-        // ✅ FIXED: Proper HOME route wrapper
         composable(Screen.Home.route) {
             MainShell(
                 onLogout = {
@@ -228,8 +270,5 @@ fun AppNavGraph() {
         composable(Screen.CyberSos.route) {
             CyberSosScreen()
         }
-
     }
 }
-
-

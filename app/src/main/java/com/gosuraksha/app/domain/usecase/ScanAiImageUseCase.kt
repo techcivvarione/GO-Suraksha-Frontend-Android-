@@ -10,7 +10,7 @@ import com.gosuraksha.app.domain.result.DomainResult
 data class ScanRealityParams(
     val context: Context,
     val uri: Uri,
-    val mimeType: String
+    val mimeType: String  // kept for call-site compatibility; mimeType is resolved from URI in impl
 )
 
 class ScanAiImageUseCase(
@@ -18,6 +18,6 @@ class ScanAiImageUseCase(
     dispatchers: DispatcherProvider
 ) : UseCase<ScanRealityParams, DomainResult<AiImageScanResult>>(dispatchers) {
     override suspend fun execute(params: ScanRealityParams): DomainResult<AiImageScanResult> {
-        return repository.scanRealityMedia(params.context, params.uri, params.mimeType)
+        return repository.scanAiImage(params.context, params.uri)
     }
 }

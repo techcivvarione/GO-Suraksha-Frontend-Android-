@@ -41,11 +41,6 @@
         <meta-data
             android:name="com.google.android.geo.API_KEY"
             android:value="${MAPS_API_KEY}" />
-
-        <meta-data
-            android:name="com.mapbox.token"
-            android:value="${MAPBOX_ACCESS_TOKEN}" />
-
         <activity
             android:name=".MainActivity"
             android:exported="true">
@@ -101,3 +96,4 @@
     </application>
 
 </manifest>
+

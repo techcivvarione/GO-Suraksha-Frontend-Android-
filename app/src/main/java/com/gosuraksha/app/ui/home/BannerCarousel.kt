@@ -1,5 +1,12 @@
 package com.gosuraksha.app.ui.home
 
+// =============================================================================
+// BannerCarousel.kt — Go Suraksha  (updated for green brand system)
+// Same API, same BannerData/BannerIllustration data classes.
+// Only change: dot active color = #22C55E (brand green), height = 170dp.
+// Auto-scroll 6s, pause on drag, animated pill dots.
+// =============================================================================
+
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
@@ -25,8 +32,10 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -66,16 +75,18 @@ fun BannerCarousel(
     val isDark = ColorTokens.LocalAppDarkMode.current
     val pagerState = rememberPagerState(pageCount = { banners.size })
     val scope = rememberCoroutineScope()
-    var isDragging = false
+    var isDragging by remember { mutableStateOf(false) }
 
-    LaunchedEffect(pagerState, banners.size) {
+    LaunchedEffect(pagerState) {
         while (true) {
-            delay(6_000L)
+            delay(6000L)
             if (!isDragging) {
                 val next = (pagerState.currentPage + 1) % banners.size
                 pagerState.animateScrollToPage(
                     page = next,
-                    animationSpec = spring(stiffness = androidx.compose.animation.core.Spring.StiffnessLow)
+                    animationSpec = spring(
+                        stiffness = androidx.compose.animation.core.Spring.StiffnessLow
+                    )
                 )
             }
         }
@@ -86,7 +97,7 @@ fun BannerCarousel(
             state = pagerState,
             modifier = Modifier
                 .fillMaxWidth()
-                .height(180.dp)
+                .height(170.dp)
                 .pointerInput(Unit) {
                     awaitPointerEventScope {
                         while (true) {
@@ -108,14 +119,16 @@ fun BannerCarousel(
         ) {
             repeat(banners.size) { index ->
                 val isActive = pagerState.currentPage == index
-                PaginationDot(
+                BannerDot(
                     isActive = isActive,
-                    isDark = isDark,
-                    onClick = {
+                    isDark   = isDark,
+                    onClick  = {
                         scope.launch {
                             pagerState.animateScrollToPage(
                                 page = index,
-                                animationSpec = spring(stiffness = androidx.compose.animation.core.Spring.StiffnessLow)
+                                animationSpec = spring(
+                                    stiffness = androidx.compose.animation.core.Spring.StiffnessLow
+                                )
                             )
                         }
                     }
@@ -133,63 +146,73 @@ private fun BannerCard(banner: BannerData, isDark: Boolean) {
     Surface(
         modifier = Modifier
             .fillMaxWidth()
-            .height(180.dp)
-            .clip(RoundedCornerShape(22.dp))
-            .clickable(interactionSource = interactionSource, indication = null, onClick = banner.onClick),
-        shape = RoundedCornerShape(22.dp),
+            .height(170.dp)
+            .clip(RoundedCornerShape(20.dp))
+            .clickable(interactionSource = interactionSource,
+                indication = null, onClick = banner.onClick),
+        shape           = RoundedCornerShape(20.dp),
         shadowElevation = if (isDark) 6.dp else 3.dp,
-        tonalElevation = 0.dp,
-        color = banner.gradientStart
+        tonalElevation  = 0.dp,
+        color           = banner.gradientStart
     ) {
         Box(Modifier.fillMaxSize()) {
+            // Gradient
             Box(
                 modifier = Modifier
                     .fillMaxSize()
                     .background(
                         Brush.linearGradient(
                             colors = listOf(banner.gradientStart, banner.gradientEnd),
-                            start = Offset(0f, 0f),
-                            end = Offset(Float.POSITIVE_INFINITY, Float.POSITIVE_INFINITY)
+                            start  = Offset(0f, 0f),
+                            end    = Offset(Float.POSITIVE_INFINITY, Float.POSITIVE_INFINITY)
                         )
                     )
             )
+            // Illustration
             Box(
                 modifier = Modifier
                     .fillMaxSize()
                     .drawBehind { drawBannerIllustration(banner.illustrationType) }
             )
+            // Content
             Column(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(horizontal = 22.dp, vertical = 20.dp),
+                    .padding(horizontal = 20.dp, vertical = 18.dp),
                 verticalArrangement = Arrangement.SpaceBetween
             ) {
-                Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                Column(verticalArrangement = Arrangement.spacedBy(5.dp)) {
                     Text(
-                        text = banner.title,
-                        fontSize = 20.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = Color.White,
-                        lineHeight = 26.sp
+                        text       = banner.title,
+                        fontSize   = 17.sp,
+                        fontWeight = FontWeight.ExtraBold,
+                        color      = Color.White,
+                        lineHeight = 22.sp,
+                        letterSpacing = (-0.3).sp
                     )
                     Text(
-                        text = banner.subtitle,
-                        fontSize = 13.sp,
-                        color = Color(0xCCFFFFFF),
-                        lineHeight = 18.sp
+                        text       = banner.subtitle,
+                        fontSize   = 12.sp,
+                        color      = Color.White.copy(alpha = 0.72f),
+                        lineHeight = 17.sp
                     )
                 }
-                Box(
+                // CTA pill
+                Row(
                     modifier = Modifier
-                        .background(Color.White.copy(alpha = 0.18f), RoundedCornerShape(20.dp))
-                        .padding(horizontal = 16.dp, vertical = 8.dp)
+                        .clip(RoundedCornerShape(20.dp))
+                        .background(Color.White.copy(alpha = 0.16f))
+                        .padding(horizontal = 14.dp, vertical = 7.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(5.dp)
                 ) {
                     Text(
-                        text = "${banner.ctaLabel}  ->",
-                        fontSize = 13.sp,
+                        text       = banner.ctaLabel,
+                        fontSize   = 11.sp,
                         fontWeight = FontWeight.SemiBold,
-                        color = Color.White
+                        color      = Color.White
                     )
+                    Text("→", fontSize = 11.sp, color = Color.White)
                 }
             }
         }
@@ -197,15 +220,18 @@ private fun BannerCard(banner: BannerData, isDark: Boolean) {
 }
 
 @Composable
-private fun PaginationDot(isActive: Boolean, isDark: Boolean, onClick: () -> Unit) {
+private fun BannerDot(isActive: Boolean, isDark: Boolean, onClick: () -> Unit) {
     val width by animateDpAsState(
-        targetValue = if (isActive) 20.dp else 6.dp,
+        targetValue   = if (isActive) 20.dp else 6.dp,
         animationSpec = tween(300),
-        label = "dot_width"
+        label         = "dot_width"
     )
-    val activeColor = Color(0xFF3B6FD4)
-    val inactiveColor = if (isDark) Color(0xFF7A84A0).copy(alpha = 0.35f)
-    else Color(0xFF94A3B8).copy(alpha = 0.50f)
+    // Brand green dot — both dark and light mode
+    val activeColor   = Color(0xFF22C55E)
+    val inactiveColor = if (isDark)
+        Color(0xFF2D5535).copy(alpha = 0.60f)
+    else
+        Color(0xFF6B9E78).copy(alpha = 0.35f)
 
     Box(
         modifier = Modifier
@@ -215,40 +241,40 @@ private fun PaginationDot(isActive: Boolean, isDark: Boolean, onClick: () -> Uni
             .clickable(
                 interactionSource = remember { MutableInteractionSource() },
                 indication = null,
-                onClick = onClick
+                onClick    = onClick
             )
     )
 }
 
 private fun DrawScope.drawBannerIllustration(type: BannerIllustration) {
-    val alpha = 0.08f
+    val c = Color.White.copy(alpha = 0.06f)
     when (type) {
         BannerIllustration.Lock -> {
-            drawRoundRect(
-                color = Color.White.copy(alpha = alpha),
-                topLeft = Offset(size.width * 0.74f, size.height * 0.20f),
-                size = Size(size.width * 0.16f, size.height * 0.22f),
-                cornerRadius = androidx.compose.ui.geometry.CornerRadius(26f, 26f)
-            )
+            drawCircle(c, radius = size.width * 0.38f,
+                center = Offset(size.width * 0.88f, size.height * 0.18f))
+            drawCircle(c, radius = size.width * 0.22f,
+                center = Offset(size.width * 0.78f, size.height * 0.85f))
+            drawRect(c,
+                topLeft = Offset(size.width * 0.72f, size.height * 0.55f),
+                size    = Size(size.width * 0.22f, size.height * 0.35f))
         }
         BannerIllustration.Scanner -> {
-            drawCircle(
-                color = Color.White.copy(alpha = alpha),
-                radius = size.minDimension * 0.18f,
-                center = Offset(size.width * 0.80f, size.height * 0.42f)
-            )
+            val stripeH = size.height / 15f
+            repeat(6) { i ->
+                drawRect(c,
+                    topLeft = Offset(size.width * 0.55f, i * size.height / 6f + size.height * 0.1f),
+                    size    = Size(size.width * 0.42f, stripeH))
+            }
+            drawCircle(c, radius = size.width * 0.28f,
+                center = Offset(size.width * 0.90f, size.height * 0.12f))
         }
         BannerIllustration.Diamond -> {
-            val w = size.width
-            val h = size.height
-            val path = androidx.compose.ui.graphics.Path().apply {
-                moveTo(w * 0.82f, h * 0.18f)
-                lineTo(w * 0.90f, h * 0.34f)
-                lineTo(w * 0.82f, h * 0.50f)
-                lineTo(w * 0.74f, h * 0.34f)
-                close()
-            }
-            drawPath(path, Color.White.copy(alpha = alpha))
+            drawCircle(c, radius = size.width * 0.32f,
+                center = Offset(size.width * 0.85f, size.height * 0.35f))
+            drawCircle(c, radius = size.width * 0.18f,
+                center = Offset(size.width * 0.70f, size.height * 0.78f))
+            drawCircle(c, radius = size.width * 0.10f,
+                center = Offset(size.width * 0.60f, size.height * 0.20f))
         }
     }
 }

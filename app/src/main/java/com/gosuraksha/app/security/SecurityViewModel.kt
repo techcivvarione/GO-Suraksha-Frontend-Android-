@@ -2,9 +2,12 @@ package com.gosuraksha.app.security.model
 
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.google.gson.Gson
 import com.google.gson.JsonObject
+import com.gosuraksha.app.data.repository.SecurityRepository
 import com.gosuraksha.app.network.ApiClient
 import com.gosuraksha.app.security.model.*
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -13,7 +16,10 @@ import kotlinx.coroutines.launch
 import okhttp3.ResponseBody
 import retrofit2.HttpException
 
-class SecurityViewModel(application: Application) : AndroidViewModel(application) {
+class SecurityViewModel(
+    application: Application,
+    private val repository: SecurityRepository
+) : AndroidViewModel(application) {
 
     // -----------------------------
     // GLOBAL STATE
@@ -78,8 +84,8 @@ class SecurityViewModel(application: Application) : AndroidViewModel(application
                 _loading.value = true
                 _error.value = null
 
-                _status.value = ApiClient.securityApi.getSecurityStatus()
-                _healthScore.value = ApiClient.securityApi.getHealthScore()
+                _status.value = repository.getSecurityStatus()
+                _healthScore.value = repository.getHealthScore()
 
             } catch (e: HttpException) {
                 _error.value = parseHttpError(e)
@@ -98,8 +104,7 @@ class SecurityViewModel(application: Application) : AndroidViewModel(application
     ) {
         viewModelScope.launch {
             try {
-                val response =
-                    ApiClient.securityApi.getAuditLogs(limit, offset, eventType)
+                val response = repository.getAuditLogs(limit, offset, eventType)
                 _auditLogs.value = response.data
             } catch (e: HttpException) {
                 _error.value = parseHttpError(e)
@@ -112,8 +117,7 @@ class SecurityViewModel(application: Application) : AndroidViewModel(application
     fun loadHealthTrend(days: Int = 30) {
         viewModelScope.launch {
             try {
-                val response =
-                    ApiClient.securityApi.getHealthTrend(days)
+                val response = repository.getHealthTrend(days)
                 _healthTrend.value = response.trend
             } catch (e: HttpException) {
                 _error.value = parseHttpError(e)
@@ -131,7 +135,7 @@ class SecurityViewModel(application: Application) : AndroidViewModel(application
         viewModelScope.launch {
             try {
                 _loading.value = true
-                ApiClient.securityApi.logoutAll()
+                repository.logoutAll()
                 _message.value = "security_sessions_logged_out"
             } catch (e: HttpException) {
                 _error.value = parseHttpError(e)
@@ -152,7 +156,7 @@ class SecurityViewModel(application: Application) : AndroidViewModel(application
             try {
                 _loading.value = true
 
-                ApiClient.securityApi.changePassword(
+                repository.changePassword(
                     ChangePasswordRequest(
                         current_password = current,
                         new_password = new,
@@ -182,7 +186,7 @@ class SecurityViewModel(application: Application) : AndroidViewModel(application
         viewModelScope.launch {
             try {
                 _loading.value = true
-                val file = ApiClient.securityApi.exportEvidence()
+                val file = repository.exportEvidence()
                 onSuccess(file)
             } catch (e: HttpException) {
                 _error.value = parseHttpError(e)
@@ -192,5 +196,20 @@ class SecurityViewModel(application: Application) : AndroidViewModel(application
                 _loading.value = false
             }
         }
+    }
+}
+
+class SecurityViewModelFactory(
+    private val application: Application
+) : ViewModelProvider.Factory {
+    override fun <T : ViewModel> create(modelClass: Class<T>): T {
+        if (modelClass.isAssignableFrom(SecurityViewModel::class.java)) {
+            @Suppress("UNCHECKED_CAST")
+            return SecurityViewModel(
+                application,
+                SecurityRepository(ApiClient.securityApi)
+            ) as T
+        }
+        throw IllegalArgumentException("Unknown ViewModel class")
     }
 }

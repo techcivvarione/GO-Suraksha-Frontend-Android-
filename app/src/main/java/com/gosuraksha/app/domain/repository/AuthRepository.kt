@@ -16,4 +16,5 @@ interface AuthRepository {
 
     suspend fun getMe(): AppResult<AuthSession>
     suspend fun logout(): AppResult<Unit>
+    suspend fun deleteAccount(username: String): AppResult<Unit>
 }

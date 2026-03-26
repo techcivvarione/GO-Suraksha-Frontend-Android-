@@ -7,10 +7,10 @@ data class HomeOverviewDto(
 )
 
 data class SecuritySnapshotDto(
-    val scans_done: Int,
-    val threats_detected: Int,
-    val last_scan_at: String,
-    val overall_risk: String
+    val scans_done: Int?,
+    val threats_detected: Int?,
+    val last_scan_at: String?,
+    val overall_risk: String?
 )
 
 data class FinancialImpactDto(
@@ -18,7 +18,7 @@ data class FinancialImpactDto(
 )
 
 data class GlobalImpactDto(
-    val scope: String,
+    val scope: String?,
     val region_code: String?,
     val payload: ImpactPayloadDto?,
     val confidence: String?,
@@ -27,8 +27,8 @@ data class GlobalImpactDto(
 )
 
 data class ImpactPayloadDto(
-    val year: Int,
-    val trend: String,
-    val display_text: String,
-    val estimated_loss_usd: Long
+    val year: Int?,
+    val trend: String?,
+    val display_text: String?,
+    val estimated_loss_usd: Long?
 )

@@ -3,6 +3,7 @@ package com.gosuraksha.app.auth
 import android.content.Context
 import android.util.Log
 import com.gosuraksha.app.R
+import com.gosuraksha.app.BuildConfig
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.auth.api.signin.GoogleSignInClient
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions
@@ -24,11 +25,13 @@ class GoogleSignInManager(
 
     init {
         val placeholderConfigured = googleClientId == "YOUR_GOOGLE_CLIENT_ID"
-        Log.d(
-            GOOGLE_SIGN_IN_TAG,
-            "GoogleSignInClient initialized. requestEmail=true requestIdToken=true " +
-                "clientIdLength=${googleClientId.length} placeholderClientId=$placeholderConfigured"
-        )
+        if (BuildConfig.DEBUG) {
+            Log.d(
+                GOOGLE_SIGN_IN_TAG,
+                "GoogleSignInClient initialized. requestEmail=true requestIdToken=true " +
+                    "placeholderClientId=$placeholderConfigured"
+            )
+        }
         if (placeholderConfigured) {
             Log.e(
                 GOOGLE_SIGN_IN_TAG,

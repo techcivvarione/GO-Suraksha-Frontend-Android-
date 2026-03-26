@@ -6,6 +6,7 @@ import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import kotlinx.coroutines.flow.firstOrNull
+import kotlinx.coroutines.runBlocking
 import java.security.KeyStore
 import javax.crypto.Cipher
 import javax.crypto.KeyGenerator
@@ -25,18 +26,23 @@ class EncryptedTokenStorage(
     private var cachedToken: String? = null
 
     override suspend fun setToken(token: String) {
-        val encrypted = encrypt(token)
+        val sanitizedToken = token.takeIf { it.isNotBlank() } ?: return
+        val encrypted = encrypt(sanitizedToken)
         context.secureTokenStore.edit { prefs ->
             prefs[tokenKey] = encrypted
         }
-        syncPrefs.edit().putString(tokenKey.name, encrypted).apply()
-        cachedToken = token
+        syncPrefs.edit().putString(tokenKey.name, encrypted).commit()
+        cachedToken = sanitizedToken
     }
 
     override suspend fun getToken(): String? {
-        val stored = context.secureTokenStore.data.firstOrNull()?.get(tokenKey) ?: return null
+        val stored = context.secureTokenStore.data.firstOrNull()?.get(tokenKey)
+            ?: syncPrefs.getString(tokenKey.name, null)
+            ?: return null
         return decrypt(stored)?.also { cachedToken = it }
     }
+
+    suspend fun getAccessToken(): String? = getToken()
 
     override suspend fun clearToken() {
         context.secureTokenStore.edit { prefs ->
@@ -51,16 +57,28 @@ class EncryptedTokenStorage(
         return decrypt(stored)?.also { cachedToken = it }
     }
 
+    fun getAccessTokenSync(): String? = getTokenSync()
+
+    fun saveTokenSync(token: String) {
+        runBlocking { setToken(token) }
+    }
+
     override fun clearTokenSync() {
-        syncPrefs.edit().remove(tokenKey.name).apply()
+        runBlocking {
+            context.secureTokenStore.edit { prefs ->
+                prefs.remove(tokenKey)
+            }
+        }
+        syncPrefs.edit().remove(tokenKey.name).commit()
         cachedToken = null
     }
 
-    private fun encrypt(plainText: String): String {
+    private fun encrypt(plainText: String?): String {
+        val payload = plainText?.takeIf { it.isNotBlank() }?.toByteArray(Charsets.UTF_8) ?: ByteArray(0)
         val cipher = Cipher.getInstance(TRANSFORMATION)
         cipher.init(Cipher.ENCRYPT_MODE, getOrCreateKey())
         val iv = cipher.iv
-        val cipherText = cipher.doFinal(plainText.toByteArray(Charsets.UTF_8))
+        val cipherText = cipher.doFinal(payload)
         val combined = ByteArray(iv.size + cipherText.size)
         System.arraycopy(iv, 0, combined, 0, iv.size)
         System.arraycopy(cipherText, 0, combined, iv.size, cipherText.size)

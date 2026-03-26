@@ -2,14 +2,20 @@ package com.gosuraksha.app.trusted
 
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
+import com.gosuraksha.app.data.repository.TrustedContactsRepository
 import com.gosuraksha.app.network.ApiClient
 import com.gosuraksha.app.trusted.model.*
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 
-class TrustedContactsViewModel(application: Application) :
+class TrustedContactsViewModel(
+    application: Application,
+    private val repository: TrustedContactsRepository
+) :
     AndroidViewModel(application) {
 
     private val _contacts = MutableStateFlow<List<TrustedContact>>(emptyList())
@@ -30,7 +36,7 @@ class TrustedContactsViewModel(application: Application) :
                 _error.value = null
                 _loading.value = true
 
-                val response = ApiClient.trustedContactsApi.listTrustedContacts()
+                val response = repository.listTrustedContacts()
 
                 _contacts.value = response.data ?: emptyList()
 
@@ -47,7 +53,7 @@ class TrustedContactsViewModel(application: Application) :
         viewModelScope.launch {
             try {
                 _error.value = null
-                ApiClient.trustedContactsApi.addTrustedContact(
+                repository.addTrustedContact(
                     AddTrustedContactRequest(name, email, phone)
                 )
                 loadContacts()
@@ -61,7 +67,7 @@ class TrustedContactsViewModel(application: Application) :
         viewModelScope.launch {
             try {
                 _error.value = null
-                ApiClient.trustedContactsApi.deleteTrustedContact(id)
+                repository.deleteTrustedContact(id)
                 loadContacts()
             } catch (e: Exception) {
                 _error.value = e.message
@@ -74,7 +80,7 @@ class TrustedContactsViewModel(application: Application) :
             try {
                 _error.value = null
 
-                val response = ApiClient.trustedContactsApi.getTrustedAlerts()
+                val response = repository.getTrustedAlerts()
 
                 _alerts.value = response.alerts ?: emptyList()
 
@@ -83,5 +89,20 @@ class TrustedContactsViewModel(application: Application) :
                 _error.value = e.message ?: "error_trusted_alerts_load_failed"
             }
         }
+    }
+}
+
+class TrustedContactsViewModelFactory(
+    private val application: Application
+) : ViewModelProvider.Factory {
+    override fun <T : ViewModel> create(modelClass: Class<T>): T {
+        if (modelClass.isAssignableFrom(TrustedContactsViewModel::class.java)) {
+            @Suppress("UNCHECKED_CAST")
+            return TrustedContactsViewModel(
+                application,
+                TrustedContactsRepository(ApiClient.trustedContactsApi)
+            ) as T
+        }
+        throw IllegalArgumentException("Unknown ViewModel class")
     }
 }

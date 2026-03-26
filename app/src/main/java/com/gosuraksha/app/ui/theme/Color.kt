@@ -12,10 +12,10 @@ val PrimaryTealDark = Color(0xFF16A085)
 val CyberGreen = Color(0xFF3CD27D)
 
 // ---- Dark Mode Palette ----
-val DarkBackground = Color(0xFF121B24)
-val DarkSurface = Color(0xFF1B2733)
-val DarkSurfaceVariant = Color(0xFF1E2936)
-val DarkOutline = Color(0xFF2C3A47)
+val DarkBackground = Color(0xFF0B0F14)
+val DarkSurface = Color(0xFF121821)
+val DarkSurfaceVariant = Color(0xFF1A2330)
+val DarkOutline = Color(0xFF1F2A37)
 val DarkTextPrimary = Color(0xFFFFFFFF)
 val DarkTextSecondary = Color(0xFF9FB3C8)
 

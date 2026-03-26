@@ -5,6 +5,7 @@ data class UserProfile(
     val name: String,
     val email: String? = null,
     val phone: String? = null,
+    val profile_image_url: String? = null,
     val role: String? = null,
     val created_at: String? = null,
     val updated_at: String? = null,
@@ -13,11 +14,20 @@ data class UserProfile(
 
 data class UpdateProfileRequest(
     val name: String,
-    val phone: String
+    val profile_image_url: String? = null
+)
+
+data class ProfileUpdateResponse(
+    val status: String,
+    val message: String? = null
 )
 
 data class UpgradePlanRequest(
     val plan: String
+)
+
+data class UploadProfilePhotoResponse(
+    val profile_image_url: String
 )
 
 typealias ProfileResponse = UserProfile

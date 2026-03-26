@@ -1,9 +1,12 @@
 package com.gosuraksha.app.core
 
+import android.app.Activity
 import android.content.Context
+import android.os.Build
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.platform.LocalContext
 import androidx.core.os.LocaleListCompat
@@ -83,10 +86,17 @@ fun LanguageManager(content: @Composable () -> Unit) {
     val currentLanguage by LanguagePrefs.getLanguage(context)
         .collectAsStateWithLifecycle(initialValue = "en")
 
-    androidx.compose.runtime.LaunchedEffect(currentLanguage) {
+    LaunchedEffect(currentLanguage) {
         AppCompatDelegate.setApplicationLocales(
             LocaleListCompat.forLanguageTags(currentLanguage)
         )
+        // On Android 12 and below, setApplicationLocales does not automatically
+        // recreate the activity because AppCompatDelegate per-app language API
+        // relies on the OS recreation hook only available on API 33+.
+        // We recreate manually to ensure every string resource refreshes.
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
+            (context as? Activity)?.recreate()
+        }
     }
 
     CompositionLocalProvider(LocalLanguage provides currentLanguage) {
@@ -94,11 +104,19 @@ fun LanguageManager(content: @Composable () -> Unit) {
     }
 }
 
+/**
+ * Save [languageCode] to DataStore and immediately apply the new locale.
+ * On API < 33 the calling activity is recreated so all string resources refresh.
+ */
 suspend fun changeLanguage(context: Context, languageCode: String) {
     LanguagePrefs.saveLanguage(context, languageCode)
     AppCompatDelegate.setApplicationLocales(
         LocaleListCompat.forLanguageTags(languageCode)
     )
+    // Recreate on pre-API-33 so resources load in the new locale.
+    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
+        (context as? Activity)?.recreate()
+    }
 }
 
 @Composable

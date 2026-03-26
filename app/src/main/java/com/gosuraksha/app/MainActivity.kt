@@ -7,7 +7,6 @@ import android.graphics.Color
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
-import android.provider.Settings
 import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -17,15 +16,13 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.platform.LocalContext
-import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.core.os.LocaleListCompat
 import androidx.core.view.WindowCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.lifecycleScope
+import com.gosuraksha.app.BuildConfig
 import com.google.firebase.messaging.FirebaseMessaging
-import com.gosuraksha.app.call.CallScreeningHelper
-import com.gosuraksha.app.core.OnboardingPrefs
 import com.gosuraksha.app.core.LanguagePrefs
 import com.gosuraksha.app.core.ThemePrefs
 import com.gosuraksha.app.data.remote.dto.auth.RegisterDeviceRequest
@@ -44,7 +41,9 @@ class MainActivity : ComponentActivity() {
     private val notificationPermissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestPermission()
     ) { granted ->
-        Log.d("GO_SURAKSHA_PUSH", "POST_NOTIFICATIONS granted=$granted")
+        if (BuildConfig.DEBUG) {
+            Log.d("GO_SURAKSHA_PUSH", "POST_NOTIFICATIONS granted=$granted")
+        }
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -101,20 +100,6 @@ class MainActivity : ComponentActivity() {
 
     override fun onResume() {
         super.onResume()
-        if (!hasCompletedOnboarding()) return
-        if (!hasCallPermissions()) {
-            requestCallPermissions()
-            return
-        }
-        requestOverlayPermissionIfNeeded()
-        if (!CallScreeningHelper.isCallScreeningEnabled(this)) {
-            Log.d("CALL_SCAM", "Requesting call screening role")
-            runCatching {
-                CallScreeningHelper.requestCallScreeningRole(this)
-            }.onFailure {
-                CallScreeningHelper.requestDefaultDialer(this)
-            }
-        }
     }
 
     private fun requestNotificationPermissionIfNeeded() {
@@ -127,23 +112,6 @@ class MainActivity : ComponentActivity() {
             return
         }
         notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
-    }
-
-    fun requestCallPermissions() {
-        Log.d("CALL_SCAM", "Requesting call permissions")
-        val missingPermissions = arrayOf(
-            Manifest.permission.READ_PHONE_STATE,
-            Manifest.permission.READ_CALL_LOG,
-            Manifest.permission.ACCESS_FINE_LOCATION
-        ).filter {
-            ContextCompat.checkSelfPermission(this, it) != PackageManager.PERMISSION_GRANTED
-        }
-        if (missingPermissions.isEmpty()) return
-        ActivityCompat.requestPermissions(
-            this,
-            missingPermissions.toTypedArray(),
-            REQUEST_CALL_PERMISSIONS
-        )
     }
 
     private fun fetchAndRegisterDeviceToken() {
@@ -192,27 +160,5 @@ class MainActivity : ComponentActivity() {
         ScamAlertNavigationStore.publish(route = route, alertId = alertId)
     }
 
-    private fun requestOverlayPermissionIfNeeded() {
-        if (Settings.canDrawOverlays(this)) return
-        startActivity(
-            Intent(
-                Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
-                Uri.parse("package:$packageName")
-            )
-        )
-    }
-
-    private fun hasCallPermissions(): Boolean {
-        return ContextCompat.checkSelfPermission(this, Manifest.permission.READ_PHONE_STATE) == PackageManager.PERMISSION_GRANTED &&
-            ContextCompat.checkSelfPermission(this, Manifest.permission.READ_CALL_LOG) == PackageManager.PERMISSION_GRANTED
-    }
-
-    private fun hasCompletedOnboarding(): Boolean {
-        return OnboardingPrefs.isCompletedSync(this)
-    }
-
-    private companion object {
-        private const val REQUEST_CALL_PERMISSIONS = 2001
-    }
 }
 

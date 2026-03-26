@@ -27,6 +27,7 @@ fun localizedUiMessage(raw: String): String {
         raw == "error_qr_weekly_report_limit_reached" -> stringResource(R.string.qr_error_weekly_report_limit_reached)
         raw == "error_qr_weekly_scan_limit_reached" -> stringResource(R.string.qr_error_weekly_scan_limit_reached)
         raw == "error_scan_image_read" -> stringResource(R.string.reality_error_read_image)
+        raw == "error_scan_timeout" -> stringResource(R.string.error_scan_timeout)
         raw == "INVALID_TOKEN" -> stringResource(R.string.error_session_invalid)
         raw == "TOKEN_EXPIRED" -> stringResource(R.string.error_unauthorized)
         raw.equals("Invalid token", ignoreCase = true) -> stringResource(R.string.error_unauthorized)

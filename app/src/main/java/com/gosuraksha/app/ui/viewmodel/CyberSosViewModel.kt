@@ -4,10 +4,12 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.google.gson.Gson
 import com.google.gson.JsonObject
 import com.gosuraksha.app.data.remote.dto.CyberSosRequest
+import com.gosuraksha.app.data.mapper.requireData
 import com.gosuraksha.app.data.remote.dto.CyberSosResponse
 import com.gosuraksha.app.data.repository.SecurityRepository
 import com.gosuraksha.app.network.ApiClient
@@ -15,10 +17,9 @@ import kotlinx.coroutines.launch
 import okhttp3.ResponseBody
 import retrofit2.Response
 
-class CyberSosViewModel : ViewModel() {
-
-    // create repository manually
-    private val repository = SecurityRepository(ApiClient.securityApi)
+class CyberSosViewModel(
+    private val repository: SecurityRepository
+) : ViewModel() {
 
     var uiState by mutableStateOf(CyberSosState())
         private set
@@ -54,11 +55,20 @@ class CyberSosViewModel : ViewModel() {
             try {
                 val response = repository.triggerCyberSos(request)
 
-                if (response.isSuccessful && response.body() != null) {
+                if (response.isSuccessful) {
+                    val body = try {
+                        response.requireData("Cyber SOS response body missing")
+                    } catch (_: IllegalStateException) {
+                        uiState = uiState.copy(
+                            isLoading = false,
+                            error = "error_cybersos_failed:${response.code()}"
+                        )
+                        return@launch
+                    }
                     uiState = uiState.copy(
                         isLoading = false,
                         success = true,
-                        data = response.body()
+                        data = body
                     )
                 } else {
                     val parsed = parseCyberSosError(response.errorBody())
@@ -85,3 +95,15 @@ data class CyberSosState(
     val error: String? = null,
     val data: CyberSosResponse? = null
 )
+
+class CyberSosViewModelFactory : ViewModelProvider.Factory {
+    override fun <T : ViewModel> create(modelClass: Class<T>): T {
+        if (modelClass.isAssignableFrom(CyberSosViewModel::class.java)) {
+            @Suppress("UNCHECKED_CAST")
+            return CyberSosViewModel(
+                SecurityRepository(ApiClient.securityApi)
+            ) as T
+        }
+        throw IllegalArgumentException("Unknown ViewModel class")
+    }
+}

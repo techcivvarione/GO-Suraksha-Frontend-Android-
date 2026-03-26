@@ -39,6 +39,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -46,13 +47,16 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.gosuraksha.app.R
 import com.gosuraksha.app.design.components.AppCard
 import com.gosuraksha.app.risk.RiskViewModel
+import com.gosuraksha.app.risk.RiskViewModelFactory
 import com.gosuraksha.app.ui.components.localizedUiMessage
 import com.gosuraksha.app.ui.motion.MotionSpec
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 
 @Composable
 fun RiskScreen(
-    viewModel: RiskViewModel = viewModel()
+    viewModel: RiskViewModel = viewModel(
+        factory = RiskViewModelFactory(LocalContext.current.applicationContext as android.app.Application)
+    )
 ) {
     val score by viewModel.score.collectAsStateWithLifecycle()
     val timeline by viewModel.timeline.collectAsStateWithLifecycle()

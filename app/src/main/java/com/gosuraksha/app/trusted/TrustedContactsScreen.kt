@@ -10,10 +10,12 @@ import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.gosuraksha.app.R
 import com.gosuraksha.app.trusted.TrustedContactsViewModel
+import com.gosuraksha.app.trusted.TrustedContactsViewModelFactory
 import com.gosuraksha.app.ui.components.localizedUiMessage
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 
@@ -22,14 +24,14 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 fun TrustedContactsScreen(
     onBack: () -> Unit
 ) {
-    val viewModel: TrustedContactsViewModel = viewModel()
+    val app = LocalContext.current.applicationContext as android.app.Application
+    val viewModel: TrustedContactsViewModel = viewModel(factory = TrustedContactsViewModelFactory(app))
 
     val contacts by viewModel.contacts.collectAsStateWithLifecycle()
     val loading by viewModel.loading.collectAsStateWithLifecycle()
     val error by viewModel.error.collectAsStateWithLifecycle()
 
     var name by remember { mutableStateOf("") }
-    var email by remember { mutableStateOf("") }
     var phone by remember { mutableStateOf("") }
 
     LaunchedEffect(Unit) {
@@ -66,15 +68,6 @@ fun TrustedContactsScreen(
             Spacer(Modifier.height(8.dp))
 
             OutlinedTextField(
-                value = email,
-                onValueChange = { email = it },
-                label = { Text(stringResource(R.string.ui_alertsscreen_18)) },
-                modifier = Modifier.fillMaxWidth()
-            )
-
-            Spacer(Modifier.height(8.dp))
-
-            OutlinedTextField(
                 value = phone,
                 onValueChange = { phone = it },
                 label = { Text(stringResource(R.string.profile_field_phone)) },
@@ -85,11 +78,13 @@ fun TrustedContactsScreen(
 
             Button(
                 onClick = {
-                    viewModel.addContact(name, email, phone)
-                    name = ""
-                    email = ""
-                    phone = ""
-                }
+                    if (name.isNotBlank() && phone.isNotBlank()) {
+                        viewModel.addContact(name, null, phone)
+                        name = ""
+                        phone = ""
+                    }
+                },
+                enabled = name.isNotBlank() && phone.isNotBlank()
             ) {
                 Text(stringResource(R.string.ui_alertsscreen_5))
             }
@@ -116,9 +111,8 @@ fun TrustedContactsScreen(
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
                             Column {
-                                Text(text = contact.contact_name ?: stringResource(R.string.alerts_contact_unnamed))
-                                contact.contact_email?.let { Text(it) }
-                                contact.contact_phone?.let { Text(it) }
+                                Text(text = contact.name ?: stringResource(R.string.alerts_contact_unnamed))
+                                contact.phone?.let { Text(it) }
                             }
 
                             IconButton(

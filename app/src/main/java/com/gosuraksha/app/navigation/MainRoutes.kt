@@ -5,6 +5,9 @@ sealed class Screen(val route: String) {
     object Onboarding : Screen("onboarding")
     object Language : Screen("language")
     object Login : Screen("login")
+    object Otp : Screen("otp")
+    object VerifyPhone : Screen("verify_phone")
+    object ProfileSetup : Screen("profile_setup")
     object Signup : Screen("signup")
     object Home : Screen("home")
     object CyberCard : Screen("cyberCardScreen")
@@ -21,9 +24,9 @@ sealed class Screen(val route: String) {
     object ScamAlertHub : Screen("scam_alert_hub")
     object ReportScam : Screen("report_scam")
     object CheckNumber : Screen("check_number")
-    object ScamHeatmap : Screen("scam_heatmap")
     object ScamAlertsFeed : Screen("scam_alerts_feed")
     object ScamAlertDetail : Screen("scam_alert_detail/{alertId}") {
         fun createRoute(alertId: String): String = "scam_alert_detail/$alertId"
     }
+    object Search : Screen("search")
 }

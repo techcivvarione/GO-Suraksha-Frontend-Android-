@@ -13,5 +13,6 @@ interface ScanRepository {
     suspend fun analyzeQr(rawPayload: String): DomainResult<QrScanAnalysis>
     suspend fun explain(text: String): DomainResult<AiExplainResult>
     suspend fun scanAiImage(context: Context, uri: Uri): DomainResult<AiImageScanResult>
-    suspend fun scanRealityMedia(context: Context, uri: Uri, mimeType: String): DomainResult<AiImageScanResult>
+    /** Calls POST /scan/image/explain with structured scan data for a result-specific explanation. */
+    suspend fun explainImage(scan: AiImageScanResult): DomainResult<AiExplainResult>
 }

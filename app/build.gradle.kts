@@ -18,24 +18,13 @@ android {
     namespace = "com.gosuraksha.app"
     compileSdk = 36
 
-    defaultConfig {
-        val mapboxAccessToken =
-            (project.findProperty("MAPBOX_ACCESS_TOKEN") as String?)
-                ?.takeUnless { it.isBlank() }
-                ?: localProperties.getProperty("MAPBOX_ACCESS_TOKEN", "").trim()
-        applicationId = "com.gosuraksha.app"
+    defaultConfig {        applicationId = "com.gosuraksha.app"
         minSdk = 26
         targetSdk = 35
         versionCode = 2
         versionName = "1.0.1"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         manifestPlaceholders["MAPS_API_KEY"] = providers.gradleProperty("MAPS_API_KEY").orElse("").get()
-        manifestPlaceholders["MAPBOX_ACCESS_TOKEN"] = mapboxAccessToken
-        buildConfigField(
-            "String",
-            "MAPBOX_ACCESS_TOKEN",
-            "\"$mapboxAccessToken\""
-        )
     }
 
     buildTypes {
@@ -97,7 +86,6 @@ dependencies {
     implementation("com.google.android.gms:play-services-location:21.3.0")
     implementation("com.google.maps.android:maps-compose:6.12.1")
     implementation("com.google.maps.android:android-maps-utils:3.19.0")
-    implementation("com.mapbox.maps:android:11.3.0")
 
     // Coroutines
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.1")
@@ -126,6 +114,7 @@ dependencies {
     implementation("androidx.camera:camera-camera2:1.4.1")
     implementation("androidx.camera:camera-lifecycle:1.4.1")
     implementation("androidx.camera:camera-view:1.4.1")
+    implementation("androidx.compose.material:material-icons-extended")
 
     // Room
     implementation("androidx.room:room-runtime:2.7.2")
@@ -144,3 +133,4 @@ dependencies {
     debugImplementation(libs.androidx.compose.ui.tooling)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
 }
+

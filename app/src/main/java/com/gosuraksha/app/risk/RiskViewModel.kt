@@ -2,17 +2,24 @@ package com.gosuraksha.app.risk
 
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.google.gson.Gson
 import com.google.gson.JsonObject
+import com.gosuraksha.app.data.repository.RiskRepository
 import com.gosuraksha.app.network.ApiClient
 import com.gosuraksha.app.risk.model.*
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import java.util.concurrent.atomic.AtomicInteger
 import retrofit2.HttpException
 
-class RiskViewModel(application: Application) : AndroidViewModel(application) {
+class RiskViewModel(
+    application: Application,
+    private val repository: RiskRepository
+) : AndroidViewModel(application) {
 
     private val _score = MutableStateFlow<RiskScoreResponse?>(null)
     val score: StateFlow<RiskScoreResponse?> = _score
@@ -31,6 +38,17 @@ class RiskViewModel(application: Application) : AndroidViewModel(application) {
 
     private val _error = MutableStateFlow<String?>(null)
     val error: StateFlow<String?> = _error
+
+    // Counts how many async loads are in flight; loading = true while > 0.
+    private val loadingCount = AtomicInteger(0)
+
+    private fun beginLoad() {
+        if (loadingCount.incrementAndGet() == 1) _loading.value = true
+    }
+
+    private fun endLoad() {
+        if (loadingCount.decrementAndGet() == 0) _loading.value = false
+    }
 
     // -----------------------------
     // ERROR PARSER
@@ -62,16 +80,16 @@ class RiskViewModel(application: Application) : AndroidViewModel(application) {
 
     fun loadScore() {
         viewModelScope.launch {
+            beginLoad()
             try {
-                _loading.value = true
                 _error.value = null
-                _score.value = ApiClient.riskApi.getRiskScore()
+                _score.value = repository.getRiskScore()
             } catch (e: HttpException) {
                 _error.value = parseHttpError(e)
             } catch (e: Exception) {
-                _error.value = e.message
+                _error.value = "error_server"
             } finally {
-                _loading.value = false
+                endLoad()
             }
         }
     }
@@ -82,13 +100,15 @@ class RiskViewModel(application: Application) : AndroidViewModel(application) {
 
     fun loadTimeline() {
         viewModelScope.launch {
+            beginLoad()
             try {
-                val response = ApiClient.riskApi.getRiskTimeline()
-                _timeline.value = response.points
+                _timeline.value = repository.getRiskTimeline().points
             } catch (e: HttpException) {
                 _error.value = parseHttpError(e)
             } catch (e: Exception) {
-                _error.value = e.message
+                _error.value = "error_server"
+            } finally {
+                endLoad()
             }
         }
     }
@@ -99,21 +119,37 @@ class RiskViewModel(application: Application) : AndroidViewModel(application) {
 
     fun loadInsights() {
         viewModelScope.launch {
+            beginLoad()
             try {
-                val response = ApiClient.riskApi.getRiskInsights()
+                val response = repository.getRiskInsights()
                 _insights.value = response.summary
                 _upgradeRequired.value = false
             } catch (e: HttpException) {
-
                 if (e.code() == 403) {
                     _upgradeRequired.value = true
                 } else {
                     _error.value = parseHttpError(e)
                 }
-
             } catch (e: Exception) {
-                _error.value = e.message
+                _error.value = "error_server"
+            } finally {
+                endLoad()
             }
         }
+    }
+}
+
+class RiskViewModelFactory(
+    private val application: Application
+) : ViewModelProvider.Factory {
+    override fun <T : ViewModel> create(modelClass: Class<T>): T {
+        if (modelClass.isAssignableFrom(RiskViewModel::class.java)) {
+            @Suppress("UNCHECKED_CAST")
+            return RiskViewModel(
+                application,
+                RiskRepository(ApiClient.riskApi)
+            ) as T
+        }
+        throw IllegalArgumentException("Unknown ViewModel class")
     }
 }

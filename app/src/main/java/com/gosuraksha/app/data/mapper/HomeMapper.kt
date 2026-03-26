@@ -6,17 +6,17 @@ import com.gosuraksha.app.domain.model.home.*
 fun HomeOverviewDto.toDomain(): HomeOverview {
     return HomeOverview(
         securitySnapshot = security_snapshot.toDomain(),
-        threatPulse = threat_pulse,
+        threatPulse = safeMap(threat_pulse).takeIf { it.isNotEmpty() },
         financialImpact = financial_impact?.toDomain()
     )
 }
 
 private fun SecuritySnapshotDto.toDomain(): SecuritySnapshot {
     return SecuritySnapshot(
-        scansDone = scans_done,
-        threatsDetected = threats_detected,
-        lastScanAt = last_scan_at,
-        overallRisk = overall_risk
+        scansDone = safeInt(scans_done),
+        threatsDetected = safeInt(threats_detected),
+        lastScanAt = safeString(last_scan_at),
+        overallRisk = safeString(overall_risk)
     )
 }
 
@@ -28,20 +28,20 @@ private fun FinancialImpactDto.toDomain(): FinancialImpact {
 
 private fun GlobalImpactDto.toDomain(): GlobalImpact {
     return GlobalImpact(
-        scope = scope,
-        regionCode = region_code,
+        scope = safeString(scope),
+        regionCode = region_code?.trim()?.takeIf { it.isNotEmpty() },
         payload = payload?.toDomain(),
-        confidence = confidence,
-        sources = sources,
-        generatedAt = generated_at
+        confidence = confidence?.trim()?.takeIf { it.isNotEmpty() },
+        sources = safeList(sources).map { safeString(it) }.takeIf { it.isNotEmpty() },
+        generatedAt = generated_at?.trim()?.takeIf { it.isNotEmpty() }
     )
 }
 
 private fun ImpactPayloadDto.toDomain(): ImpactPayload {
     return ImpactPayload(
-        year = year,
-        trend = trend,
-        displayText = display_text,
-        estimatedLossUsd = estimated_loss_usd
+        year = safeInt(year),
+        trend = safeString(trend),
+        displayText = safeString(display_text),
+        estimatedLossUsd = safeLong(estimated_loss_usd)
     )
 }

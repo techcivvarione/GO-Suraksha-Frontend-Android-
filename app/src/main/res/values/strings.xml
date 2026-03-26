@@ -11,8 +11,24 @@
     <string name="error_timeout">Request timed out</string>
     <string name="error_unauthorized">Session expired. Please login again.</string>
     <string name="error_session_invalid">Session invalid. Please login again.</string>
-    <string name="error_scan_limit_reached_free">You have used your monthly scan. Upgrade to continue.</string>
+    <string name="error_scan_limit_reached_free">You have used your free quota for this week. Upgrade to continue.</string>
     <string name="error_scan_limit_reached_pro">Daily scan limit reached. Try again tomorrow.</string>
+
+    <!-- ── Upgrade Intercept Dialog ──────────────────────────────────────────── -->
+    <string name="upgrade_dialog_title_limit_free">You\'ve used your free quota</string>
+    <string name="upgrade_dialog_title_limit_pro">Daily scan limit reached</string>
+    <string name="upgrade_dialog_title_feature_locked">Feature not available on your plan</string>
+    <string name="upgrade_dialog_title_generic">Unlock the full GO Suraksha</string>
+    <string name="upgrade_dialog_sub_limit_free">Upgrade to keep scanning without waiting.</string>
+    <string name="upgrade_dialog_sub_limit_pro">GO ULTRA has zero daily limits.</string>
+    <string name="upgrade_dialog_sub_feature_locked">This feature is available on GO PRO and GO ULTRA.</string>
+    <string name="upgrade_dialog_sub_generic">Choose a plan that fits your protection needs.</string>
+    <string name="upgrade_dialog_cta_pro">Upgrade to GO PRO</string>
+    <string name="upgrade_dialog_cta_ultra">Upgrade to GO ULTRA</string>
+    <string name="upgrade_dialog_no_commitment">No commitment. Cancel anytime.</string>
+    <string name="upgrade_dialog_recommended">Recommended</string>
+    <string name="upgrade_plan_pro_tagline">Everything unlimited</string>
+    <string name="upgrade_plan_ultra_tagline">Zero limits. Full protection.</string>
     <string name="error_forbidden">Access denied</string>
     <string name="error_not_found">Resource not found</string>
     <string name="error_server">Server issue. Please try again.</string>
@@ -24,6 +40,7 @@
     <string name="error_trusted_contacts_load_failed">Failed to load contacts</string>
     <string name="error_trusted_alerts_load_failed">Failed to load alerts</string>
     <string name="error_cybersos_failed_code">Cyber SOS failed (%1$s)</string>
+    <string name="error_scan_timeout">Scan timed out. Please try again with a smaller file.</string>
 
     <!-- ═══════════════════════════════════════════════════════════════════════ -->
     <!-- PROFILE SCREEN -->
@@ -551,6 +568,11 @@
     <string name="profile_delete_title">Delete Account</string>
     <string name="profile_delete_message">This will permanently delete your account and all data. This action cannot be undone!</string>
     <string name="profile_delete_confirm">DELETE PERMANENTLY</string>
+    <string name="profile_delete_dialog_message">This action is permanent. All your data will be deleted.</string>
+    <string name="profile_delete_dialog_instruction">Type your name to confirm</string>
+    <string name="profile_delete_name_label">Your name</string>
+    <string name="profile_delete_name_mismatch">Name does not match your profile.</string>
+    <string name="profile_delete_in_progress">Deleting account...</string>
     <string name="profile_premium_pro">PRO</string>
     <string name="profile_score_label">SCORE</string>
     <string name="profile_snapshot_status">Status: %1$s</string>
@@ -564,12 +586,13 @@
     <string name="profile_refer_earn">Refer &amp; Earn ₹100</string>
 
     <!-- CyberSOS -->
-    <string name="cybersos_emergency_help">Emergency Cyber Help</string>
+    <string name="cybersos_emergency_help">Act now to prevent money loss</string>
     <string name="cybersos_emergency_title">Cyber Fraud Emergency?</string>
-    <string name="cybersos_emergency_subtitle">Report immediately to prevent further loss</string>
+    <string name="cybersos_emergency_subtitle">Every second counts — report now to stop further loss</string>
     <string name="cybersos_quick_call_1930">Call 1930</string>
-    <string name="cybersos_helpline">Cyber Helpline</string>
-    <string name="cybersos_contact_bank">Contact Bank</string>
+    <string name="cybersos_helpline">Immediate help, available 24/7</string>
+    <string name="cybersos_contact_bank">Stop financial loss instantly</string>
+    <string name="cybersos_report_portal">File your complaint officially</string>
     <string name="cybersos_select_fraud_type">Select Type of Fraud</string>
     <string name="cybersos_scam_job">Job Scam</string>
     <string name="cybersos_scam_other">Other</string>
@@ -645,6 +668,10 @@
     <string name="login_google_loading">Signing in with Google</string>
     <string name="login_or_continue_with">OR</string>
 </resources>
+
+
+
+
 
 
 
