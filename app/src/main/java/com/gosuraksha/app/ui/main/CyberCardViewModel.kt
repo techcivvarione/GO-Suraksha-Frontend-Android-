@@ -61,20 +61,48 @@ class CyberCardViewModel(
     }
 
     /**
-     * Silent background refresh — no loading spinner.
-     * Called after the user taps an action (e.g. "Scan password") and returns.
-     * If the score improved, sets [improvementMessage] for a toast.
+     * Silent poll — no loading spinner, no error shown.
+     * Used by the "Check Now" button on the Preparing state so the user
+     * can re-check without seeing the full-screen spinner every time.
      */
-    fun refreshCard() {
+    fun pollCard() {
         viewModelScope.launch {
             try {
-                val before = _previousScore.value
                 val fetched = repository.getCyberCard()
-                val after = fetched?.score
+                _card.value = fetched
+                if (fetched?.score != null) {
+                    _previousScore.value = fetched.score
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "Poll failed — will not show error to user", e)
+            }
+        }
+    }
+
+    /**
+     * Silent background refresh — no loading spinner.
+     * Called after the user taps an action (e.g. "Scan password") and returns.
+     * [actionId] is used to build a contextual improvement message if the score went up.
+     */
+    fun refreshCard(actionId: String? = null) {
+        viewModelScope.launch {
+            try {
+                val before  = _previousScore.value
+                val fetched = repository.getCyberCard()
+                val after   = fetched?.score
 
                 if (before != null && after != null && after > before) {
-                    val delta = after - before
-                    _improvementMessage.value = "+$delta — Your safety score improved"
+                    val delta   = after - before
+                    val context = when (actionId) {
+                        "scan_password"      -> "Password scan improved your security"
+                        "scan_email"         -> "Email scan improved your security"
+                        "scan_now",
+                        "resume_scanning"    -> "Scan completed — security improved"
+                        "verify_phone"       -> "Phone verification improved your security"
+                        "add_trusted_contact"-> "Trusted contact added — security improved"
+                        else                 -> "Your safety score improved"
+                    }
+                    _improvementMessage.value = "+$delta — $context"
                 }
 
                 _card.value = fetched

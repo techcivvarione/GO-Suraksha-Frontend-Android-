@@ -17,5 +17,8 @@ data class CyberCardResponse(
     val score_month: String? = null,
     val updated_at: String? = null,
     val score_version: String? = null,
-    val message: String? = null
+    val message: String? = null,
+    // Eligibility signals — present on PENDING responses
+    val eligible: Boolean? = null,           // true = eligible but score still computing
+    val distinct_scan_types: Int? = null     // how many unique scan types completed so far
 )

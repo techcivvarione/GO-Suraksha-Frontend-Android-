@@ -71,11 +71,12 @@ private fun InsightsPanel(isDark: Boolean, insights: List<String>) {
     // Track which items are visible; start revealing after 500 ms, 120 ms apart
     val visible = remember(insights) { mutableStateListOf(*Array(insights.size) { false }) }
 
+    // Start after card slide-up completes (~500ms), stagger 80ms between items
     LaunchedEffect(insights) {
         delay(500)
         insights.indices.forEach { i ->
             visible[i] = true
-            delay(120)
+            delay(80)
         }
     }
 

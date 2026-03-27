@@ -63,7 +63,7 @@ fun FreeCyberCardState(isDark: Boolean, onUpgradePlan: () -> Unit) {
                     verticalArrangement = Arrangement.spacedBy(10.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    Text("??? / 999", color = onSurf(isDark), fontSize = 30.sp, fontWeight = FontWeight.Black)
+                    Text("??? / 1000", color = onSurf(isDark), fontSize = 30.sp, fontWeight = FontWeight.Black)
                     Text("Get Your Cyber Score", color = onSurf(isDark), fontSize = 18.sp, fontWeight = FontWeight.Bold)
                     Text("Know how safe you are from scams and online threats", color = subText(isDark), fontSize = 14.sp)
                     PrimaryCyberCardButton("Upgrade to GO PRO", onUpgradePlan)
@@ -73,9 +73,16 @@ fun FreeCyberCardState(isDark: Boolean, onUpgradePlan: () -> Unit) {
     }
 }
 
-// Shown when user has CYBER_CARD feature but the API returned null (score still computing or network delay)
+// Shown when the API returned null — score is computing or there was a network hiccup.
+// onRetry calls pollCard() — no loading spinner, no flashing.
 @Composable
-fun CalculatingCyberCardState(isDark: Boolean, onRetry: () -> Unit) {
+fun CalculatingCyberCardState(
+    isDark: Boolean,
+    onRetry: (() -> Unit)? = null
+) {
+    // No auto-poll here — user taps "Check Now" manually.
+    // Auto-polling caused the loading spinner to flash repeatedly.
+
     Column(
         modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(20.dp),
         verticalArrangement = Arrangement.spacedBy(18.dp)
@@ -84,33 +91,78 @@ fun CalculatingCyberCardState(isDark: Boolean, onRetry: () -> Unit) {
         StatusPanel(
             isDark   = isDark,
             icon     = Icons.Rounded.Security,
-            title    = "Your Cyber Score is being calculated...",
-            message  = "We are checking your scan history and activity. Complete a scan to generate your score."
+            title    = "Preparing your safety score",
+            message  = "We're analysing your scan history and protection signals. This usually takes just a moment."
         )
-        PrimaryCyberCardButton("Check Again", onRetry)
+        if (onRetry != null) {
+            PrimaryCyberCardButton("Check Now", onRetry)
+        }
     }
 }
 
+/**
+ * Shown when the user has CYBER_CARD feature but hasn't completed enough distinct scan types.
+ * [distinctScanTypes] = 0 → first-time user; 1 → almost there; eligible=true → computing.
+ */
 @Composable
-fun PendingCyberCardState(isDark: Boolean, onNavigateToScan: () -> Unit) {
+fun PendingCyberCardState(
+    isDark: Boolean,
+    onNavigateToScan: () -> Unit,
+    eligible: Boolean = false,
+    distinctScanTypes: Int = 0,
+    onRetry: (() -> Unit)? = null
+) {
+    // No auto-poll — user taps "Check Now" manually.
+    // Removed auto-polling: it caused a spinning/flashing loader every 4s.
+    val (heading, headingSub, panelTitle, panelBody, buttonLabel) = when {
+        // Eligible but score still being computed (backend returned eligible=true)
+        eligible -> PendingCopy(
+            heading      = "Your Cyber Safety Score",
+            headingSub   = "Your score is ready soon",
+            panelTitle   = "Preparing your safety score",
+            panelBody    = "We have your scan data. Tap 'Check Now' to generate your score — it takes just a second.",
+            buttonLabel  = "Check Now"
+        )
+        // Has some scans but not enough variety — nudge without "no scans" language
+        distinctScanTypes > 0 -> PendingCopy(
+            heading      = "Your Cyber Safety Score",
+            headingSub   = "Run one more type of scan to unlock",
+            panelTitle   = "Almost there",
+            panelBody    = "You've completed $distinctScanTypes scan type${if (distinctScanTypes > 1) "s" else ""}. Try an email check or password scan to generate your full safety score.",
+            buttonLabel  = "Continue Scanning"
+        )
+        // No scans at all — first time
+        else -> PendingCopy(
+            heading      = "Your Cyber Safety Score",
+            headingSub   = "Start your first scan to unlock",
+            panelTitle   = "Build your safety score",
+            panelBody    = "Run an email breach check or password scan to generate your personal Cyber Safety Score. Takes under 30 seconds.",
+            buttonLabel  = "Start Security Scan"
+        )
+    }
+
     Column(
         modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(20.dp),
         verticalArrangement = Arrangement.spacedBy(18.dp)
     ) {
-        SectionHeading(
-            isDark,
-            "Start Your Security Scan",
-            "Your Cyber Safety Score will be generated after your first scan"
-        )
-        StatusPanel(
-            isDark,
-            Icons.Rounded.Security,
-            "No scans yet",
-            "Run an email or password scan to generate your personal Cyber Safety Score. It takes under 30 seconds."
-        )
-        PrimaryCyberCardButton("Start Security Scan", onNavigateToScan)
+        SectionHeading(isDark, heading, headingSub)
+        StatusPanel(isDark, Icons.Rounded.Security, panelTitle, panelBody)
+        if (eligible && onRetry != null) {
+            // Eligible users get "Check Now" (score might already be ready)
+            PrimaryCyberCardButton("Check Now", onRetry)
+        } else {
+            PrimaryCyberCardButton(buttonLabel, onNavigateToScan)
+        }
     }
 }
+
+private data class PendingCopy(
+    val heading: String,
+    val headingSub: String,
+    val panelTitle: String,
+    val panelBody: String,
+    val buttonLabel: String
+)
 
 @Composable
 fun LockedCyberCardState(isDark: Boolean, card: CyberCardResponse, onUpgradePlan: () -> Unit) {
@@ -129,7 +181,7 @@ fun LockedCyberCardState(isDark: Boolean, card: CyberCardResponse, onUpgradePlan
                 Icon(Icons.Rounded.Lock, "Locked", tint = if (isDark) Color.White else Color(0xFF991B1B), modifier = Modifier.size(34.dp))
             }
         }
-        CyberScoreSection(isDark, card.score ?: 600, card.max_score ?: 999, card.risk_level ?: "Locked", card.score_month ?: "--", card.card_id ?: "--")
+        CyberScoreSection(isDark, card.score ?: 600, card.max_score ?: 1000, card.risk_level ?: "Locked", card.score_month ?: "--", card.card_id ?: "--")
         InfoPanel(isDark, "Lock reason", signals.lockReason ?: card.message ?: "This Cyber Card is not accessible yet.")
     }
 }

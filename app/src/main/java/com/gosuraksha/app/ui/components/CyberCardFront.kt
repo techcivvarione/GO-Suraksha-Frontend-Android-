@@ -1,213 +1,281 @@
 package com.gosuraksha.app.ui.components
 
-import androidx.compose.ui.res.stringResource
-import com.gosuraksha.app.R
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import kotlin.math.PI
-import kotlin.math.sin
+
+// ── Level colour helper ───────────────────────────────────────────────────────
+
+private fun levelPill(level: String): Pair<Color, String> = when (level.uppercase()) {
+    "EXCELLENT"     -> Color(0xFF4ADE80) to "EXCELLENT"
+    "MOSTLY_SAFE"   -> Color(0xFF2EC472) to "MOSTLY SAFE"
+    "MODERATE_RISK" -> Color(0xFFFBBF24) to "MODERATE"
+    "HIGH_RISK"     -> Color(0xFFFF8C42) to "HIGH RISK"
+    "CRITICAL"      -> Color(0xFFEF4444) to "CRITICAL"
+    else            -> Color(0xFF6BAA80) to "LOADING"
+}
+
+// ── Main card composable ──────────────────────────────────────────────────────
 
 @Composable
 fun CyberCardFrontNew(
     userName: String,
     cardNumber: String,
-    cyberScore: Int,
+    cyberScore: Int,        // receives the already-animated value from CyberCardNew
     generatedOn: String,
-    validTill: String
+    validTill: String,
+    level: String = ""
 ) {
+    // ── Slow shimmer sweep — repeats every 3 s ────────────────────────────────
+    val infiniteTransition = rememberInfiniteTransition(label = "shimmer")
+    val shimmerX by infiniteTransition.animateFloat(
+        initialValue  = -0.6f,
+        targetValue   = 1.6f,
+        animationSpec = infiniteRepeatable(
+            animation  = tween(3200, easing = LinearEasing),
+            repeatMode = RepeatMode.Restart
+        ),
+        label = "shimmer_x"
+    )
+
+    val (pillColor, pillLabel) = levelPill(level)
+
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .height(240.dp)
-            .clip(RoundedCornerShape(20.dp))
+            .height(210.dp)
+            .clip(RoundedCornerShape(24.dp))
     ) {
-        // Gradient background
+        // ── Layer 1: deep matte background ───────────────────────────────────
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(
+                    Brush.linearGradient(
+                        colors     = listOf(Color(0xFF060D1C), Color(0xFF071814)),
+                        start      = Offset(0f, 0f),
+                        end        = Offset(Float.POSITIVE_INFINITY, Float.POSITIVE_INFINITY)
+                    )
+                )
+        )
+
+        // ── Layer 2: subtle circuit-dot grid ─────────────────────────────────
+        Canvas(modifier = Modifier.fillMaxSize()) {
+            val spacing = 32.dp.toPx()
+            val dotR    = 1.2.dp.toPx()
+            val cols    = (size.width  / spacing).toInt() + 2
+            val rows    = (size.height / spacing).toInt() + 2
+            for (c in 0..cols) {
+                for (r in 0..rows) {
+                    val x = c * spacing
+                    val y = r * spacing
+                    drawCircle(
+                        color  = Color.White.copy(alpha = 0.06f),
+                        radius = dotR,
+                        center = Offset(x, y)
+                    )
+                    if (c < cols && (c + r) % 3 != 0) {
+                        drawLine(
+                            color       = Color.White.copy(alpha = 0.03f),
+                            start       = Offset(x + dotR, y),
+                            end         = Offset(x + spacing - dotR, y),
+                            strokeWidth = 0.6.dp.toPx()
+                        )
+                    }
+                    if (r < rows && (c + r) % 2 != 0) {
+                        drawLine(
+                            color       = Color.White.copy(alpha = 0.03f),
+                            start       = Offset(x, y + dotR),
+                            end         = Offset(x, y + spacing - dotR),
+                            strokeWidth = 0.6.dp.toPx()
+                        )
+                    }
+                }
+            }
+        }
+
+        // ── Layer 3: diagonal shimmer sweep ──────────────────────────────────
         Box(
             modifier = Modifier
                 .fillMaxSize()
                 .background(
                     Brush.linearGradient(
                         colors = listOf(
-                            Color(0xFF4A5568), // Gray-blue
-                            Color(0xFF2D3748), // Dark gray
-                            Color(0xFF1A202C)  // Almost black
+                            Color.Transparent,
+                            Color.White.copy(alpha = 0.035f),
+                            Color.Transparent
                         ),
-                        start = Offset(0f, 0f),
-                        end = Offset(1000f, 1000f)
+                        start = Offset(shimmerX * 800f,  0f),
+                        end   = Offset(shimmerX * 800f + 260f, 400f)
                     )
                 )
         )
 
-        // Wavy lines pattern overlay
-        WavyPattern()
-
-        // Content
-        Column(
+        // ── Layer 4: left accent stripe (green 4%) ────────────────────────────
+        Box(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(24.dp),
+                .background(
+                    Brush.horizontalGradient(
+                        colors = listOf(
+                            Color(0xFF2EC472).copy(alpha = 0.04f),
+                            Color.Transparent
+                        )
+                    )
+                )
+        )
+
+        // ── Content ───────────────────────────────────────────────────────────
+        Column(
+            modifier            = Modifier
+                .fillMaxSize()
+                .padding(horizontal = 22.dp, vertical = 18.dp),
             verticalArrangement = Arrangement.SpaceBetween
         ) {
-            // Header
+
+            // TOP ROW — brand + level badge
             Row(
-                modifier = Modifier.fillMaxWidth(),
+                modifier              = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.Top
+                verticalAlignment     = Alignment.Top
             ) {
-                // GO Suraksha logo text
-                Text(
-                    text = stringResource(R.string.cybercard_brand_go),
-                    fontSize = 32.sp,
-                    fontWeight = FontWeight.Black,
-                    color = Color(0xFF00D68F), // Green accent
-                    letterSpacing = (-1).sp
-                )
-                Text(
-                    text = stringResource(R.string.cybercard_brand_suraksha),
-                    fontSize = 24.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Color(0xFF00D68F),
-                    modifier = Modifier.offset(x = (-8).dp, y = 8.dp)
-                )
-
-                // CYBER CARD text
-                Text(
-                    text = stringResource(R.string.ui_cybercardfront_2),
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Color.White,
-                    letterSpacing = 2.sp
-                )
-            }
-
-            // Card number section
-            Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                Text(
-                    text = stringResource(R.string.ui_cybercardfront_3),
-                    fontSize = 10.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    color = Color.White.copy(alpha = 0.7f),
-                    letterSpacing = 2.sp
-                )
-                Text(
-                    text = cardNumber,
-                    fontSize = 28.sp,
-                    fontWeight = FontWeight.Black,
-                    color = Color.Black, // Yes, black text on dark bg (matches your design)
-                    letterSpacing = 4.sp
-                )
-            }
-
-            // Bottom row - Name and Score
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.Bottom
-            ) {
-                // Name section
-                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                Column(verticalArrangement = Arrangement.spacedBy(1.dp)) {
                     Text(
-                        text = stringResource(R.string.ui_cybercardfront_4),
-                        fontSize = 11.sp,
-                        color = Color.White.copy(alpha = 0.7f)
+                        text         = "GO SURAKSHA",
+                        color        = Color(0xFF2EC472),
+                        fontSize     = 13.sp,
+                        fontWeight   = FontWeight.Black,
+                        letterSpacing = 1.2.sp
                     )
                     Text(
-                        text = userName.uppercase(),
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = Color.White
+                        text         = "CYBER SHIELD",
+                        color        = Color.White.copy(alpha = 0.42f),
+                        fontSize     = 8.sp,
+                        fontWeight   = FontWeight.Medium,
+                        letterSpacing = 2.sp
                     )
                 }
 
-                // Cyber Score
-                Column(
-                    horizontalAlignment = Alignment.End,
-                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                // Level pill — color-coded
+                if (level.isNotBlank()) {
+                    Box(
+                        modifier = Modifier
+                            .background(
+                                color = pillColor.copy(alpha = 0.16f),
+                                shape = RoundedCornerShape(20.dp)
+                            )
+                            .padding(horizontal = 10.dp, vertical = 4.dp)
+                    ) {
+                        Text(
+                            text         = pillLabel,
+                            color        = pillColor,
+                            fontSize     = 9.sp,
+                            fontWeight   = FontWeight.Bold,
+                            letterSpacing = 0.6.sp
+                        )
+                    }
+                }
+            }
+
+            // MIDDLE — big score
+            Column(verticalArrangement = Arrangement.spacedBy(0.dp)) {
+                Row(
+                    verticalAlignment     = Alignment.Bottom,
+                    horizontalArrangement = Arrangement.spacedBy(5.dp)
                 ) {
                     Text(
-                        text = cyberScore.toString(),
-                        fontSize = 56.sp,
-                        fontWeight = FontWeight.Black,
-                        color = Color(0xFF00FF7F), // Bright green
+                        text         = cyberScore.toString(),
+                        color        = Color(0xFF2EC472),
+                        fontSize     = 54.sp,
+                        fontWeight   = FontWeight.Black,
                         letterSpacing = (-2).sp
                     )
                     Text(
-                        text = stringResource(R.string.ui_cybercardfront_5),
-                        fontSize = 11.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = Color.White,
-                        letterSpacing = 1.sp
+                        text         = "/ 1000",
+                        color        = Color.White.copy(alpha = 0.35f),
+                        fontSize     = 14.sp,
+                        fontWeight   = FontWeight.Medium,
+                        modifier     = Modifier.padding(bottom = 11.dp)
+                    )
+                }
+                Text(
+                    text         = "CYBER SAFETY SCORE",
+                    color        = Color.White.copy(alpha = 0.28f),
+                    fontSize     = 8.sp,
+                    fontWeight   = FontWeight.Medium,
+                    letterSpacing = 1.8.sp
+                )
+            }
+
+            // BOTTOM ROW — cardholder + card ID
+            Row(
+                modifier              = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment     = Alignment.Bottom
+            ) {
+                Column(verticalArrangement = Arrangement.spacedBy(3.dp)) {
+                    Text(
+                        text         = "CARDHOLDER",
+                        color        = Color.White.copy(alpha = 0.36f),
+                        fontSize     = 7.5.sp,
+                        letterSpacing = 1.4.sp
+                    )
+                    Text(
+                        text         = userName.uppercase().take(20),
+                        color        = Color.White,
+                        fontSize     = 13.sp,
+                        fontWeight   = FontWeight.Bold,
+                        letterSpacing = 0.4.sp
+                    )
+                }
+                Column(
+                    horizontalAlignment = Alignment.End,
+                    verticalArrangement = Arrangement.spacedBy(3.dp)
+                ) {
+                    Text(
+                        text         = "CARD ID",
+                        color        = Color.White.copy(alpha = 0.36f),
+                        fontSize     = 7.5.sp,
+                        letterSpacing = 1.4.sp
+                    )
+                    Text(
+                        text         = cardNumber,
+                        color        = Color.White.copy(alpha = 0.65f),
+                        fontSize     = 10.sp,
+                        fontWeight   = FontWeight.Medium,
+                        letterSpacing = 0.5.sp
                     )
                 }
             }
-
-            // Footer - Generated and Valid dates
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Text(
-                    text = stringResource(R.string.ui_cybercardfront_7, generatedOn),
-                    fontSize = 9.sp,
-                    color = Color.White.copy(alpha = 0.6f)
-                )
-                Text(
-                    text = stringResource(R.string.ui_cybercardfront_8, validTill),
-                    fontSize = 9.sp,
-                    color = Color.White.copy(alpha = 0.6f)
-                )
-            }
-        }
-    }
-}
-
-@Composable
-private fun WavyPattern() {
-    Canvas(modifier = Modifier.fillMaxSize()) {
-        val width = size.width
-        val height = size.height
-
-        // Draw multiple wavy curves
-        val waveCount = 15
-        val waveHeight = height / waveCount
-
-        for (i in 0 until waveCount) {
-            val path = Path()
-            val yOffset = i * waveHeight
-
-            // Start from left
-            path.moveTo(0f, yOffset)
-
-            // Create smooth wave
-            val wavelength = width / 3f
-            var x = 0f
-            while (x <= width) {
-                val y = yOffset + (sin((x / wavelength) * 2 * PI) * 8).toFloat()
-                path.lineTo(x, y)
-                x += 5f
-            }
-
-            // Draw the wave
-            drawPath(
-                path = path,
-                color = Color.White.copy(alpha = 0.08f),
-                style = Stroke(width = 1.5f)
-            )
         }
     }
 }

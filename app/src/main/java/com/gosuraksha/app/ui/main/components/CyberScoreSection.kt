@@ -53,79 +53,80 @@ fun ActiveCyberCardContent(isDark: Boolean, card: CyberCardResponse, userName: S
     )
     LaunchedEffect(score) { animStarted = true }
 
-    Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+    val humanLevel = levelLabel(card.level).takeIf { card.level != null } ?: riskLevel
+
+    Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
+        // ── Hero card — tap to flip; already shows animated score ─────────────
         com.gosuraksha.app.ui.components.CyberCardNew(
-            userName   = userName.ifBlank { card.name ?: "GO Suraksha User" },
-            cardNumber = card.card_id ?: "CYBER CARD",
-            cyberScore = animatedScore,
+            userName    = userName.ifBlank { card.name ?: "GO Suraksha User" },
+            cardNumber  = card.card_id ?: "CYBER CARD",
+            cyberScore  = animatedScore,
             generatedOn = card.score_month ?: "--",
-            validTill  = card.score_version ?: "--"
+            validTill   = card.score_version ?: "--",
+            level       = card.level ?: ""
         )
+
+        // ── Score summary panel — ring + level label + month strip ────────────
         Surface(
-            color         = cardBg(isDark),
-            shape         = RoundedCornerShape(20.dp),
+            color          = cardBg(isDark),
+            shape          = RoundedCornerShape(20.dp),
             tonalElevation = 0.dp,
-            modifier      = Modifier.fillMaxWidth()
+            modifier       = Modifier.fillMaxWidth()
         ) {
-            Column(
-                modifier = Modifier.padding(18.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
+            Row(
+                modifier              = Modifier
+                    .padding(horizontal = 18.dp, vertical = 16.dp)
+                    .fillMaxWidth(),
+                verticalAlignment     = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                Row(
-                    modifier            = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment   = Alignment.CenterVertically
-                ) {
-                    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                // Left: label + level badge + month
+                Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                    Text(
+                        "Based on your recent activity",
+                        color    = subText(isDark),
+                        fontSize = 11.sp
+                    )
+                    Box(
+                        modifier = Modifier
+                            .background(scoreColor.copy(alpha = 0.13f), RoundedCornerShape(20.dp))
+                            .padding(horizontal = 12.dp, vertical = 5.dp)
+                    ) {
                         Text(
-                            "CYBER SCORE",
-                            color      = subText(isDark),
-                            fontSize   = 11.sp,
-                            fontWeight = FontWeight.Medium
+                            humanLevel,
+                            color      = scoreColor,
+                            fontSize   = 13.sp,
+                            fontWeight = FontWeight.Bold
                         )
-                        Text(
-                            "$animatedScore / $maxScore",
-                            color      = onSurf(isDark),
-                            fontSize   = 28.sp,
-                            fontWeight = FontWeight.Black
-                        )
-                        Box(
-                            modifier = Modifier
-                                .background(scoreColor.copy(alpha = 0.12f), RoundedCornerShape(20.dp))
-                                .padding(horizontal = 10.dp, vertical = 4.dp)
-                        ) {
-                            Text(
-                                levelLabel(card.level) .takeIf { card.level != null } ?: riskLevel,
-                                color      = scoreColor,
-                                fontSize   = 12.sp,
-                                fontWeight = FontWeight.SemiBold
-                            )
-                        }
                     }
-                    CyberScoreRing(
-                        targetScore = score,
-                        animatedScore = animatedScore,
-                        maxScore    = maxScore,
-                        color       = scoreColor,
-                        isDark      = isDark
+                    Text(
+                        card.score_month ?: "--",
+                        color    = subText(isDark).copy(alpha = 0.7f),
+                        fontSize = 10.sp
                     )
                 }
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(1.dp)
-                        .background(divider(isDark))
-                )
-                CyberScoreSection(
-                    isDark     = isDark,
-                    score      = animatedScore,
-                    maxScore   = maxScore,
-                    riskLevel  = levelLabel(card.level).takeIf { card.level != null } ?: riskLevel,
-                    scoreMonth = card.score_month ?: "--",
-                    cardId     = card.card_id ?: "--"
+
+                // Right: progress ring
+                CyberScoreRing(
+                    targetScore   = score,
+                    animatedScore = animatedScore,
+                    maxScore      = maxScore,
+                    color         = scoreColor,
+                    isDark        = isDark
                 )
             }
         }
+
+        // ── 4-segment progress strip ──────────────────────────────────────────
+        CyberScoreSection(
+            isDark     = isDark,
+            score      = animatedScore,
+            maxScore   = maxScore,
+            riskLevel  = humanLevel,
+            scoreMonth = card.score_month ?: "--",
+            cardId     = card.card_id ?: "--"
+        )
+
         ScoreBreakdownPanel(isDark = isDark, factors = card.factors)
         CyberScoreExplanationSection(isDark = isDark)
         CyberImprovementTipsSection(isDark = isDark)
@@ -424,29 +425,73 @@ fun ScoreBreakdownPanel(isDark: Boolean, factors: Map<String, Any?>?) {
     @Suppress("UNCHECKED_CAST")
     fun factorMap(key: String): Map<*, *>? = factors[key] as? Map<*, *>
     fun Number?.int(): Int = this?.toInt() ?: 0
+    fun Any?.bool(): Boolean = this as? Boolean ?: false
+    @Suppress("UNCHECKED_CAST")
+    fun Any?.strList(): List<String> = (this as? List<*>)?.filterIsInstance<String>() ?: emptyList()
 
     val exposure   = factorMap("exposure")
     val behavior   = factorMap("behavior")
     val protection = factorMap("protection")
     val activity   = factorMap("activity")
 
-    val expDeduction = (exposure?.get("deduction")   as? Number).int()
-    val behDeduction = (behavior?.get("deduction")   as? Number).int()
-    val protBonus    = (protection?.get("bonus")     as? Number).int()
-    val actBonus     = (activity?.get("bonus")       as? Number).int()
+    val expDeduction = (exposure?.get("deduction")        as? Number).int()
+    val behDeduction = (behavior?.get("deduction")        as? Number).int()
+    val protBonus    = (protection?.get("bonus")          as? Number).int()
+    val actBonus     = (activity?.get("bonus")            as? Number).int()
 
-    // Convert to "score achieved" out of the max for each component
-    val expScore  = (400 - expDeduction).coerceAtLeast(0)   // max 400
-    val behScore  = (250 - behDeduction).coerceAtLeast(0)   // max 250
-    val protScore = protBonus.coerceIn(0, 200)               // max 200
-    val actScore  = actBonus.coerceIn(0, 100)                // max 100
+    // Convert to "score achieved" out of each component's max
+    val expScore  = (400 - expDeduction).coerceAtLeast(0)
+    val behScore  = (250 - behDeduction).coerceAtLeast(0)
+    val protScore = protBonus.coerceIn(0, 200)
+    val actScore  = actBonus.coerceIn(0, 100)
+
+    // ── Contextual labels ────────────────────────────────────────────────────
+    val emailHigh  = (exposure?.get("email_breaches_high")   as? Number).int()
+    val emailMed   = (exposure?.get("email_breaches_medium")  as? Number).int()
+    val weakPw     = (exposure?.get("weak_passwords")         as? Number).int()
+    val highRisk   = (behavior?.get("high_risk_scans")        as? Number).int()
+    val medRisk    = (behavior?.get("medium_risk_scans")      as? Number).int()
+    val riskyQr    = (behavior?.get("risky_qr_codes")         as? Number).int()
+    val phoneVerif = protection?.get("phone_verified").bool()
+    val trustedCtc = (protection?.get("trusted_contacts")     as? Number).int()
+    val covTypes   = activity?.get("scan_types_covered").strList()
+    val covCount   = (activity?.get("coverage_count")         as? Number).int()
+
+    val expContext: String = when {
+        emailHigh > 0 && weakPw > 0 -> "Email in $emailHigh breach${if (emailHigh > 1) "es" else ""} · weak password"
+        emailHigh > 0               -> "Email found in $emailHigh breach${if (emailHigh > 1) "es" else ""}"
+        emailMed  > 0 && weakPw > 0 -> "Minor breach + weak password detected"
+        emailMed  > 0               -> "Email found in minor breach"
+        weakPw    > 0               -> "Weak or compromised password detected"
+        else                        -> "No known breaches or weak passwords"
+    }
+    val behContext: String = when {
+        highRisk > 0 && riskyQr > 0 -> "$highRisk risky link${if (highRisk > 1) "s" else ""} · $riskyQr risky QR"
+        highRisk > 0                -> "$highRisk high-risk link${if (highRisk > 1) "s" else ""} detected"
+        medRisk  > 0                -> "$medRisk suspicious message${if (medRisk > 1) "s" else ""} found"
+        riskyQr  > 0                -> "$riskyQr risky QR code${if (riskyQr > 1) "s" else ""} detected"
+        else                        -> "No risky behaviour detected"
+    }
+    val protContext: String = when {
+        phoneVerif && trustedCtc >= 2 -> "Phone verified · $trustedCtc trusted contacts"
+        phoneVerif                    -> "Phone verified · add more trusted contacts"
+        trustedCtc >= 1               -> "$trustedCtc contact${if (trustedCtc > 1) "s" else ""} added · phone not verified"
+        else                          -> "Phone not verified · no trusted contacts"
+    }
+    val actContext: String = when {
+        covCount >= 4 -> "All scan types covered"
+        covCount == 0 -> "No scans completed yet"
+        else -> covTypes
+            .joinToString(" · ") { it.replaceFirstChar { c -> c.uppercase() } }
+            .let { "$it scanned" }
+    }
 
     fun barColor(value: Int, max: Int): Color {
         val pct = value.toFloat() / max.toFloat()
         return when {
-            pct >= 0.75f -> Color(0xFF4ADE80)   // green — good
-            pct >= 0.40f -> Color(0xFFFBBF24)   // amber — moderate
-            else         -> Color(0xFFF87171)   // red   — poor
+            pct >= 0.75f -> Color(0xFF4ADE80)
+            pct >= 0.40f -> Color(0xFFFBBF24)
+            else         -> Color(0xFFF87171)
         }
     }
 
@@ -468,10 +513,10 @@ fun ScoreBreakdownPanel(isDark: Boolean, factors: Map<String, Any?>?) {
             )
             Box(modifier = Modifier.fillMaxWidth().height(1.dp).background(divider(isDark)))
 
-            BreakdownRow(isDark, "Exposure Safety", expScore,  400, barColor(expScore,  400))
-            BreakdownRow(isDark, "Behavior",         behScore,  250, barColor(behScore,  250))
-            BreakdownRow(isDark, "Protection",        protScore, 200, barColor(protScore, 200))
-            BreakdownRow(isDark, "Activity",          actScore,  100, barColor(actScore,  100))
+            BreakdownRow(isDark, "Exposure Safety", expScore,  400, expContext,  barColor(expScore,  400))
+            BreakdownRow(isDark, "Behaviour",        behScore,  250, behContext,  barColor(behScore,  250))
+            BreakdownRow(isDark, "Protection",        protScore, 200, protContext, barColor(protScore, 200))
+            BreakdownRow(isDark, "Activity",          actScore,  100, actContext,  barColor(actScore,  100))
         }
     }
 }
@@ -482,30 +527,32 @@ private fun BreakdownRow(
     label: String,
     value: Int,
     max: Int,
+    context: String,
     color: Color
 ) {
     val progress = (value.toFloat() / max.coerceAtLeast(1).toFloat()).coerceIn(0f, 1f)
-    Column(verticalArrangement = Arrangement.spacedBy(5.dp)) {
+    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
         Row(
             modifier              = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment     = Alignment.CenterVertically
         ) {
-            Text(label,           color = subText(isDark), fontSize = 12.sp, fontWeight = FontWeight.Medium)
-            Text("$value / $max", color = color,           fontSize = 12.sp, fontWeight = FontWeight.Bold)
+            Text(label,           color = onSurf(isDark), fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
+            Text("$value / $max", color = color,          fontSize = 12.sp, fontWeight = FontWeight.Bold)
         }
-        // Progress track
+        // Contextual explanation
+        Text(context, color = subText(isDark), fontSize = 11.sp, lineHeight = 15.sp)
+        // Animated progress track
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(6.dp)
+                .height(5.dp)
                 .background(chipBg(isDark), RoundedCornerShape(3.dp))
         ) {
-            // Filled portion
             Box(
                 modifier = Modifier
                     .fillMaxWidth(progress)
-                    .height(6.dp)
+                    .height(5.dp)
                     .background(color, RoundedCornerShape(3.dp))
             )
         }

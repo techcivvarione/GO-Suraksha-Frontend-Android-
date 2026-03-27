@@ -958,7 +958,7 @@ private fun CyberScoreShortcutCard(isDark: Boolean, onClick: () -> Unit) {
                     fontWeight = FontWeight.SemiBold
                 )
                 Text(
-                    "See how safe you are right now",
+                    "See your real safety level",
                     color    = textSecondary,
                     fontSize = 12.sp
                 )
