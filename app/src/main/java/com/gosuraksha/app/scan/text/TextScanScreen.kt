@@ -28,6 +28,9 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.AutoAwesome
+import androidx.compose.material.icons.outlined.Email
+import androidx.compose.material.icons.outlined.Lock
+import androidx.compose.material.icons.outlined.Shield
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
@@ -42,6 +45,8 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -67,6 +72,7 @@ import com.gosuraksha.app.scan.design.ScanTheme
 import com.gosuraksha.app.ui.components.UpgradeInterceptDialog
 import com.gosuraksha.app.ui.components.UpgradeTrigger
 import com.gosuraksha.app.ui.components.localizedUiMessage
+import kotlinx.coroutines.delay
 
 // ─── Category accent helper ───────────────────────────────────────────────────
 // Threat = primaryBlue, Email = accentEmail (purple), Password = accentPassword (amber)
@@ -113,6 +119,28 @@ fun TextScanScreen(
 
     LaunchedEffect(category) { input = "" }
 
+    // ── Staggered entrance animation state ─────────────────────────────────
+    var headerVisible by remember { mutableStateOf(false) }
+    var chipsVisible  by remember { mutableStateOf(false) }
+    var inputVisible  by remember { mutableStateOf(false) }
+    var tipVisible    by remember { mutableStateOf(false) }
+    var ctaVisible    by remember { mutableStateOf(false) }
+
+    LaunchedEffect(category) {
+        headerVisible = false; chipsVisible = false
+        inputVisible  = false; tipVisible   = false; ctaVisible = false
+        delay(30)
+        headerVisible = true
+        delay(70)
+        chipsVisible  = true
+        delay(70)
+        inputVisible  = true
+        delay(60)
+        tipVisible    = true
+        delay(50)
+        ctaVisible    = true
+    }
+
     // darkTheme defaults to ColorTokens.LocalAppDarkMode via GoSurakshaScanTheme
     GoSurakshaScanTheme {
         val colors     = ScanTheme.colors
@@ -138,57 +166,111 @@ fun TextScanScreen(
 
             // ── 1. Header ──────────────────────────────────────────────────
             item {
-                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                    Text(
-                        text  = when (category) {
-                            ScanCategory.THREAT   -> "MESSAGE SCAN"
-                            ScanCategory.EMAIL    -> "EMAIL BREACH CHECK"
-                            ScanCategory.PASSWORD -> "PASSWORD CHECK"
-                            else                  -> "SCAN"
-                        },
-                        style = typography.chipLabel,
-                        color = accent,
-                    )
-                    Text(
-                        text  = when (category) {
-                            ScanCategory.THREAT   -> "Check Message or Link"
-                            ScanCategory.EMAIL    -> "Email Breach Check"
-                            ScanCategory.PASSWORD -> "Password Check"
-                            else                  -> title
-                        },
-                        style = typography.sectionHeading,
-                        color = colors.textPrimary,
-                    )
-                    Spacer(Modifier.height(2.dp))
-                    Text(
-                        text  = when (category) {
-                            ScanCategory.THREAT   -> "Paste any suspicious message, link, or forwarded text to check if it's safe."
-                            ScanCategory.EMAIL    -> "Check if your email has appeared in any known data breaches."
-                            ScanCategory.PASSWORD -> "See how strong your password is and if it has been leaked."
-                            else                  -> "Scan content for threats."
-                        },
-                        style = typography.bodySmall,
-                        color = colors.textSecondary,
-                    )
+                AnimatedVisibility(
+                    visible = headerVisible,
+                    enter   = fadeIn() + slideInVertically { -it / 3 },
+                ) {
+                    Row(
+                        modifier              = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(14.dp),
+                        verticalAlignment     = Alignment.CenterVertically,
+                    ) {
+                        // Colored icon box matching category accent
+                        Box(
+                            modifier = Modifier
+                                .shadow(
+                                    elevation    = 4.dp,
+                                    shape        = RoundedCornerShape(16.dp),
+                                    ambientColor = accent.copy(alpha = 0.15f),
+                                    spotColor    = accent.copy(alpha = 0.20f),
+                                )
+                                .size(54.dp)
+                                .clip(RoundedCornerShape(16.dp))
+                                .background(accent.copy(alpha = 0.12f))
+                                .border(1.dp, accent.copy(alpha = 0.22f), RoundedCornerShape(16.dp)),
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            Icon(
+                                imageVector = when (category) {
+                                    ScanCategory.EMAIL    -> Icons.Outlined.Email
+                                    ScanCategory.PASSWORD -> Icons.Outlined.Lock
+                                    else                  -> Icons.Outlined.Shield
+                                },
+                                contentDescription = null,
+                                tint     = accent,
+                                modifier = Modifier.size(24.dp),
+                            )
+                        }
+
+                        Column(
+                            modifier            = Modifier.weight(1f),
+                            verticalArrangement = Arrangement.spacedBy(1.dp),
+                        ) {
+                            // Category label pill
+                            Box(
+                                modifier = Modifier
+                                    .background(accent.copy(alpha = 0.10f), RoundedCornerShape(20.dp))
+                                    .padding(horizontal = 9.dp, vertical = 3.dp),
+                            ) {
+                                Text(
+                                    text = when (category) {
+                                        ScanCategory.THREAT   -> "MESSAGE SCAN"
+                                        ScanCategory.EMAIL    -> "EMAIL BREACH CHECK"
+                                        ScanCategory.PASSWORD -> "PASSWORD CHECK"
+                                        else                  -> "SCAN"
+                                    },
+                                    style = typography.chipLabel,
+                                    color = accent,
+                                )
+                            }
+                            Spacer(Modifier.height(4.dp))
+                            Text(
+                                text = when (category) {
+                                    ScanCategory.THREAT   -> "Check Message or Link"
+                                    ScanCategory.EMAIL    -> "Email Breach Check"
+                                    ScanCategory.PASSWORD -> "Password Check"
+                                    else                  -> title
+                                },
+                                style = typography.sectionHeading,
+                                color = colors.textPrimary,
+                            )
+                            Spacer(Modifier.height(2.dp))
+                            Text(
+                                text = when (category) {
+                                    ScanCategory.THREAT   -> "Paste any suspicious message, link, or forwarded text to check if it's safe."
+                                    ScanCategory.EMAIL    -> "Check if your email has appeared in any known data breaches."
+                                    ScanCategory.PASSWORD -> "See how strong your password is and if it has been leaked."
+                                    else                  -> "Scan content for threats."
+                                },
+                                style = typography.bodySmall,
+                                color = colors.textSecondary,
+                            )
+                        }
+                    }
                 }
             }
 
             // ── 2. Context chips — Threat only ─────────────────────────────
             if (category == ScanCategory.THREAT) {
                 item {
-                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        listOf("Forwarded message", "Phishing link", "OTP scam").forEach { label ->
-                            Box(
-                                modifier = Modifier
-                                    .background(colors.surface, RoundedCornerShape(20.dp))
-                                    .border(1.dp, colors.border, RoundedCornerShape(20.dp))
-                                    .padding(horizontal = 12.dp, vertical = 6.dp),
-                            ) {
-                                Text(
-                                    text  = label,
-                                    style = typography.chipLabel,
-                                    color = colors.textSecondary,
-                                )
+                    AnimatedVisibility(
+                        visible = chipsVisible,
+                        enter   = fadeIn() + slideInVertically { it / 4 },
+                    ) {
+                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            listOf("Forwarded message", "Phishing link", "OTP scam").forEach { chipLabel ->
+                                Box(
+                                    modifier = Modifier
+                                        .background(accent.copy(alpha = 0.08f), RoundedCornerShape(20.dp))
+                                        .border(1.dp, accent.copy(alpha = 0.18f), RoundedCornerShape(20.dp))
+                                        .padding(horizontal = 12.dp, vertical = 6.dp),
+                                ) {
+                                    Text(
+                                        text  = chipLabel,
+                                        style = typography.chipLabel,
+                                        color = accent,
+                                    )
+                                }
                             }
                         }
                     }
@@ -197,69 +279,87 @@ fun TextScanScreen(
 
             // ── 3. Input field ─────────────────────────────────────────────
             item {
-                ScanInputField(
-                    value         = input,
-                    onValueChange = { input = it },
-                    label         = when (category) {
-                        ScanCategory.EMAIL    -> "Email Address"
-                        ScanCategory.PASSWORD -> "Password"
-                        else                  -> "Message or URL"
-                    },
-                    placeholder   = placeholder,
-                    minLines      = if (category == ScanCategory.THREAT) 4 else 1,
-                    maxLines      = if (category == ScanCategory.THREAT) 8 else 1,
-                    keyboardType  = when (category) {
-                        ScanCategory.EMAIL    -> KeyboardType.Email
-                        ScanCategory.PASSWORD -> KeyboardType.Password
-                        else                  -> KeyboardType.Text
-                    },
-                )
+                AnimatedVisibility(
+                    visible = inputVisible,
+                    enter   = fadeIn() + slideInVertically { it / 4 },
+                ) {
+                    ScanInputField(
+                        value         = input,
+                        onValueChange = { input = it },
+                        label         = when (category) {
+                            ScanCategory.EMAIL    -> "Email Address"
+                            ScanCategory.PASSWORD -> "Password"
+                            else                  -> "Message or URL"
+                        },
+                        placeholder   = placeholder,
+                        minLines      = if (category == ScanCategory.THREAT) 4 else 1,
+                        maxLines      = if (category == ScanCategory.THREAT) 8 else 1,
+                        keyboardType  = when (category) {
+                            ScanCategory.EMAIL    -> KeyboardType.Email
+                            ScanCategory.PASSWORD -> KeyboardType.Password
+                            else                  -> KeyboardType.Text
+                        },
+                    )
+                }
             }
 
             // ── 4. Info tip — Email & Password only ────────────────────────
             if (category == ScanCategory.EMAIL || category == ScanCategory.PASSWORD) {
                 item {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .background(colors.surface, RoundedCornerShape(14.dp))
-                            .border(1.dp, colors.border, RoundedCornerShape(14.dp))
-                            .padding(horizontal = 14.dp, vertical = 12.dp),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        verticalAlignment     = Alignment.Top,
+                    AnimatedVisibility(
+                        visible = tipVisible,
+                        enter   = fadeIn() + slideInVertically { it / 4 },
                     ) {
-                        Box(
+                        Row(
                             modifier = Modifier
-                                .padding(top = 3.dp)
-                                .size(6.dp)
-                                .background(accent, CircleShape)
-                        )
-                        Text(
-                            text  = when (category) {
-                                ScanCategory.EMAIL    -> "We check against 15B+ leaked credentials. Your email is never stored."
-                                ScanCategory.PASSWORD -> "Your password is analyzed locally and never sent to any server."
-                                else                  -> ""
-                            },
-                            style    = typography.bodySmall,
-                            color    = colors.textSecondary,
-                            modifier = Modifier.weight(1f),
-                        )
+                                .fillMaxWidth()
+                                .background(accent.copy(alpha = 0.06f), RoundedCornerShape(14.dp))
+                                .border(1.dp, accent.copy(alpha = 0.14f), RoundedCornerShape(14.dp))
+                                .padding(horizontal = 14.dp, vertical = 12.dp),
+                            horizontalArrangement = Arrangement.spacedBy(10.dp),
+                            verticalAlignment     = Alignment.Top,
+                        ) {
+                            Icon(
+                                imageVector = if (category == ScanCategory.PASSWORD)
+                                    Icons.Outlined.Lock else Icons.Outlined.Shield,
+                                contentDescription = null,
+                                tint     = accent,
+                                modifier = Modifier
+                                    .padding(top = 2.dp)
+                                    .size(15.dp),
+                            )
+                            Text(
+                                text  = when (category) {
+                                    ScanCategory.EMAIL    -> "We check against 15B+ leaked credentials. Your email is never stored."
+                                    ScanCategory.PASSWORD -> "Your password is analyzed locally and never sent to any server."
+                                    else                  -> ""
+                                },
+                                style    = typography.bodySmall,
+                                color    = colors.textSecondary,
+                                modifier = Modifier.weight(1f),
+                            )
+                        }
                     }
                 }
             }
 
             // ── 5. CTA button ──────────────────────────────────────────────
             item {
-                ScanPrimaryAction(
-                    text    = if (isLoading) "Checking…" else when (category) {
-                        ScanCategory.EMAIL    -> "Check My Email"
-                        ScanCategory.PASSWORD -> "Check Password"
-                        else                  -> "Check for Threats"
-                    },
-                    onClick     = { onAnalyze(input) },
-                    enabled     = canAnalyze,
-                    accentColor = accent,
-                )
+                AnimatedVisibility(
+                    visible = ctaVisible,
+                    enter   = fadeIn() + slideInVertically { it / 4 },
+                ) {
+                    ScanPrimaryAction(
+                        text    = if (isLoading) "Checking…" else when (category) {
+                            ScanCategory.EMAIL    -> "Check My Email"
+                            ScanCategory.PASSWORD -> "Check Password"
+                            else                  -> "Check for Threats"
+                        },
+                        onClick     = { onAnalyze(input) },
+                        enabled     = canAnalyze,
+                        accentColor = accent,
+                    )
+                }
             }
 
             // ── 6. Loader ──────────────────────────────────────────────────
@@ -295,24 +395,34 @@ fun TextScanScreen(
                             if (category == ScanCategory.EMAIL && (result.breachCount ?: 0) > 0) {
                                 val breachCount = result.breachCount ?: result.breaches?.size ?: 0
 
-                                // ── Email verdict banner ───────────────────
-                                Box(
+                                // ── Email breach hero card ─────────────────
+                                Column(
                                     modifier = Modifier
                                         .fillMaxWidth()
-                                        .background(tone.containerColor(colors, emphasized = false), RoundedCornerShape(16.dp))
-                                        .border(1.dp, tone.contentColor(colors).copy(alpha = 0.30f), RoundedCornerShape(16.dp))
-                                        .padding(horizontal = 16.dp, vertical = 12.dp),
+                                        .background(tone.containerColor(colors), RoundedCornerShape(20.dp))
+                                        .border(1.dp, tone.contentColor(colors).copy(alpha = 0.22f), RoundedCornerShape(20.dp))
+                                        .padding(20.dp),
+                                    verticalArrangement = Arrangement.spacedBy(12.dp),
                                 ) {
+                                    // Verdict row
                                     Row(
                                         verticalAlignment     = Alignment.CenterVertically,
                                         horizontalArrangement = Arrangement.spacedBy(10.dp),
                                     ) {
-                                        Text("🚨", fontSize = 22.sp)
+                                        Box(
+                                            modifier = Modifier
+                                                .size(44.dp)
+                                                .background(tone.contentColor(colors).copy(alpha = 0.18f), CircleShape)
+                                                .border(1.dp, tone.contentColor(colors).copy(alpha = 0.30f), CircleShape),
+                                            contentAlignment = Alignment.Center,
+                                        ) {
+                                            Text("🚨", fontSize = 20.sp)
+                                        }
                                         Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
                                             Text(
-                                                text       = "Unsafe — Your data has been exposed",
+                                                text       = "Data Exposed",
                                                 fontWeight = FontWeight.Bold,
-                                                fontSize   = 15.sp,
+                                                fontSize   = 16.sp,
                                                 color      = tone.contentColor(colors),
                                             )
                                             Text(
@@ -322,50 +432,54 @@ fun TextScanScreen(
                                             )
                                         }
                                     }
-                                }
 
-                                Column(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .background(tone.containerColor(colors), RoundedCornerShape(20.dp))
-                                        .border(1.dp, tone.contentColor(colors).copy(alpha = 0.2f), RoundedCornerShape(20.dp))
-                                        .padding(20.dp),
-                                    verticalArrangement = Arrangement.spacedBy(10.dp),
-                                ) {
-                                    // Hero count display
-                                    Column(
-                                        horizontalAlignment = Alignment.CenterHorizontally,
-                                        modifier = Modifier.fillMaxWidth(),
-                                        verticalArrangement = Arrangement.spacedBy(2.dp),
+                                    // Divider
+                                    Box(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .height(1.dp)
+                                            .background(tone.contentColor(colors).copy(alpha = 0.12f)),
+                                    )
+
+                                    // Hero count
+                                    Row(
+                                        modifier          = Modifier.fillMaxWidth(),
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.Center,
                                     ) {
-                                        Text("⚠️", fontSize = 28.sp)
-                                        Spacer(Modifier.height(4.dp))
-                                        Text(
-                                            text       = "$breachCount",
-                                            fontSize   = 56.sp,
-                                            fontWeight = FontWeight.Black,
-                                            color      = tone.contentColor(colors),
-                                        )
-                                        Text(
-                                            text       = "data breach${if (breachCount > 1) "es" else ""} found",
-                                            fontSize   = 13.sp,
-                                            fontWeight = FontWeight.Medium,
-                                            color      = colors.textSecondary,
-                                        )
+                                        Column(
+                                            horizontalAlignment = Alignment.CenterHorizontally,
+                                            verticalArrangement = Arrangement.spacedBy(2.dp),
+                                        ) {
+                                            Text(
+                                                text       = "$breachCount",
+                                                fontSize   = 52.sp,
+                                                fontWeight = FontWeight.Black,
+                                                color      = tone.contentColor(colors),
+                                            )
+                                            Text(
+                                                text       = "data breach${if (breachCount > 1) "es" else ""} found",
+                                                fontSize   = 13.sp,
+                                                fontWeight = FontWeight.Medium,
+                                                color      = colors.textSecondary,
+                                            )
+                                        }
                                     }
+
                                     Text(
                                         text  = result.summary
                                             ?: "Your email address has been exposed in known data breaches. Change your passwords immediately.",
                                         fontSize = 13.sp,
                                         color    = colors.textSecondary,
                                     )
+
                                     // View affected sites button
                                     if (!result.breaches.isNullOrEmpty()) {
                                         Box(
                                             modifier = Modifier
                                                 .fillMaxWidth()
-                                                .height(42.dp)
-                                                .background(accent, RoundedCornerShape(12.dp))
+                                                .height(44.dp)
+                                                .background(accent, RoundedCornerShape(14.dp))
                                                 .clickable(
                                                     indication        = null,
                                                     interactionSource = remember { MutableInteractionSource() },
@@ -454,16 +568,20 @@ fun TextScanScreen(
                                     Column(
                                         modifier = Modifier
                                             .fillMaxWidth()
-                                            .background(colors.surface, RoundedCornerShape(16.dp))
-                                            .border(1.dp, colors.border, RoundedCornerShape(16.dp))
-                                            .padding(14.dp),
-                                        verticalArrangement = Arrangement.spacedBy(8.dp),
+                                            .background(colors.surface, RoundedCornerShape(18.dp))
+                                            .border(1.dp, colors.border, RoundedCornerShape(18.dp))
+                                            .padding(16.dp),
+                                        verticalArrangement = Arrangement.spacedBy(10.dp),
                                     ) {
                                         Row(
                                             verticalAlignment     = Alignment.CenterVertically,
                                             horizontalArrangement = Arrangement.spacedBy(6.dp),
                                         ) {
-                                            Text("🔍", fontSize = 14.sp)
+                                            Box(
+                                                modifier = Modifier
+                                                    .size(5.dp)
+                                                    .background(colors.textTertiary, CircleShape),
+                                            )
                                             Text(
                                                 text  = "LINK CHECK",
                                                 style = typography.chipLabel,
@@ -526,10 +644,10 @@ fun TextScanScreen(
                                     Text("💡", fontSize = 16.sp)
                                     Column(verticalArrangement = Arrangement.spacedBy(3.dp)) {
                                         Text(
-                                            text       = "WHAT TO DO",
-                                            fontSize   = 10.sp,
-                                            fontWeight = FontWeight.SemiBold,
-                                            color      = accent,
+                                            text          = "WHAT TO DO",
+                                            fontSize      = 10.sp,
+                                            fontWeight    = FontWeight.SemiBold,
+                                            color         = accent,
                                             letterSpacing = 0.8.sp,
                                         )
                                         Text(
@@ -628,9 +746,9 @@ fun TextScanScreen(
                                     modifier           = Modifier.size(14.dp),
                                 )
                                 Text(
-                                    text       = "EXPLAIN SIMPLY",
-                                    style      = typography.chipLabel,
-                                    color      = accent,
+                                    text  = "EXPLAIN SIMPLY",
+                                    style = typography.chipLabel,
+                                    color = accent,
                                 )
                             }
                             // Explanation as a natural, friendly paragraph — no bullets, no jargon
@@ -700,4 +818,3 @@ private val shortenerDomains = setOf(
 
 private fun isShortenerDomain(domain: String): Boolean =
     shortenerDomains.any { domain.equals(it, ignoreCase = true) }
-
