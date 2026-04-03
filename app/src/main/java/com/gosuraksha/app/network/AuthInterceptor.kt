@@ -39,7 +39,7 @@ class AuthInterceptor(
 
         val newRequest = request.newBuilder().apply {
             if (!token.isNullOrBlank()) {
-                addHeader("Authorization", "Bearer $token")
+                header("Authorization", "Bearer $token")
                 if (BuildConfig.DEBUG) {
                     Log.d("AuthInterceptor", "Injecting bearer token")
                 }

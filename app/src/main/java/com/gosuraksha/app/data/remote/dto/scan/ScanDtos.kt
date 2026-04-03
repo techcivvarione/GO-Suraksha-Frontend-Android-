@@ -50,7 +50,8 @@ data class BreachItem(
 )
 
 data class AiExplainRequestDto(
-    val text: String
+    val text: String,
+    val language: String = "en"
 )
 
 data class AiExplainResponseDto(

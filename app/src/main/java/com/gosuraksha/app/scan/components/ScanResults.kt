@@ -11,6 +11,7 @@ package com.gosuraksha.app.scan.components
 // =============================================================================
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
@@ -38,8 +39,15 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Campaign
+import androidx.compose.material.icons.outlined.CheckCircle
+import androidx.compose.material.icons.outlined.KeyboardArrowDown
+import androidx.compose.material.icons.outlined.KeyboardArrowUp
 import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material.icons.outlined.Refresh
+import androidx.compose.material.icons.outlined.RecordVoiceOver
+import androidx.compose.material.icons.outlined.ReportProblem
+import androidx.compose.material.icons.outlined.Warning
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -58,6 +66,242 @@ import com.gosuraksha.app.scan.design.ScanTheme
 
 private val CardShape   = RoundedCornerShape(20.dp)
 private val ButtonShape = RoundedCornerShape(16.dp)
+
+@Composable
+fun RiskCard(
+    riskLevel: String,
+    riskScore: Int,
+    tone: ScanRiskTone,
+    modifier: Modifier = Modifier,
+) {
+    HeroRiskCard(
+        title = riskLevel,
+        summary = when (tone) {
+            ScanRiskTone.DANGER -> "High risk found. Act now."
+            ScanRiskTone.WARNING -> "Something feels wrong. Check before acting."
+            ScanRiskTone.SAFE -> "No major warning found."
+        },
+        score = riskScore,
+        tone = tone,
+        label = "Risk Score",
+        modifier = modifier
+    )
+}
+
+@Composable
+fun ExplainSimplyCard(
+    explanation: String,
+    tone: ScanRiskTone,
+    modifier: Modifier = Modifier,
+) {
+    val colors = ScanTheme.colors
+    val typography = ScanTheme.typography
+    val toneColor = tone.contentColor(colors)
+    val parts = explanation.split("\n\n").map { it.trim() }.filter { it.isNotBlank() }
+    val verdict = parts.getOrElse(0) { "Review this carefully." }
+    val why = parts.getOrElse(1) { "Something does not look right." }
+    val action = parts.getOrElse(2) { "Pause before taking action." }
+    val verdictIcon = when (tone) {
+        ScanRiskTone.DANGER -> Icons.Outlined.ReportProblem
+        ScanRiskTone.WARNING -> Icons.Outlined.Warning
+        ScanRiskTone.SAFE -> Icons.Outlined.CheckCircle
+    }
+
+    Column(
+        modifier = modifier
+            .fillMaxWidth()
+            .shadow(4.dp, CardShape, ambientColor = toneColor.copy(alpha = 0.12f), spotColor = toneColor.copy(alpha = 0.12f))
+            .clip(CardShape)
+            .background(colors.surface, CardShape)
+            .border(1.dp, toneColor.copy(alpha = 0.20f), CardShape)
+            .padding(18.dp),
+        verticalArrangement = Arrangement.spacedBy(10.dp),
+    ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            Icon(
+                imageVector = verdictIcon,
+                contentDescription = null,
+                tint = toneColor,
+                modifier = Modifier.size(20.dp),
+            )
+            Text(
+                text = "EXPLAIN SIMPLY",
+                style = typography.chipLabel,
+                color = toneColor,
+            )
+        }
+        Text(
+            text = verdict,
+            fontSize = 18.sp,
+            fontWeight = FontWeight.Bold,
+            color = colors.textPrimary,
+        )
+        Text(
+            text = why,
+            style = typography.bodySmall,
+            color = colors.textPrimary,
+        )
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(14.dp))
+                .background(toneColor.copy(alpha = 0.10f))
+                .padding(horizontal = 12.dp, vertical = 10.dp),
+        ) {
+            Text(
+                text = action,
+                style = typography.bodySmall,
+                color = toneColor,
+                fontWeight = FontWeight.SemiBold,
+            )
+        }
+    }
+}
+
+@Composable
+fun ThreatResultActions(
+    tone: ScanRiskTone,
+    onWhatToDo: () -> Unit,
+    onPlayVoiceAlert: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val colors = ScanTheme.colors
+    val toneColor = tone.contentColor(colors)
+    val typography = ScanTheme.typography
+
+    Row(
+        modifier = modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(10.dp),
+    ) {
+        Box(
+            modifier = Modifier
+                .weight(1f)
+                .height(48.dp)
+                .clip(ButtonShape)
+                .background(toneColor)
+                .clickable(onClick = onWhatToDo),
+            contentAlignment = Alignment.Center,
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(6.dp),
+            ) {
+                Icon(Icons.Outlined.Info, contentDescription = null, tint = Color.White, modifier = Modifier.size(16.dp))
+                Text(text = "What to do", style = typography.chipLabel, color = Color.White)
+            }
+        }
+        Box(
+            modifier = Modifier
+                .weight(1f)
+                .height(48.dp)
+                .clip(ButtonShape)
+                .background(colors.surface)
+                .border(1.dp, colors.border, ButtonShape)
+                .clickable(onClick = onPlayVoiceAlert),
+            contentAlignment = Alignment.Center,
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(6.dp),
+            ) {
+                Icon(Icons.Outlined.RecordVoiceOver, contentDescription = null, tint = toneColor, modifier = Modifier.size(16.dp))
+                Text(text = "Play voice alert", style = typography.chipLabel, color = colors.textPrimary)
+            }
+        }
+    }
+}
+
+@Composable
+fun ExpandableDetailsCard(
+    expanded: Boolean,
+    onToggle: () -> Unit,
+    details: List<String>,
+    recommendation: String?,
+    modifier: Modifier = Modifier,
+) {
+    val colors = ScanTheme.colors
+    val typography = ScanTheme.typography
+
+    Column(
+        modifier = modifier
+            .fillMaxWidth()
+            .animateContentSize(spring(stiffness = Spring.StiffnessMediumLow, dampingRatio = 0.9f))
+            .background(colors.surface, CardShape)
+            .border(1.dp, colors.border, CardShape)
+            .padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(10.dp),
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable(onClick = onToggle),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween,
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                Icon(Icons.Outlined.Campaign, contentDescription = null, tint = colors.textSecondary, modifier = Modifier.size(16.dp))
+                Text(
+                    text = "See detailed analysis",
+                    style = typography.chipLabel,
+                    color = colors.textPrimary,
+                )
+            }
+            Icon(
+                imageVector = if (expanded) Icons.Outlined.KeyboardArrowUp else Icons.Outlined.KeyboardArrowDown,
+                contentDescription = null,
+                tint = colors.textSecondary,
+            )
+        }
+
+        AnimatedVisibility(
+            visible = expanded,
+            enter = fadeIn() + expandVertically(),
+            exit = fadeOut() + shrinkVertically(),
+        ) {
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                if (recommendation != null) {
+                    Text(
+                        text = recommendation,
+                        style = typography.bodySmall,
+                        color = colors.textSecondary,
+                    )
+                }
+                details.forEachIndexed { index, detail ->
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(10.dp),
+                        verticalAlignment = Alignment.Top,
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(20.dp)
+                                .background(colors.blueTint, CircleShape),
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            Text(
+                                text = "${index + 1}",
+                                fontSize = 10.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = colors.primaryBlue,
+                            )
+                        }
+                        Text(
+                            text = detail,
+                            style = typography.bodySmall,
+                            color = colors.textPrimary,
+                            modifier = Modifier.weight(1f),
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
 
 // ─── ScanResultCard ───────────────────────────────────────────────────────────
 // Full results view: hero → evidence → recommendation → actions

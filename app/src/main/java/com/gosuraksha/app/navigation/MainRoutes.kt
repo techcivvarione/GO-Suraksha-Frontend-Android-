@@ -19,6 +19,7 @@ sealed class Screen(val route: String) {
     object UnlockPin : Screen("unlock_pin")
     object History : Screen("history")
     object TrustedContacts : Screen("trusted_contacts")
+    object Notifications : Screen("notifications")
     object CyberSos : Screen("cyber_sos")
     object RiskInternal : Screen("risk_internal")
     object ScamAlertHub : Screen("scam_alert_hub")

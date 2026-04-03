@@ -5,7 +5,6 @@ import androidx.compose.ui.graphics.vector.ImageVector
 data class ScamTypeItem(
     val labelRes: Int,
     val icon: ImageVector,
-    val emoji: String
 )
 
 data class CyberSosSuccessUiState(

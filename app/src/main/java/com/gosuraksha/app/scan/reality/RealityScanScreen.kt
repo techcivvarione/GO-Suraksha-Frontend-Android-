@@ -396,9 +396,9 @@ fun RealityScanScreen(
             // Trust score = 100 - riskScore (how authentic/safe the image is)
             val trustScore = (100 - scanResult.riskScore).coerceIn(0, 100)
             val verdictTitle = when (tone) {
-                ScanRiskTone.DANGER  -> "🚨 This image is very likely fake"
-                ScanRiskTone.WARNING -> "⚠️ This image may have been edited"
-                ScanRiskTone.SAFE    -> "✅ This image looks like a real photo"
+                ScanRiskTone.DANGER  -> "HIGH RISK - Image Likely Fake"
+                ScanRiskTone.WARNING -> "MODERATE RISK - Image May Be Edited"
+                ScanRiskTone.SAFE    -> "LOW RISK - Image Looks Real"
             }
             val verdictSummary = scanResult.summary.takeIf { it.isNotBlank() } ?: when (tone) {
                 ScanRiskTone.DANGER  -> "We found signs it could be edited or AI-generated."

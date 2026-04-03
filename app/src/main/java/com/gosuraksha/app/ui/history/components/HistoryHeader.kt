@@ -12,6 +12,8 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.outlined.History
+import androidx.compose.material.icons.outlined.Warning
 import androidx.compose.material3.Divider
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -92,7 +94,12 @@ fun HistoryTopBar(
                         ),
                     contentAlignment = Alignment.Center
                 ) {
-                    Text("🛡️", fontSize = 18.sp)
+                    Icon(
+                        imageVector = Icons.Outlined.History,
+                        contentDescription = null,
+                        tint = ColorTokens.accent(),
+                        modifier = Modifier.size(18.dp)
+                    )
                 }
             },
             colors = TopAppBarDefaults.topAppBarColors(
@@ -118,7 +125,12 @@ fun ThreatAlertBanner(count: Int) {
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(10.dp)
     ) {
-        Text("🚨", fontSize = 16.sp)
+        Icon(
+            imageVector = Icons.Outlined.Warning,
+            contentDescription = null,
+            tint = ColorTokens.error(),
+            modifier = Modifier.size(16.dp)
+        )
         Text(
             text = "$count active threat${if (count > 1) "s" else ""} detected — review below",
             style = MaterialTheme.typography.labelMedium.copy(

@@ -200,9 +200,9 @@ private fun ContactCard(
 
     // Risk-based status label + color + icon
     val (riskLabel, riskColor, riskIcon) = when (riskStatus) {
-        ContactRiskStatus.RISK      -> Triple("🚨 Risk Detected", ColorTokens.error(), Icons.Outlined.Warning)
-        ContactRiskStatus.ATTENTION -> Triple("⚠️ Needs Attention", ColorTokens.warning(), Icons.Outlined.Security)
-        ContactRiskStatus.SAFE      -> Triple("✅ Safe", ColorTokens.success(), Icons.Outlined.CheckCircle)
+        ContactRiskStatus.RISK      -> Triple("Risk Detected", ColorTokens.error(), Icons.Outlined.Warning)
+        ContactRiskStatus.ATTENTION -> Triple("Needs Attention", ColorTokens.warning(), Icons.Outlined.Security)
+        ContactRiskStatus.SAFE      -> Triple("Safe", ColorTokens.success(), Icons.Outlined.CheckCircle)
     }
 
     AppCard(
@@ -306,7 +306,6 @@ private fun ContactCard(
                             "MEDIUM" -> ColorTokens.warning()
                             else     -> ColorTokens.textSecondary()
                         }
-                        val emoji = when (itemRisk) { "HIGH" -> "🚨"; "MEDIUM" -> "⚠️"; else -> "🟡" }
                         val phrase = when (item.scan_type?.uppercase()) {
                             "IMAGE"         -> "received a suspicious image"
                             "EMAIL"         -> "checked a suspicious email"
@@ -319,7 +318,16 @@ private fun ContactCard(
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.spacedBy(SpacingTokens.xs),
                         ) {
-                            Text(emoji, style = TypographyTokens.bodySmall)
+                            Icon(
+                                imageVector = when (itemRisk) {
+                                    "HIGH" -> Icons.Outlined.Warning
+                                    "MEDIUM" -> Icons.Outlined.Security
+                                    else -> Icons.Filled.Info
+                                },
+                                contentDescription = null,
+                                tint = itemColor,
+                                modifier = Modifier.size(16.dp),
+                            )
                             Text(
                                 phrase,
                                 color    = ColorTokens.textPrimary(),
@@ -414,11 +422,6 @@ private fun FamilyActivityCard(item: FamilyActivityItem) {
         "LOW"    -> ColorTokens.success()
         else     -> ColorTokens.textSecondary()
     }
-    val riskEmoji = when (riskRaw) {
-        "HIGH"   -> "🔴"
-        "MEDIUM" -> "⚠️"
-        else     -> "🟡"
-    }
     // STEP 7: human-readable "received a suspicious X" description
     val actionPhrase = when (item.scan_type?.uppercase()) {
         "IMAGE"          -> "received a suspicious image"
@@ -436,9 +439,8 @@ private fun FamilyActivityCard(item: FamilyActivityItem) {
         else     -> "Unknown risk"
     }
     val memberName = item.member_name ?: "A family member"
-    // Full sentence: "Ravi received a suspicious message ⚠️ Medium risk"
     val headline = "$memberName $actionPhrase"
-    val subline  = "$riskEmoji $riskLabel"
+    val subline  = riskLabel
 
     AppCard(
         modifier  = Modifier.fillMaxWidth(),
@@ -476,7 +478,6 @@ private fun FamilyActivityCard(item: FamilyActivityItem) {
                     overflow = TextOverflow.Ellipsis
                 )
                 Spacer(Modifier.height(SpacingTokens.xxs))
-                // "⚠️ Medium risk"
                 Text(
                     subline,
                     color = riskColor,

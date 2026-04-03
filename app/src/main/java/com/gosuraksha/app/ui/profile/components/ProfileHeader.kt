@@ -217,9 +217,9 @@ fun ProfileHero(
                     Box(modifier = badgeModifier) {
                         Text(
                             text = when (planRaw) {
-                                "GO_ULTRA" -> "✦  GO ULTRA"
-                                "GO_PRO"   -> "★  GO PRO"
-                                else       -> "◆  Free Plan"
+                                "GO_ULTRA" -> "GO ULTRA"
+                                "GO_PRO"   -> "GO PRO"
+                                else       -> "Free Plan"
                             },
                             fontSize = 9.sp,
                             fontWeight = FontWeight.Bold,

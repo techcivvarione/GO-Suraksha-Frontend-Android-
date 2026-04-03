@@ -1,5 +1,6 @@
 package com.gosuraksha.app.scan.text
 
+import android.speech.tts.TextToSpeech
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
@@ -29,13 +30,16 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.AutoAwesome
 import androidx.compose.material.icons.outlined.Email
+import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material.icons.outlined.Lock
 import androidx.compose.material.icons.outlined.Shield
+import androidx.compose.material.icons.outlined.Warning
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
@@ -48,6 +52,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
@@ -55,13 +60,18 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.gosuraksha.app.R
+import com.gosuraksha.app.core.getCurrentLanguage
 import com.gosuraksha.app.presentation.state.UiState
+import com.gosuraksha.app.scan.components.ExpandableDetailsCard
+import com.gosuraksha.app.scan.components.ExplainSimplyCard
+import com.gosuraksha.app.scan.components.RiskCard
 import com.gosuraksha.app.scan.components.ScanErrorBanner
 import com.gosuraksha.app.scan.components.ScanInputField
 import com.gosuraksha.app.scan.components.ScanLoader
 import com.gosuraksha.app.scan.components.ScanPrimaryAction
 import com.gosuraksha.app.scan.components.ScanResultCard
 import com.gosuraksha.app.scan.components.ScanRiskTone
+import com.gosuraksha.app.scan.components.ThreatResultActions
 import com.gosuraksha.app.scan.components.containerColor
 import com.gosuraksha.app.scan.components.contentColor
 import com.gosuraksha.app.scan.components.toScanRiskTone
@@ -73,6 +83,7 @@ import com.gosuraksha.app.ui.components.UpgradeInterceptDialog
 import com.gosuraksha.app.ui.components.UpgradeTrigger
 import com.gosuraksha.app.ui.components.localizedUiMessage
 import kotlinx.coroutines.delay
+import java.util.Locale
 
 // ─── Category accent helper ───────────────────────────────────────────────────
 // Threat = primaryBlue, Email = accentEmail (purple), Password = accentPassword (amber)
@@ -95,6 +106,8 @@ fun TextScanScreen(
     viewModel: TextScanViewModel,
     onUpgradePlan: () -> Unit = {},
 ) {
+    val context          = LocalContext.current
+    val currentLanguage  = getCurrentLanguage()
     val state            by viewModel.state.collectAsStateWithLifecycle()
     val aiExplanation    by viewModel.aiExplanation.collectAsStateWithLifecycle()
     val aiExplainLoading by viewModel.aiExplainLoading.collectAsStateWithLifecycle()
@@ -118,6 +131,33 @@ fun TextScanScreen(
     }
 
     LaunchedEffect(category) { input = "" }
+
+    LaunchedEffect(result?.id, category, currentLanguage.code) {
+        if (category == ScanCategory.THREAT && result != null && aiExplanation.isNullOrBlank()) {
+            viewModel.loadAiExplanation(
+                text = buildSimpleExplainInput(result),
+                language = currentLanguage.code,
+            )
+        }
+    }
+
+    val speechText = aiExplanation?.takeIf { it.isNotBlank() }
+        ?: result?.summary?.takeIf { it.isNotBlank() }
+    var tts by remember { mutableStateOf<TextToSpeech?>(null) }
+    DisposableEffect(context, currentLanguage.code) {
+        val engine = TextToSpeech(context) { status ->
+            if (status == TextToSpeech.SUCCESS) {
+                tts?.language = Locale.forLanguageTag(currentLanguage.code)
+            }
+        }
+        tts = engine
+        engine.language = Locale.forLanguageTag(currentLanguage.code)
+        onDispose {
+            engine.stop()
+            engine.shutdown()
+            tts = null
+        }
+    }
 
     // ── Staggered entrance animation state ─────────────────────────────────
     var headerVisible by remember { mutableStateOf(false) }
@@ -416,7 +456,12 @@ fun TextScanScreen(
                                                 .border(1.dp, tone.contentColor(colors).copy(alpha = 0.30f), CircleShape),
                                             contentAlignment = Alignment.Center,
                                         ) {
-                                            Text("🚨", fontSize = 20.sp)
+                                            Icon(
+                                                imageVector = Icons.Outlined.Warning,
+                                                contentDescription = null,
+                                                tint = tone.contentColor(colors),
+                                                modifier = Modifier.size(20.dp),
+                                            )
                                         }
                                         Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
                                             Text(
@@ -497,63 +542,84 @@ fun TextScanScreen(
                                 }
                             } else {
                                 // ── Threat / Password verdict card ─────────
-                                val verdictEmoji = when {
-                                    category == ScanCategory.PASSWORD -> when (tone) {
-                                        ScanRiskTone.DANGER  -> "🔴"
-                                        ScanRiskTone.WARNING -> "🟡"
-                                        ScanRiskTone.SAFE    -> "🟢"
-                                    }
-                                    else -> when (tone) {
-                                        ScanRiskTone.DANGER  -> "🚨"
-                                        ScanRiskTone.WARNING -> "⚠️"
-                                        ScanRiskTone.SAFE    -> "✅"
-                                    }
-                                }
                                 val verdictText = when {
                                     category == ScanCategory.THREAT -> when (tone) {
-                                        ScanRiskTone.DANGER  -> "This message is likely a SCAM"
-                                        ScanRiskTone.WARNING -> "This message looks suspicious"
-                                        ScanRiskTone.SAFE    -> "This message looks safe"
+                                        ScanRiskTone.DANGER  -> "HIGH RISK - Likely Scam"
+                                        ScanRiskTone.WARNING -> "MODERATE RISK - Suspicious Message"
+                                        ScanRiskTone.SAFE    -> "LOW RISK - Message Looks Safe"
                                     }
                                     category == ScanCategory.PASSWORD -> when (tone) {
-                                        ScanRiskTone.DANGER  -> "This password is NOT safe"
-                                        ScanRiskTone.WARNING -> "This password can be improved"
-                                        ScanRiskTone.SAFE    -> "This password is strong"
+                                        ScanRiskTone.DANGER  -> "HIGH RISK - Password Not Safe"
+                                        ScanRiskTone.WARNING -> "MODERATE RISK - Improve Password"
+                                        ScanRiskTone.SAFE    -> "LOW RISK - Strong Password"
                                     }
                                     else -> when (tone) {
-                                        ScanRiskTone.DANGER  -> "High risk detected"
-                                        ScanRiskTone.WARNING -> "Some risk detected"
-                                        ScanRiskTone.SAFE    -> "Looks safe"
+                                        ScanRiskTone.DANGER  -> "HIGH RISK"
+                                        ScanRiskTone.WARNING -> "MODERATE RISK"
+                                        ScanRiskTone.SAFE    -> "LOW RISK"
                                     }
                                 }
-                                ScanResultCard(
-                                    title   = "$verdictEmoji $verdictText",
-                                    summary = result.summary
-                                        ?: "Review the evidence below before taking action.",
-                                    tone    = tone,
-                                    score   = result.score,
-                                    evidence = result.highlights.ifEmpty { result.reasons },
-                                    recommendation       = result.recommendation,
-                                    confidenceLabel      = when (category) {
-                                        ScanCategory.EMAIL    -> "Exposure Score"
-                                        ScanCategory.PASSWORD -> "Strength Score"
-                                        else                  -> "Risk Score"
-                                    },
-                                    accentColor          = accent,
-                                    primaryActionLabel   = "Get AI explanation",
-                                    onPrimaryAction      = {
-                                        viewModel.loadAiExplanation(
-                                            buildString {
-                                                append(result.highlights.ifEmpty { result.reasons }.joinToString())
-                                                if (!result.recommendation.isNullOrBlank()) {
-                                                    append(". ${result.recommendation}")
-                                                }
-                                            }
+                                if (category == ScanCategory.THREAT) {
+                                    var detailsExpanded by rememberSaveable(result.id) { mutableStateOf(false) }
+                                    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                                        RiskCard(
+                                            riskLevel = verdictText,
+                                            riskScore = result.score,
+                                            tone = tone,
                                         )
-                                    },
-                                    secondaryActionLabel = "Check again",
-                                    onSecondaryAction    = { onAnalyze(input) },
-                                )
+                                        ExplainSimplyCard(
+                                            explanation = aiExplanation
+                                                ?: result.summary
+                                                ?: result.recommendation
+                                                ?: "Review this carefully.\n\nSomething does not look right here.\n\nDo not take action yet.",
+                                            tone = tone,
+                                        )
+                                        ThreatResultActions(
+                                            tone = tone,
+                                            onWhatToDo = { detailsExpanded = true },
+                                            onPlayVoiceAlert = {
+                                                val utterance = speechText ?: return@ThreatResultActions
+                                                tts?.speak(utterance, TextToSpeech.QUEUE_FLUSH, null, "threat_result")
+                                            },
+                                        )
+                                        ExpandableDetailsCard(
+                                            expanded = detailsExpanded,
+                                            onToggle = { detailsExpanded = !detailsExpanded },
+                                            details = result.highlights.ifEmpty { result.reasons },
+                                            recommendation = result.recommendation,
+                                        )
+                                        ScanPrimaryAction(
+                                            text = "Scan again",
+                                            onClick = { onAnalyze(input) },
+                                            accentColor = accent,
+                                        )
+                                    }
+                                } else {
+                                    ScanResultCard(
+                                        title   = verdictText,
+                                        summary = result.summary
+                                            ?: "Review the evidence below before taking action.",
+                                        tone    = tone,
+                                        score   = result.score,
+                                        evidence = result.highlights.ifEmpty { result.reasons },
+                                        recommendation       = result.recommendation,
+                                        confidenceLabel      = when (category) {
+                                            ScanCategory.EMAIL    -> "Exposure Score"
+                                            ScanCategory.PASSWORD -> "Strength Score"
+                                            else                  -> "Risk Score"
+                                        },
+                                        accentColor          = accent,
+                                        primaryActionLabel   = "Get AI explanation",
+                                        onPrimaryAction      = {
+                                            viewModel.loadAiExplanation(
+                                                text = buildSimpleExplainInput(result),
+                                                language = currentLanguage.code,
+                                            )
+                                        },
+                                        secondaryActionLabel = "Check again",
+                                        onSecondaryAction    = { onAnalyze(input) },
+                                    )
+                                }
                             }
 
                             // ── Threat: domain intelligence card ──────────
@@ -617,10 +683,10 @@ fun TextScanScreen(
                                             )
                                             Text(
                                                 text  = when {
-                                                    isShortener             -> "⚠️ Shortened link — origin hidden"
-                                                    tone == ScanRiskTone.DANGER  -> "🚨 High-risk domain"
-                                                    tone == ScanRiskTone.WARNING -> "⚠️ Check official source"
-                                                    else                    -> "✅ Looks OK"
+                                                    isShortener             -> "Shortened link - destination hidden"
+                                                    tone == ScanRiskTone.DANGER  -> "High-risk domain"
+                                                    tone == ScanRiskTone.WARNING -> "Verify with official source"
+                                                    else                    -> "Looks OK"
                                                 },
                                                 style = typography.chipLabel,
                                                 color = domainColor,
@@ -641,7 +707,12 @@ fun TextScanScreen(
                                     horizontalArrangement = Arrangement.spacedBy(10.dp),
                                     verticalAlignment     = Alignment.Top,
                                 ) {
-                                    Text("💡", fontSize = 16.sp)
+                                    Icon(
+                                        imageVector = Icons.Outlined.Info,
+                                        contentDescription = null,
+                                        tint = accent,
+                                        modifier = Modifier.size(16.dp),
+                                    )
                                     Column(verticalArrangement = Arrangement.spacedBy(3.dp)) {
                                         Text(
                                             text          = "WHAT TO DO",
@@ -720,7 +791,7 @@ fun TextScanScreen(
             }
 
             // ── 9. AI explanation — friendly paragraph card ────────────────
-            if (!aiExplanation.isNullOrBlank()) {
+            if (!aiExplanation.isNullOrBlank() && category != ScanCategory.THREAT) {
                 item {
                     AnimatedVisibility(
                         visible = true,
@@ -818,3 +889,15 @@ private val shortenerDomains = setOf(
 
 private fun isShortenerDomain(domain: String): Boolean =
     shortenerDomains.any { domain.equals(it, ignoreCase = true) }
+
+private fun buildSimpleExplainInput(result: com.gosuraksha.app.domain.model.scan.ScanAnalysisResult): String {
+    return buildString {
+        append(result.highlights.ifEmpty { result.reasons }.joinToString(". "))
+        if (!result.recommendation.isNullOrBlank()) {
+            append(". ${result.recommendation}")
+        }
+        if (!result.summary.isNullOrBlank()) {
+            append(". ${result.summary}")
+        }
+    }
+}

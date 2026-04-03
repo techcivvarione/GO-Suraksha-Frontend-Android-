@@ -217,7 +217,7 @@ fun LoginScreen(
 
                     // Email toggle
                     AuthOutlinedButton(
-                        text    = if (showEmailForm) "✕  Hide email login" else "✉  Use email instead",
+                        text    = if (showEmailForm) "Hide email login" else "Use email instead",
                         onClick = {
                             showEmailForm = !showEmailForm
                             localError    = null
@@ -307,9 +307,8 @@ fun LoginScreen(
                         horizontalArrangement = Arrangement.Center,
                         verticalAlignment     = Alignment.CenterVertically
                     ) {
-                        Text("🔒 ", fontSize = 11.sp)
                         Text(
-                            "256-bit encrypted  ·  RBI compliant  ·  Zero data sold",
+                            "256-bit encrypted · RBI compliant · Zero data sold",
                             fontSize = 10.sp,
                             color    = AuthColors.textTert(isDark)
                         )

@@ -21,13 +21,13 @@ fun String.toRiskLevel(): RiskLevel {
     }
 }
 
-enum class ScanType(val label: String, val emoji: String) {
-    QR("QR Code", "⬛"),
-    URL("URL Scan", "🔗"),
-    FILE("File Scan", "📄"),
-    APK("APK Scan", "📦"),
-    NETWORK("Network", "📶"),
-    UNKNOWN("Scan", "🔍")
+enum class ScanType(val label: String) {
+    QR("QR Code"),
+    URL("URL Scan"),
+    FILE("File Scan"),
+    APK("APK Scan"),
+    NETWORK("Network"),
+    UNKNOWN("Scan")
 }
 
 fun inferScanType(inputText: String): ScanType {

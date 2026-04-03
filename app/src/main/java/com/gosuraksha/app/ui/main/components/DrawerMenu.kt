@@ -268,7 +268,7 @@ fun DrawerMenu(
 
                 // Plan badge — always derived from the plan param, never hardcoded
                 val planUpper    = plan.uppercase()
-                val planBadgeLabel = when (planUpper) { "GO_ULTRA" -> "✦  GO ULTRA"; "GO_PRO" -> "★  GO PRO"; else -> "◆  FREE" }
+                val planBadgeLabel = when (planUpper) { "GO_ULTRA" -> "GO ULTRA"; "GO_PRO" -> "GO PRO"; else -> "FREE" }
                 val planBadgeBg    = when (planUpper) {
                     "GO_ULTRA" -> if (isDark) Color(0xFF3D1F6E) else Color(0xFFF5F3FF)
                     "GO_PRO"   -> if (isDark) Color(0xFF1A3A5C) else Color(0xFFEFF6FF)

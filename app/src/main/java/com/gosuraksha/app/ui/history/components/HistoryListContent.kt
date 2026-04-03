@@ -28,6 +28,11 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.outlined.Description
+import androidx.compose.material.icons.outlined.Language
+import androidx.compose.material.icons.outlined.NetworkCheck
+import androidx.compose.material.icons.outlined.QrCode2
+import androidx.compose.material.icons.outlined.Security
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Divider
@@ -48,6 +53,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
@@ -153,7 +159,12 @@ fun SignalFeedCard(
                     .background(riskLevel.containerColor()),
                 contentAlignment = Alignment.Center
             ) {
-                Text(scanType.emoji, fontSize = 17.sp)
+                Icon(
+                    imageVector = scanTypeIcon(scanType),
+                    contentDescription = null,
+                    tint = riskLevel.contentColor(),
+                    modifier = Modifier.size(18.dp)
+                )
             }
 
             Column(modifier = Modifier.weight(1f)) {
@@ -274,6 +285,15 @@ fun SignalFeedCard(
             )
         }
     }
+}
+
+private fun scanTypeIcon(scanType: com.gosuraksha.app.ui.history.model.ScanType): ImageVector = when (scanType) {
+    com.gosuraksha.app.ui.history.model.ScanType.QR -> Icons.Outlined.QrCode2
+    com.gosuraksha.app.ui.history.model.ScanType.URL -> Icons.Outlined.Language
+    com.gosuraksha.app.ui.history.model.ScanType.FILE -> Icons.Outlined.Description
+    com.gosuraksha.app.ui.history.model.ScanType.APK -> Icons.Outlined.Security
+    com.gosuraksha.app.ui.history.model.ScanType.NETWORK -> Icons.Outlined.NetworkCheck
+    com.gosuraksha.app.ui.history.model.ScanType.UNKNOWN -> Icons.Outlined.Security
 }
 
 @Composable

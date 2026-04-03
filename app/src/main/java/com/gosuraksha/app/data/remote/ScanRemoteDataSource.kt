@@ -34,8 +34,8 @@ class ScanRemoteDataSource(
     /**
      * Calls /ai/explain and unwraps the envelope, returning the DTO directly.
      */
-    suspend fun explain(text: String): AiExplainResponseDto =
-        api.explain(AiExplainRequestDto(text = text)).data
+    suspend fun explain(text: String, language: String): AiExplainResponseDto =
+        api.explain(AiExplainRequestDto(text = text, language = language)).data
 
     /**
      * Uploads an image to POST /scan/image (synchronous, no polling).

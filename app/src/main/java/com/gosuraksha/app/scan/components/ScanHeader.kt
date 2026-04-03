@@ -21,7 +21,10 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.CheckCircle
+import androidx.compose.material.icons.outlined.ReportProblem
 import androidx.compose.material.icons.outlined.Shield
+import androidx.compose.material.icons.outlined.Warning
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -123,16 +126,15 @@ fun HeroRiskCard(
     val toneColor  = tone.contentColor(colors)
     val cardShape  = RoundedCornerShape(20.dp)
 
-    // Verdict emoji
-    val verdictEmoji = when (tone) {
-        ScanRiskTone.DANGER  -> "🚨"
-        ScanRiskTone.WARNING -> "⚠️"
-        ScanRiskTone.SAFE    -> "✅"
-    }
     val verdictLabel = when (tone) {
         ScanRiskTone.DANGER  -> "HIGH RISK"
         ScanRiskTone.WARNING -> "MODERATE RISK"
-        ScanRiskTone.SAFE    -> "ALL CLEAR"
+        ScanRiskTone.SAFE    -> "LOW RISK"
+    }
+    val verdictIcon = when (tone) {
+        ScanRiskTone.DANGER -> Icons.Outlined.ReportProblem
+        ScanRiskTone.WARNING -> Icons.Outlined.Warning
+        ScanRiskTone.SAFE -> Icons.Outlined.CheckCircle
     }
 
     Column(
@@ -162,7 +164,7 @@ fun HeroRiskCard(
             verticalAlignment     = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            // Large colored circle with verdict emoji
+            // Large colored circle with verdict icon
             Box(
                 modifier = Modifier
                     .size(46.dp)
@@ -170,7 +172,12 @@ fun HeroRiskCard(
                     .border(1.dp, toneColor.copy(alpha = 0.30f), CircleShape),
                 contentAlignment = Alignment.Center,
             ) {
-                Text(verdictEmoji, fontSize = 20.sp)
+                Icon(
+                    imageVector = verdictIcon,
+                    contentDescription = null,
+                    tint = toneColor,
+                    modifier = Modifier.size(20.dp),
+                )
             }
 
             Column(verticalArrangement = Arrangement.spacedBy(3.dp)) {

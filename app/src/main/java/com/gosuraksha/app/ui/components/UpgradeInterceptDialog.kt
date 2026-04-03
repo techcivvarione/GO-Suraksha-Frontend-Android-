@@ -194,7 +194,7 @@ fun UpgradeInterceptDialog(
 
                     Spacer(Modifier.height(14.dp))
                     Text(
-                        text      = "🔒  Secure payment · No commitment · Cancel anytime",
+                        text      = "Secure payment · No commitment · Cancel anytime",
                         fontSize  = 10.sp,
                         color     = UpgMuted,
                         modifier  = Modifier.fillMaxWidth(),

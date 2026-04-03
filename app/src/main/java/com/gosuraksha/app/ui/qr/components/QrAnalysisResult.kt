@@ -42,7 +42,10 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.CheckCircle
 import androidx.compose.material.icons.outlined.QrCodeScanner
+import androidx.compose.material.icons.outlined.ReportProblem
+import androidx.compose.material.icons.outlined.Warning
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
@@ -299,9 +302,9 @@ fun QrAnalysisResult(
                             PaymentDetailRow(
                                 label = "Security Check",
                                 value = when (tone) {
-                                    ScanRiskTone.SAFE    -> "✅ Verified"
-                                    ScanRiskTone.WARNING -> "⚠️ Check carefully"
-                                    ScanRiskTone.DANGER  -> "🚨 High risk"
+                                    ScanRiskTone.SAFE    -> "Verified"
+                                    ScanRiskTone.WARNING -> "Check carefully"
+                                    ScanRiskTone.DANGER  -> "High risk"
                                 },
                                 valueColor = toneColor,
                                 colors = colors,
@@ -339,13 +342,15 @@ fun QrAnalysisResult(
                                     .border(1.dp, toneColor.copy(alpha = 0.30f), CircleShape),
                                 contentAlignment = Alignment.Center,
                             ) {
-                                Text(
-                                    text = when (tone) {
-                                        ScanRiskTone.DANGER  -> "🚨"
-                                        ScanRiskTone.WARNING -> "⚠️"
-                                        ScanRiskTone.SAFE    -> "✅"
+                                Icon(
+                                    imageVector = when (tone) {
+                                        ScanRiskTone.DANGER -> Icons.Outlined.ReportProblem
+                                        ScanRiskTone.WARNING -> Icons.Outlined.Warning
+                                        ScanRiskTone.SAFE -> Icons.Outlined.CheckCircle
                                     },
-                                    fontSize = 20.sp,
+                                    contentDescription = null,
+                                    tint = toneColor,
+                                    modifier = Modifier.size(20.dp),
                                 )
                             }
                             Box(
@@ -660,7 +665,7 @@ fun QrAnalysisResult(
                             contentAlignment = Alignment.Center,
                         ) {
                             Text(
-                                text       = "🚨  Report This QR",
+                                text       = "Report This QR",
                                 fontWeight = FontWeight.SemiBold,
                                 fontSize   = 14.sp,
                                 color      = Color.White,
@@ -847,8 +852,8 @@ private val qrShorteners = setOf(
 
 private fun qrDomainFlag(domain: String, tone: ScanRiskTone): String? = when {
     qrShorteners.any { domain.equals(it, ignoreCase = true) } ->
-        "⚠️ Shortened — real destination hidden"
-    tone == ScanRiskTone.DANGER  -> "🚨 Not official — possible fraud"
-    tone == ScanRiskTone.WARNING -> "⚠️ Verify with official source"
+        "Shortened link - real destination hidden"
+    tone == ScanRiskTone.DANGER  -> "Not official - possible fraud"
+    tone == ScanRiskTone.WARNING -> "Verify with official source"
     else                         -> null
 }

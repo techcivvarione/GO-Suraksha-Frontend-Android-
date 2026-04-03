@@ -172,7 +172,7 @@ fun CyberSosSuccess(
                     Divider(color = ColorTokens.border().copy(alpha = 0.5f), thickness = 1.dp)
                     TicketRow(label = "Fraud Type", value = successState.scamType)
                     TicketRow(label = "Filed On", value = successState.submittedAt)
-                    TicketRow(label = "Status", value = "🕐 Under Review", valueColor = AmberStatus)
+                    TicketRow(label = "Status", value = "Under Review", valueColor = AmberStatus)
                 }
 
                 Column(

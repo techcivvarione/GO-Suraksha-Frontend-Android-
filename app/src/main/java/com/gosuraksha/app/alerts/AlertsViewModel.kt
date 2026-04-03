@@ -6,7 +6,7 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
-import com.gosuraksha.app.BuildConfig
+import com.google.android.datatransport.BuildConfig
 import com.gosuraksha.app.alerts.model.*
 import com.gosuraksha.app.core.session.SessionManager
 import com.gosuraksha.app.data.repository.AlertsRepository

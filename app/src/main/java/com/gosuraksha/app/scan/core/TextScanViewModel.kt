@@ -8,6 +8,7 @@ import com.gosuraksha.app.domain.model.scan.ScanAnalysisResult
 import com.gosuraksha.app.domain.result.DomainError
 import com.gosuraksha.app.domain.result.DomainResult
 import com.gosuraksha.app.domain.usecase.AnalyzeTextParams
+import com.gosuraksha.app.domain.usecase.ExplainScanParams
 import com.gosuraksha.app.domain.usecase.ScanUseCases
 import com.gosuraksha.app.presentation.state.UiState
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -33,10 +34,10 @@ class TextScanViewModel(
 
     fun analyzePassword(password: String) = analyze("PASSWORD", password)
 
-    fun loadAiExplanation(text: String) {
+    fun loadAiExplanation(text: String, language: String = "en") {
         viewModelScope.launch {
             _aiExplainLoading.value = true
-            when (val result = useCases.explain(text)) {
+            when (val result = useCases.explain(ExplainScanParams(text = text, language = language))) {
                 is DomainResult.Success -> _aiExplanation.value = result.data.aiExplanation
                 is DomainResult.Failure -> _state.value = UiState.Error(result.error.toMessage())
             }

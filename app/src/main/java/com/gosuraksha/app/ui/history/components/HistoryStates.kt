@@ -21,6 +21,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.ErrorOutline
 import androidx.compose.material.icons.outlined.Shield
 import androidx.compose.material3.Divider
 import androidx.compose.material3.Icon
@@ -239,7 +240,12 @@ fun HistoryErrorState(message: String) {
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            Text(text = "⚠️", fontSize = 40.sp)
+            Icon(
+                imageVector = Icons.Outlined.ErrorOutline,
+                contentDescription = null,
+                tint = ColorTokens.error(),
+                modifier = Modifier.size(40.dp)
+            )
             Text(
                 text = "Something went wrong",
                 style = MaterialTheme.typography.titleMedium.copy(

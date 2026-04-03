@@ -98,9 +98,9 @@ class ScanRepositoryImpl(
         }
     }
 
-    override suspend fun explain(text: String): DomainResult<AiExplainResult> {
+    override suspend fun explain(text: String, language: String): DomainResult<AiExplainResult> {
         return try {
-            val dto = remote.explain(text)
+            val dto = remote.explain(text, language)
             DomainResult.Success(dto.toDomain())
         } catch (t: Throwable) {
             val appError = NetworkErrorMapper.map(t)

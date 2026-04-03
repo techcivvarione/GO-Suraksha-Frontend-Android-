@@ -22,7 +22,10 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.TrendingUp
 import androidx.compose.material.icons.outlined.Campaign
+import androidx.compose.material.icons.outlined.ChatBubbleOutline
+import androidx.compose.material.icons.outlined.CurrencyRupee
 import androidx.compose.material.icons.outlined.Group
+import androidx.compose.material.icons.outlined.Phone
 import androidx.compose.material.icons.outlined.Shield
 import androidx.compose.material.icons.outlined.Warning
 import androidx.compose.material3.CardDefaults
@@ -262,12 +265,12 @@ private fun TrendingScamCard(
         category.contains("SMS")       -> Color(0xFF9C27B0)
         else                           -> ColorTokens.error()
     }
-    val emoji = when {
-        category.contains("PHISHING") -> "🎣"
-        category.contains("PAYMENT")  -> "💸"
-        category.contains("CALL")     -> "📞"
-        category.contains("SMS")      -> "💬"
-        else                          -> "⚠️"
+    val categoryIcon = when {
+        category.contains("PHISHING") -> Icons.Outlined.Shield
+        category.contains("PAYMENT")  -> Icons.Outlined.CurrencyRupee
+        category.contains("CALL")     -> Icons.Outlined.Phone
+        category.contains("SMS")      -> Icons.Outlined.ChatBubbleOutline
+        else                          -> Icons.Outlined.Warning
     }
 
     AppCard(
@@ -293,7 +296,12 @@ private fun TrendingScamCard(
                     verticalAlignment  = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(SpacingTokens.xs),
                 ) {
-                    Text(emoji, style = TypographyTokens.labelMedium)
+                    Icon(
+                        imageVector = categoryIcon,
+                        contentDescription = null,
+                        tint = accentColor,
+                        modifier = Modifier.size(18.dp),
+                    )
                     Text(
                         campaign.scamType,
                         color    = ColorTokens.textPrimary(),
@@ -347,7 +355,7 @@ private fun TrendingScamCard(
 
             if (campaign.preventionTips.isNotEmpty()) {
                 Text(
-                    "💡 ${campaign.preventionTips.first()}",
+                    campaign.preventionTips.first(),
                     color    = ColorTokens.textSecondary(),
                     style    = TypographyTokens.bodySmall,
                     maxLines = 1,

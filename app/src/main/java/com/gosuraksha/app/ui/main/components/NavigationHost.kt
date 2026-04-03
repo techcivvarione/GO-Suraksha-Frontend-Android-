@@ -17,6 +17,7 @@ import com.gosuraksha.app.ui.history.HistoryScreen
 import com.gosuraksha.app.ui.home.HomeScreen
 import com.gosuraksha.app.ui.news.NewsScreen
 import com.gosuraksha.app.ui.search.SearchScreen
+import com.gosuraksha.app.ui.trusted.NotificationScreen
 import com.gosuraksha.app.ui.trusted.TrustedContactsScreen
 
 @Composable
@@ -84,7 +85,13 @@ fun NavigationHost(
             )
         }
         composable(Screen.History.route) { HistoryScreen(onBack = { navController.popBackStack() }) }
-        composable(Screen.TrustedContacts.route) { TrustedContactsScreen(onBack = { navController.popBackStack() }) }
+        composable(Screen.TrustedContacts.route) {
+            TrustedContactsScreen(
+                onBack = { navController.popBackStack() },
+                onOpenNotifications = { navController.navigate(Screen.Notifications.route) }
+            )
+        }
+        composable(Screen.Notifications.route) { NotificationScreen(onBack = { navController.popBackStack() }) }
         composable(Screen.RiskInternal.route) { RiskScreen() }
         composable(Screen.CyberSos.route) { com.gosuraksha.app.ui.screens.CyberSosScreen() }
     }

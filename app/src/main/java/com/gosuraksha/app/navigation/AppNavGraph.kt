@@ -39,6 +39,7 @@ import com.gosuraksha.app.ui.onboarding.IntroOnboardingScreen
 import com.gosuraksha.app.ui.screens.CyberSosScreen
 import com.gosuraksha.app.ui.security.BiometricUnlockScreen
 import com.gosuraksha.app.ui.signup.SignupScreen
+import com.gosuraksha.app.ui.trusted.NotificationScreen
 import com.gosuraksha.app.ui.trusted.TrustedContactsScreen
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
@@ -263,8 +264,13 @@ fun AppNavGraph() {
 
         composable(Screen.TrustedContacts.route) {
             TrustedContactsScreen(
-                onBack = { navController.popBackStack() }
+                onBack = { navController.popBackStack() },
+                onOpenNotifications = { navController.navigate(Screen.Notifications.route) }
             )
+        }
+
+        composable(Screen.Notifications.route) {
+            NotificationScreen(onBack = { navController.popBackStack() })
         }
 
         composable(Screen.CyberSos.route) {

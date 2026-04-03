@@ -160,9 +160,9 @@ fun ScoreRow(
     val riskLabel = when (riskNorm) { "high" -> "High Risk"; "medium" -> "Medium"; else -> "Low Risk" }
     val riskColor = when (riskNorm) { "high" -> GS.Red; "medium" -> GS.Amber; else -> GS.Green500 }
     val scoreSubtitle = when (riskNorm) {
-        "high" -> "⚠️ Risks found — act now"
+        "high" -> "Risks found - act now"
         "medium" -> "Stay alert — check your scans"
-        else -> "You're protected ✓"
+        else -> "Protection active"
     }
     val divColor = if (isDark) GS.DarkBorder else GS.LightBorder
 

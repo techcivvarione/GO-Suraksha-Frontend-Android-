@@ -55,11 +55,14 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.gosuraksha.app.core.getCurrentLanguage
 import com.gosuraksha.app.core.session.SessionManager
+import com.gosuraksha.app.data.repository.NewsRepository
 import com.gosuraksha.app.design.tokens.ColorTokens
 import com.gosuraksha.app.design.tokens.SpacingTokens
 import com.gosuraksha.app.domain.model.home.HomeOverview
 import com.gosuraksha.app.domain.usecase.HomeUseCaseProvider
+import com.gosuraksha.app.network.ApiClient
 import com.gosuraksha.app.presentation.home.HomeViewModel
 import com.gosuraksha.app.presentation.home.HomeViewModelFactory
 import com.gosuraksha.app.presentation.state.UiState
@@ -125,11 +128,23 @@ fun HomeScreen(
     val isDark     = ColorTokens.LocalAppDarkMode.current
     val appContext = androidx.compose.ui.platform.LocalContext.current.applicationContext
     val provider   = appContext as HomeUseCaseProvider
-    val viewModel: HomeViewModel = viewModel(factory = HomeViewModelFactory(provider.homeUseCases()))
+    val currentLanguage = getCurrentLanguage()
+    val homeViewModelFactory = remember(provider) {
+        HomeViewModelFactory(
+            useCases = provider.homeUseCases(),
+            newsRepository = NewsRepository(ApiClient.newsApi)
+        )
+    }
+    val viewModel: HomeViewModel = viewModel(factory = homeViewModelFactory)
 
     val overviewState by viewModel.overviewState.collectAsState()
+    val bannerItems   by viewModel.bannerItems.collectAsState()
     val user          by SessionManager.user.collectAsState()
     val overview      = (overviewState as? UiState.Success<HomeOverview>)?.data
+
+    LaunchedEffect(currentLanguage.code) {
+        viewModel.loadBannerItems(currentLanguage.code)
+    }
 
     var popupExpanded by remember { mutableStateOf(false) }
     LaunchedEffect(Unit) {
@@ -187,6 +202,25 @@ fun HomeScreen(
                     hasScans    = hasScans,
                     onScanNow   = onNavigateToScan,
                     onDashboard = onNavigateToScamNetwork
+                )
+            }
+
+            item {
+                BannerCarousel(
+                    items = bannerItems,
+                    onBannerClick = { action ->
+                        when (action) {
+                            BannerAction.OPEN_QR_SCAN -> onNavigateToScan()
+                            BannerAction.OPEN_THREAT_SCAN -> onNavigateToScan()
+                            BannerAction.OPEN_CYBER_SOS -> onNavigateToCyberSos()
+                            BannerAction.OPEN_RISK_SCORE -> onNavigateToRisk()
+                            BannerAction.OPEN_FAMILY -> onNavigateToFamily()
+                            BannerAction.OPEN_NEWS -> onNavigateToNews()
+                        }
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 12.dp)
                 )
             }
 
@@ -365,10 +399,10 @@ private fun PpHeroBanner(
 
     // Headline copy — contextual to real state
     val headline = when {
-        isHighRisk && threats > 0 -> "⚠️ ${threats} threat${if (threats > 1) "s" else ""} detected\nAct now to stay safe"
-        isHighRisk                -> "⚠️ High risk detected\nTake action immediately"
+        isHighRisk && threats > 0 -> "${threats} threat${if (threats > 1) "s" else ""} detected\nAct now to stay safe"
+        isHighRisk                -> "High risk detected\nTake action immediately"
         isMediumRisk && hasScans  -> "Stay alert\nSome risks detected recently"
-        hasScans                  -> "You're safe today ✅\nNo threats detected"
+        hasScans                  -> "Protection active today\nNo threats detected"
         else                      -> "Check if you're safe\nRun your first scan now"
     }
 
@@ -424,7 +458,7 @@ private fun PpHeroBanner(
                 .padding(start = 20.dp, end = 100.dp)
         ) {
             Text(
-                text       = "Hi $name 👋",
+                text       = "Hi $name",
                 fontSize   = 11.sp,
                 color      = accentColor.copy(alpha = 0.85f),
                 fontWeight = FontWeight.Medium
@@ -477,7 +511,7 @@ private fun PpScoreStrip(isDark: Boolean, scans: Int, threats: Int, risk: String
     val riskNorm   = risk.lowercase()
     val score      = when (riskNorm) { "high" -> 28; "medium" -> 55; else -> 82 }
     val riskColor  = when (riskNorm) { "high" -> TRed; "medium" -> TAmber; else -> TGreen }
-    val riskLabel  = when (riskNorm) { "high" -> "High Risk ⚠️"; "medium" -> "Medium Risk"; else -> "Low Risk ✓" }
+    val riskLabel  = when (riskNorm) { "high" -> "High Risk"; "medium" -> "Medium Risk"; else -> "Low Risk" }
     val subtitle   = when {
         riskNorm == "high" && threats > 0 -> "$threats threat${if (threats > 1) "s" else ""} need your attention"
         riskNorm == "high"                -> "Action needed — risks detected"

@@ -141,7 +141,7 @@
     <string name="scan_risk_low">LOW</string>
 
     <!-- Upgrade -->
-    <string name="scan_upgrade_locked">🔒</string>
+    <string name="scan_upgrade_locked">Locked</string>
     <string name="scan_upgrade_title">Upgrade to Pro</string>
     <string name="scan_upgrade_message">Upgrade to view full breach details.</string>
 
@@ -274,7 +274,7 @@
     <string name="ui_mainshell_7">Sign Out</string>
     <string name="ui_newsscreen_1">Read</string>
     <string name="ui_newsscreen_2">No news in this category</string>
-    <string name="ui_newsscreen_3">🔥 TRENDING</string>
+    <string name="ui_newsscreen_3">TRENDING</string>
     <string name="ui_newsscreen_4">card_scale</string>
     <string name="ui_newsscreen_5">chip_bg</string>
     <string name="ui_newsscreen_6">chip_text</string>
@@ -332,11 +332,11 @@
     <string name="ui_scanscreen_7">score</string>
     <string name="ui_scanscreen_8">Breaches Found</string>
     <string name="ui_scanscreen_9">%s</string>
-    <string name="ui_scanscreen_10">🔒</string>
+    <string name="ui_scanscreen_10">Locked</string>
     <string name="ui_scanscreen_11">Upgrade to Pro</string>
     <string name="ui_scanscreen_12">AI Explain</string>
     <string name="ui_scanscreen_13">AI ANALYSIS</string>
-    <string name="ui_scanscreen_14">🌐</string>
+    <string name="ui_scanscreen_14">Web</string>
     <string name="ui_scanscreen_15">seg_bg</string>
     <string name="ui_scanscreen_16">seg_text</string>
     <string name="ui_scanscreen_17">loader</string>
@@ -668,7 +668,6 @@
     <string name="login_google_loading">Signing in with Google</string>
     <string name="login_or_continue_with">OR</string>
 </resources>
-
 
 
 

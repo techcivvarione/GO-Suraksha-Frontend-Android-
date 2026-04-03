@@ -37,6 +37,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.FamilyRestroom
 import androidx.compose.material.icons.filled.Shield
 import androidx.compose.material.icons.outlined.AccessTime
+import androidx.compose.material.icons.outlined.Check
 import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material.icons.outlined.Lock
 import androidx.compose.material.icons.outlined.Notifications
@@ -438,7 +439,12 @@ private fun PremiumProfileHero(
                             .align(Alignment.BottomEnd),
                         contentAlignment = Alignment.Center
                     ) {
-                        Text("✓", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                        Icon(
+                            imageVector = Icons.Outlined.Check,
+                            contentDescription = null,
+                            tint = Color.White,
+                            modifier = Modifier.size(12.dp)
+                        )
                     }
                 } else {
                     // Edit button for free users (paid users get verified badge here)
@@ -458,9 +464,8 @@ private fun PremiumProfileHero(
 
             // ── Greeting + name / contact / plan badge ────────────────────────
             Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                // "Hi Arjun 👋" greeting
                 Text(
-                    text          = "Hi $firstName 👋",
+                    text          = "Hi $firstName",
                     fontSize      = 12.sp,
                     color         = Color.White.copy(alpha = 0.65f),
                     letterSpacing = 0.2.sp
@@ -503,19 +508,19 @@ private fun PlanBadge(planRaw: String, planLabel: String) {
             bgBrush     = Brush.horizontalGradient(listOf(Color(0xFF7B1FA2), Color(0xFFAB47BC)))
             borderColor = Color(0xFFCE93D8)
             textColor   = Color.White
-            prefix      = "✦  "
+            prefix      = ""
         }
         "GO_PRO" -> {
             bgBrush     = Brush.horizontalGradient(listOf(Color(0xFF1565C0), Color(0xFF1976D2)))
             borderColor = Color(0xFF90CAF9)
             textColor   = Color.White
-            prefix      = "★  "
+            prefix      = ""
         }
         else -> {
             bgBrush     = Brush.horizontalGradient(listOf(Color.White.copy(0.09f), Color.White.copy(0.12f)))
             borderColor = Color.White.copy(0.20f)
             textColor   = Color.White.copy(0.65f)
-            prefix      = "◆  "
+            prefix      = ""
         }
     }
 
@@ -647,7 +652,7 @@ private fun ProfileTrustStrip(isDark: Boolean) {
             modifier              = Modifier.fillMaxWidth()
         ) {
             Text(
-                text     = "🔒  Your data stays private · We never store your scans",
+                text     = "Your data stays private · We never store your scans",
                 fontSize = 10.sp,
                 color    = if (isDark) Color(0xFF4B5563) else Color(0xFF9CA3AF),
                 textAlign = androidx.compose.ui.text.style.TextAlign.Center
@@ -785,7 +790,7 @@ private fun ProfileUpgradeCard(
     else
         listOf(Color(0xFF071528), Color(0xFF0F2852), Color(0xFF071528))
 
-    val badgeText = if (isPro) "✦  GO ULTRA" else "★  GO PRO"
+    val badgeText = if (isPro) "GO ULTRA" else "GO PRO"
     val badgeColor = if (isPro) Color(0xFFCE93D8) else Color(0xFF90CAF9)
 
     // Contextual headline — outcome-based, not feature-based
@@ -829,7 +834,12 @@ private fun ProfileUpgradeCard(
                 benefits.forEach { benefit ->
                     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         Box(modifier = Modifier.size(17.dp).background(Color.White.copy(0.10f), CircleShape), contentAlignment = Alignment.Center) {
-                            Text("✓", fontSize = 9.sp, color = Color.White, fontWeight = FontWeight.Bold)
+                            Icon(
+                                imageVector = Icons.Outlined.Check,
+                                contentDescription = null,
+                                tint = Color.White,
+                                modifier = Modifier.size(10.dp)
+                            )
                         }
                         Text(benefit, fontSize = 12.sp, color = Color.White.copy(0.85f))
                     }

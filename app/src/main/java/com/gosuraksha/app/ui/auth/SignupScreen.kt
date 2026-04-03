@@ -245,7 +245,7 @@ fun SignupScreen(
                                 }
                             }
                         } else {
-                            AuthSuccessRow("Email verified successfully ✓", isDark)
+                            AuthSuccessRow("Email verified successfully", isDark)
                         }
 
                         otpError?.let { AuthErrorRow(it, isDark) }

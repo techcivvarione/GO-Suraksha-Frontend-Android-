@@ -26,6 +26,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.outlined.CrisisAlert
 import androidx.compose.material.icons.outlined.Report
+import androidx.compose.material.icons.outlined.ReportProblem
 import androidx.compose.material.icons.outlined.Security
 import androidx.compose.material.icons.outlined.Shield
 import androidx.compose.material.icons.outlined.SmsFailed
@@ -138,7 +139,7 @@ fun CyberSosSelectStep(
             )
         ) {
             Text(
-                text       = "🚨  Report Incident Now",
+                text       = "Report Incident Now",
                 fontSize   = 15.sp,
                 fontWeight = FontWeight.ExtraBold,
                 letterSpacing = 0.2.sp
@@ -200,12 +201,12 @@ fun ScamTypeGrid(
 ) {
     val scamTypes = remember {
         listOf(
-            ScamTypeItem(R.string.cybersos_scam_upi, Icons.Outlined.Security, "💳"),
-            ScamTypeItem(R.string.cybersos_scam_phishing, Icons.Outlined.Shield, "🎣"),
-            ScamTypeItem(R.string.cybersos_scam_otp, Icons.Outlined.SmsFailed, "📱"),
-            ScamTypeItem(R.string.cybersos_scam_investment, Icons.Outlined.CrisisAlert, "📈"),
-            ScamTypeItem(R.string.cybersos_scam_job, Icons.Outlined.Work, "💼"),
-            ScamTypeItem(R.string.cybersos_scam_other, Icons.Outlined.Report, "⚠️")
+            ScamTypeItem(R.string.cybersos_scam_upi, Icons.Outlined.Security),
+            ScamTypeItem(R.string.cybersos_scam_phishing, Icons.Outlined.Shield),
+            ScamTypeItem(R.string.cybersos_scam_otp, Icons.Outlined.SmsFailed),
+            ScamTypeItem(R.string.cybersos_scam_investment, Icons.Outlined.CrisisAlert),
+            ScamTypeItem(R.string.cybersos_scam_job, Icons.Outlined.Work),
+            ScamTypeItem(R.string.cybersos_scam_other, Icons.Outlined.ReportProblem)
         )
     }
 
@@ -221,7 +222,6 @@ fun ScamTypeGrid(
                 rowItems.forEach { item ->
                     val label = stringResource(item.labelRes)
                     ScamTypeCell(
-                        emoji = item.emoji,
                         icon = item.icon,
                         label = label,
                         selected = selectedType == label,
@@ -237,7 +237,6 @@ fun ScamTypeGrid(
 
 @Composable
 fun ScamTypeCell(
-    emoji: String,
     icon: ImageVector,
     label: String,
     selected: Boolean,
@@ -258,7 +257,20 @@ fun ScamTypeCell(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(6.dp)
     ) {
-        Text(emoji, fontSize = 20.sp)
+        Box(
+            modifier = Modifier
+                .size(32.dp)
+                .clip(CircleShape)
+                .background(if (selected) SosRed.copy(alpha = 0.12f) else ColorTokens.surfaceVariant()),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(
+                imageVector = icon,
+                contentDescription = null,
+                tint = if (selected) SosRed else ColorTokens.textSecondary(),
+                modifier = Modifier.size(18.dp)
+            )
+        }
         Text(
             text = label,
             style = MaterialTheme.typography.labelSmall.copy(

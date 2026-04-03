@@ -119,7 +119,7 @@ fun UnlockPinScreen(
                     delay(1500)
                     onForceLogout()
                 } else {
-                    error = if (attempts >= 7) "⚠️ ${10 - attempts} attempts left before lockout" else "Incorrect PIN"
+                    error = if (attempts >= 7) "${10 - attempts} attempts left before lockout" else "Incorrect PIN"
                     pin = ""
                 }
             }

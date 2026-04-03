@@ -24,6 +24,30 @@ class TrustedContactsViewModel(
     private val _alerts = MutableStateFlow<List<TrustedAlert>>(emptyList())
     val alerts: StateFlow<List<TrustedAlert>> = _alerts
 
+    private val _pendingInvites = MutableStateFlow<List<PendingInvite>>(emptyList())
+    val pendingInvites: StateFlow<List<PendingInvite>> = _pendingInvites
+
+    private val _familyMembers = MutableStateFlow<List<FamilyMemberDashboardItem>>(emptyList())
+    val familyMembers: StateFlow<List<FamilyMemberDashboardItem>> = _familyMembers
+
+    private val _capabilities = MutableStateFlow(FamilyProtectionCapabilities())
+    val capabilities: StateFlow<FamilyProtectionCapabilities> = _capabilities
+
+    private val _dashboardMode = MutableStateFlow<String?>(null)
+    val dashboardMode: StateFlow<String?> = _dashboardMode
+
+    private val _ownSecureNow = MutableStateFlow<List<SecureNowItem>>(emptyList())
+    val ownSecureNow: StateFlow<List<SecureNowItem>> = _ownSecureNow
+
+    private val _familySecureNow = MutableStateFlow<List<SecureNowItem>>(emptyList())
+    val familySecureNow: StateFlow<List<SecureNowItem>> = _familySecureNow
+
+    private val _notifications = MutableStateFlow(NotificationFeedResponse())
+    val notifications: StateFlow<NotificationFeedResponse> = _notifications
+
+    private val _statusMessage = MutableStateFlow<String?>(null)
+    val statusMessage: StateFlow<String?> = _statusMessage
+
     private val _loading = MutableStateFlow(false)
     val loading: StateFlow<Boolean> = _loading
 
@@ -53,12 +77,45 @@ class TrustedContactsViewModel(
         viewModelScope.launch {
             try {
                 _error.value = null
-                repository.addTrustedContact(
-                    AddTrustedContactRequest(name, email, phone)
-                )
-                loadContacts()
+                if (phone.isNullOrBlank()) {
+                    repository.addTrustedContact(AddTrustedContactRequest(name, email, phone))
+                } else {
+                    repository.inviteTrustedContact(
+                        InviteTrustedContactRequest(
+                            name = name,
+                            phone = phone,
+                            relationship = null,
+                            add_to_family = true
+                        )
+                    )
+                    _statusMessage.value = "Invite sent"
+                    loadPendingInvites()
+                    loadNotifications()
+                }
+                loadDashboard()
             } catch (e: Exception) {
                 _error.value = e.message
+            }
+        }
+    }
+
+    fun sendInvite(name: String, phone: String, addToFamily: Boolean) {
+        viewModelScope.launch {
+            try {
+                _error.value = null
+                repository.inviteTrustedContact(
+                    InviteTrustedContactRequest(
+                        name = name,
+                        phone = phone,
+                        relationship = null,
+                        add_to_family = addToFamily
+                    )
+                )
+                _statusMessage.value = "Invite sent"
+                loadDashboard()
+                loadNotifications()
+            } catch (e: Exception) {
+                _error.value = e.message ?: "Unable to send invite"
             }
         }
     }
@@ -69,6 +126,7 @@ class TrustedContactsViewModel(
                 _error.value = null
                 repository.deleteTrustedContact(id)
                 loadContacts()
+                loadDashboard()
             } catch (e: Exception) {
                 _error.value = e.message
             }
@@ -87,6 +145,113 @@ class TrustedContactsViewModel(
             } catch (e: Exception) {
                 e.printStackTrace()
                 _error.value = e.message ?: "error_trusted_alerts_load_failed"
+            }
+        }
+    }
+
+    fun loadDashboard() {
+        viewModelScope.launch {
+            try {
+                _error.value = null
+                _loading.value = true
+                val dashboard = repository.getFamilyDashboard()
+                _familyMembers.value = dashboard.members
+                _capabilities.value = dashboard.capabilities ?: FamilyProtectionCapabilities()
+                _dashboardMode.value = dashboard.mode
+                loadContacts()
+                loadPendingInvites()
+                loadSecureNow()
+                loadNotifications()
+            } catch (e: Exception) {
+                _error.value = e.message ?: "Unable to load family dashboard"
+            } finally {
+                _loading.value = false
+            }
+        }
+    }
+
+    fun loadPendingInvites() {
+        viewModelScope.launch {
+            runCatching { repository.getPendingInvites() }
+                .onSuccess {
+                    _pendingInvites.value = it.invites
+                    loadNotifications()
+                }
+                .onFailure { _error.value = it.message ?: "Unable to load invites" }
+        }
+    }
+
+    fun respondToInvite(inviteId: String, action: String, addToFamily: Boolean = true) {
+        viewModelScope.launch {
+            try {
+                _error.value = null
+                repository.respondToInvite(
+                    InviteActionRequest(
+                        invite_id = inviteId,
+                        action = action,
+                        add_to_family = addToFamily
+                    )
+                )
+                _statusMessage.value = if (action == "ACCEPT") "Invite accepted" else "Invite rejected"
+                loadDashboard()
+            } catch (e: Exception) {
+                _error.value = e.message ?: "Unable to update invite"
+            }
+        }
+    }
+
+    fun loadSecureNow() {
+        viewModelScope.launch {
+            runCatching { repository.getSecureNow() }
+                .onSuccess {
+                    _capabilities.value = it.capabilities ?: _capabilities.value
+                    _ownSecureNow.value = it.own_items
+                    _familySecureNow.value = it.family_items
+                }
+                .onFailure { _error.value = it.message ?: "Unable to load secure now items" }
+        }
+    }
+
+    fun loadNotifications() {
+        viewModelScope.launch {
+            runCatching { repository.getNotifications() }
+                .onSuccess { _notifications.value = it }
+                .onFailure { _error.value = it.message ?: "Unable to load notifications" }
+        }
+    }
+
+    fun completeSecureNow(itemId: String) {
+        viewModelScope.launch {
+            try {
+                repository.completeSecureNow(itemId)
+                _statusMessage.value = "Task completed"
+                loadSecureNow()
+                loadNotifications()
+            } catch (e: Exception) {
+                _error.value = e.message ?: "Unable to update task"
+            }
+        }
+    }
+
+    fun setPrimaryContact(contactId: String) {
+        viewModelScope.launch {
+            try {
+                repository.setPrimaryContact(contactId)
+                _statusMessage.value = "Primary contact updated"
+                loadContacts()
+            } catch (e: Exception) {
+                _error.value = e.message ?: "Unable to update primary contact"
+            }
+        }
+    }
+
+    fun triggerManualAlert() {
+        viewModelScope.launch {
+            try {
+                repository.triggerManualAlert(ManualAlertRequest())
+                _statusMessage.value = "Alert sent manually"
+            } catch (e: Exception) {
+                _error.value = e.message ?: "Unable to send alert"
             }
         }
     }

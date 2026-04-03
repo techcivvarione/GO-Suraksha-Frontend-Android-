@@ -123,7 +123,7 @@ private fun Slide1Shield() {
             drawLine(IlloWhite.copy(alpha = 0.5f), Offset(bx - xd, by - xd), Offset(bx + xd, by + xd), 1.5.dp.toPx(), StrokeCap.Round)
             drawLine(IlloWhite.copy(alpha = 0.5f), Offset(bx + xd, by - xd), Offset(bx - xd, by + xd), 1.5.dp.toPx(), StrokeCap.Round)
         }
-        Badge(text = "⚠  THREAT DETECTED", color = WarnAmber, alpha = 0.12f, modifier = Modifier.align(Alignment.TopEnd))
+        Badge(text = "THREAT DETECTED", color = WarnAmber, alpha = 0.12f, modifier = Modifier.align(Alignment.TopEnd))
     }
 }
 
@@ -195,7 +195,7 @@ private fun Slide3Family() {
             drawCircle(GreenAccent.copy(alpha = 0.3f), 8.dp.toPx(), Offset(adx, ady))
             drawCircle(GreenAccent, 4.dp.toPx(), Offset(adx, ady))
         }
-        Badge(text = "ALERT SENT ✓", color = GreenAccent, alpha = 0.10f, modifier = Modifier.align(Alignment.TopEnd))
+        Badge(text = "ALERT SENT", color = GreenAccent, alpha = 0.10f, modifier = Modifier.align(Alignment.TopEnd))
     }
 }
 
@@ -266,8 +266,8 @@ private fun Slide4Score() {
 @Composable
 private fun ResultRows() {
     listOf(
-        Triple("QR Code", "Safe ✓", true),
-        Triple("Deepfake Audio", "Clean ✓", true),
+        Triple("QR Code", "Safe", true),
+        Triple("Deepfake Audio", "Clean", true),
         Triple("Email Link", "Suspicious", false),
     ).forEach { (label, value, safe) ->
         Row(
