@@ -10,6 +10,16 @@ data class ScanAnalysisResult(
     val highlights: List<String> = emptyList(),
     val reasons: List<String> = emptyList(),
     val recommendation: String? = null,
+    val originalUrl: String? = null,
+    val finalUrl: String? = null,
+    val domain: String? = null,
+    val redirectDetected: Boolean = false,
+    val redirectChain: List<String> = emptyList(),
+    val limitedAnalysis: Boolean = false,
+    val riskReasons: List<String> = emptyList(),
+    val confidenceScore: Int? = null,
+    val simpleExplanation: String? = null,
+    val detailedExplanation: String? = null,
     val breachCount: Int? = null,
     val breaches: List<BreachItem>? = null
 ) {

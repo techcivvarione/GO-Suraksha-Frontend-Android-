@@ -24,6 +24,25 @@ data class ScanResponse(
     val confidence: Float?,
     val reasons: List<String>?,
     val recommendation: String?,
+    @SerializedName("original_url")
+    val original_url: String?,
+    @SerializedName("final_url")
+    val final_url: String?,
+    val domain: String?,
+    @SerializedName("redirect_detected")
+    val redirect_detected: Boolean?,
+    @SerializedName("redirect_chain")
+    val redirect_chain: List<String>?,
+    @SerializedName("limited_analysis")
+    val limited_analysis: Boolean?,
+    @SerializedName("risk_reason")
+    val risk_reason: List<String>?,
+    @SerializedName("confidence_score")
+    val confidence_score: Int?,
+    @SerializedName("simple_explanation")
+    val simple_explanation: String?,
+    @SerializedName("detailed_explanation")
+    val detailed_explanation: String?,
     @SerializedName(value = "breach_count", alternate = ["breachCount"])
     val breach_count: Int?,
     val breaches: List<BreachItem>?,

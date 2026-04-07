@@ -624,12 +624,16 @@ fun TextScanScreen(
 
                             // ── Threat: domain intelligence card ──────────
                             if (category == ScanCategory.THREAT) {
-                                val domain = remember(input) { extractFirstDomain(input) }
-                                if (!domain.isNullOrBlank()) {
-                                    val isShortener = isShortenerDomain(domain)
-                                    val domainRisk  = if (isShortener || tone == ScanRiskTone.DANGER) tone
-                                                      else if (tone == ScanRiskTone.WARNING)          ScanRiskTone.WARNING
-                                                      else                                             ScanRiskTone.SAFE
+                                val originalUrl = result.originalUrl ?: extractFirstUrl(input)
+                                val finalUrl = result.finalUrl
+                                val domain = result.domain ?: originalUrl?.let { extractFirstDomain(it) }
+                                if (!domain.isNullOrBlank() || !originalUrl.isNullOrBlank()) {
+                                    val isShortener = domain?.let(::isShortenerDomain) == true
+                                    val domainRisk  = when {
+                                        tone == ScanRiskTone.DANGER || result.redirectDetected || isShortener -> ScanRiskTone.DANGER
+                                        tone == ScanRiskTone.WARNING -> ScanRiskTone.WARNING
+                                        else -> ScanRiskTone.WARNING
+                                    }
                                     val domainColor = domainRisk.contentColor(colors)
                                     Column(
                                         modifier = Modifier
@@ -666,7 +670,7 @@ fun TextScanScreen(
                                                 color = colors.textSecondary,
                                             )
                                             Text(
-                                                text  = domain,
+                                                text  = domain ?: "Unknown",
                                                 style = typography.chipLabel,
                                                 color = colors.textPrimary,
                                             )
@@ -683,13 +687,59 @@ fun TextScanScreen(
                                             )
                                             Text(
                                                 text  = when {
-                                                    isShortener             -> "Shortened link - destination hidden"
-                                                    tone == ScanRiskTone.DANGER  -> "High-risk domain"
-                                                    tone == ScanRiskTone.WARNING -> "Verify with official source"
-                                                    else                    -> "Looks OK"
+                                                    result.redirectDetected -> "Redirects to a different destination"
+                                                    isShortener -> "Shortened link - destination hidden"
+                                                    tone == ScanRiskTone.DANGER -> "High-risk destination"
+                                                    else -> "Analysis incomplete - verify manually"
                                                 },
                                                 style = typography.chipLabel,
                                                 color = domainColor,
+                                            )
+                                        }
+                                        if (!originalUrl.isNullOrBlank()) {
+                                            Row(
+                                                modifier              = Modifier.fillMaxWidth(),
+                                                horizontalArrangement = Arrangement.SpaceBetween,
+                                                verticalAlignment     = Alignment.Top,
+                                            ) {
+                                                Text(
+                                                    text  = "Link Destination:",
+                                                    style = typography.bodySmall,
+                                                    color = colors.textSecondary,
+                                                )
+                                                Text(
+                                                    text  = originalUrl,
+                                                    style = typography.bodySmall,
+                                                    color = colors.textPrimary,
+                                                    modifier = Modifier.weight(1f),
+                                                )
+                                            }
+                                        }
+                                        if (!finalUrl.isNullOrBlank() && finalUrl != originalUrl) {
+                                            Row(
+                                                modifier              = Modifier.fillMaxWidth(),
+                                                horizontalArrangement = Arrangement.SpaceBetween,
+                                                verticalAlignment     = Alignment.Top,
+                                            ) {
+                                                Text(
+                                                    text  = "If opened, it may redirect to:",
+                                                    style = typography.bodySmall,
+                                                    color = colors.textSecondary,
+                                                )
+                                                Text(
+                                                    text  = finalUrl,
+                                                    style = typography.bodySmall,
+                                                    color = colors.textPrimary,
+                                                    modifier = Modifier.weight(1f),
+                                                )
+                                            }
+                                        }
+                                        val evidence = result.riskReasons.ifEmpty { result.highlights.ifEmpty { result.reasons } }
+                                        if (evidence.isNotEmpty()) {
+                                            Text(
+                                                text  = evidence.take(2).joinToString(" | "),
+                                                style = typography.bodySmall,
+                                                color = colors.textSecondary,
                                             )
                                         }
                                     }
@@ -872,6 +922,9 @@ private fun String?.toUpgradeTrigger(): UpgradeTrigger = when (this) {
 
 // ─── Domain intelligence helpers ─────────────────────────────────────────────
 private val urlRegex = Regex("""https?://[^\s<>"']+|www\.[^\s<>"']+""")
+
+private fun extractFirstUrl(text: String): String? =
+    urlRegex.find(text)?.value?.trim()
 
 private fun extractFirstDomain(text: String): String? {
     val match = urlRegex.find(text) ?: return null

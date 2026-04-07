@@ -22,10 +22,20 @@ fun ScanResponse.toDomain(): ScanAnalysisResult {
         score          = safeInt(risk_score),
         confidence     = confidence,
         confidenceLabel = confidence_label?.trim()?.takeIf { it.isNotEmpty() },
-        summary        = summary?.trim()?.takeIf { it.isNotEmpty() },
+        summary        = (simple_explanation ?: summary)?.trim()?.takeIf { it.isNotEmpty() },
         highlights     = resolvedHighlights,
         reasons        = safeList(reasons).map { safeString(it) },
         recommendation = recommendation?.trim()?.takeIf { it.isNotEmpty() },
+        originalUrl    = original_url?.trim()?.takeIf { it.isNotEmpty() },
+        finalUrl       = final_url?.trim()?.takeIf { it.isNotEmpty() },
+        domain         = domain?.trim()?.takeIf { it.isNotEmpty() },
+        redirectDetected = redirect_detected == true,
+        redirectChain  = safeList(redirect_chain).map { safeString(it) },
+        limitedAnalysis = limited_analysis == true,
+        riskReasons    = safeList(risk_reason).map { safeString(it) },
+        confidenceScore = confidence_score?.let { safeInt(it) },
+        simpleExplanation = simple_explanation?.trim()?.takeIf { it.isNotEmpty() },
+        detailedExplanation = detailed_explanation?.trim()?.takeIf { it.isNotEmpty() },
         breachCount    = breach_count?.let { safeInt(it) },
         breaches       = breaches?.map { it.toDomain() }
     ).also { mapped ->
@@ -103,8 +113,8 @@ private fun resolveRiskLevel(riskLevel: String?, riskScore: Int?): String {
     }
     val score = riskScore ?: 0
     return when {
-        score <= 30 -> "LOW"
-        score <= 60 -> "MEDIUM"
+        score <= 40 -> "LOW"
+        score <= 70 -> "MEDIUM"
         else        -> "HIGH"
     }
 }
