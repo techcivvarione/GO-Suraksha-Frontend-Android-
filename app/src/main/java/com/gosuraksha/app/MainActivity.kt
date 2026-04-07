@@ -62,6 +62,7 @@ class MainActivity : ComponentActivity() {
 
         requestNotificationPermissionIfNeeded()
         fetchAndRegisterDeviceToken()
+        Log.d("APP_VERSION", "MainActivity launched version=${BuildConfig.VERSION_NAME} code=${BuildConfig.VERSION_CODE}")
 
         setContent {
             val context = LocalContext.current
@@ -161,4 +162,3 @@ class MainActivity : ComponentActivity() {
     }
 
 }
-

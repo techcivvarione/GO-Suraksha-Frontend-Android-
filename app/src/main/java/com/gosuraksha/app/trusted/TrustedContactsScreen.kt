@@ -1,5 +1,6 @@
 package com.gosuraksha.app.ui.trusted
 
+import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -70,27 +71,31 @@ fun TrustedContactsScreen(
     val app = LocalContext.current.applicationContext as android.app.Application
     val viewModel: TrustedContactsViewModel = viewModel(factory = TrustedContactsViewModelFactory(app))
 
-    val contacts by viewModel.contacts.collectAsStateWithLifecycle()
-    val pendingInvites by viewModel.pendingInvites.collectAsStateWithLifecycle()
-    val ownSecureNow by viewModel.ownSecureNow.collectAsStateWithLifecycle()
-    val notifications by viewModel.notifications.collectAsStateWithLifecycle()
-    val loading by viewModel.loading.collectAsStateWithLifecycle()
-    val error by viewModel.error.collectAsStateWithLifecycle()
-    val statusMessage by viewModel.statusMessage.collectAsStateWithLifecycle()
-
     LaunchedEffect(Unit) {
-        viewModel.loadDashboard()
         viewModel.loadNotifications()
     }
 
+    TrustedContactsScreen(
+        viewModel = viewModel,
+        onBack = onBack,
+        onOpenNotifications = onOpenNotifications,
+    )
+}
+
+@Composable
+fun TrustedContactsScreen(
+    viewModel: TrustedContactsViewModel,
+    onBack: () -> Unit = {},
+    onOpenNotifications: () -> Unit = {},
+) {
     FamilyProtectionScreen(
-        loading = loading,
-        error = error,
-        statusMessage = statusMessage,
-        contacts = contacts,
-        pendingInvites = pendingInvites,
-        ownSecureNow = ownSecureNow,
-        notifications = notifications,
+        loading = viewModel.loading.collectAsStateWithLifecycle().value,
+        error = viewModel.error.collectAsStateWithLifecycle().value,
+        statusMessage = viewModel.statusMessage.collectAsStateWithLifecycle().value,
+        contacts = viewModel.contacts.collectAsStateWithLifecycle().value,
+        pendingInvites = viewModel.pendingInvites.collectAsStateWithLifecycle().value,
+        ownSecureNow = viewModel.ownSecureNow.collectAsStateWithLifecycle().value,
+        notifications = viewModel.notifications.collectAsStateWithLifecycle().value,
         onBack = onBack,
         onOpenNotifications = onOpenNotifications,
         onInvite = viewModel::sendInvite,
@@ -121,6 +126,10 @@ private fun FamilyProtectionScreen(
     onRejectInvite: (String) -> Unit,
     onCompleteSecureNow: (String) -> Unit,
 ) {
+    LaunchedEffect(Unit) {
+        Log.d("APP_VERSION", "FamilyProtectionScreen ACTIVE")
+    }
+
     var name by remember { mutableStateOf("") }
     var phone by remember { mutableStateOf("") }
 

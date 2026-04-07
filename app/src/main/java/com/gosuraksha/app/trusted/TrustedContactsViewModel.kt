@@ -1,6 +1,7 @@
 package com.gosuraksha.app.trusted
 
 import android.app.Application
+import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
@@ -9,7 +10,7 @@ import com.gosuraksha.app.data.repository.TrustedContactsRepository
 import com.gosuraksha.app.network.ApiClient
 import com.gosuraksha.app.trusted.model.*
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
 class TrustedContactsViewModel(
@@ -19,40 +20,45 @@ class TrustedContactsViewModel(
     AndroidViewModel(application) {
 
     private val _contacts = MutableStateFlow<List<TrustedContact>>(emptyList())
-    val contacts: StateFlow<List<TrustedContact>> = _contacts
+    val contacts = _contacts.asStateFlow()
 
     private val _alerts = MutableStateFlow<List<TrustedAlert>>(emptyList())
-    val alerts: StateFlow<List<TrustedAlert>> = _alerts
+    val alerts = _alerts.asStateFlow()
 
     private val _pendingInvites = MutableStateFlow<List<PendingInvite>>(emptyList())
-    val pendingInvites: StateFlow<List<PendingInvite>> = _pendingInvites
+    val pendingInvites = _pendingInvites.asStateFlow()
 
     private val _familyMembers = MutableStateFlow<List<FamilyMemberDashboardItem>>(emptyList())
-    val familyMembers: StateFlow<List<FamilyMemberDashboardItem>> = _familyMembers
+    val familyMembers = _familyMembers.asStateFlow()
 
     private val _capabilities = MutableStateFlow(FamilyProtectionCapabilities())
-    val capabilities: StateFlow<FamilyProtectionCapabilities> = _capabilities
+    val capabilities = _capabilities.asStateFlow()
 
     private val _dashboardMode = MutableStateFlow<String?>(null)
-    val dashboardMode: StateFlow<String?> = _dashboardMode
+    val dashboardMode = _dashboardMode.asStateFlow()
 
     private val _ownSecureNow = MutableStateFlow<List<SecureNowItem>>(emptyList())
-    val ownSecureNow: StateFlow<List<SecureNowItem>> = _ownSecureNow
+    val ownSecureNow = _ownSecureNow.asStateFlow()
 
     private val _familySecureNow = MutableStateFlow<List<SecureNowItem>>(emptyList())
-    val familySecureNow: StateFlow<List<SecureNowItem>> = _familySecureNow
+    val familySecureNow = _familySecureNow.asStateFlow()
 
     private val _notifications = MutableStateFlow(NotificationFeedResponse())
-    val notifications: StateFlow<NotificationFeedResponse> = _notifications
+    val notifications = _notifications.asStateFlow()
 
     private val _statusMessage = MutableStateFlow<String?>(null)
-    val statusMessage: StateFlow<String?> = _statusMessage
+    val statusMessage = _statusMessage.asStateFlow()
 
     private val _loading = MutableStateFlow(false)
-    val loading: StateFlow<Boolean> = _loading
+    val loading = _loading.asStateFlow()
 
     private val _error = MutableStateFlow<String?>(null)
-    val error: StateFlow<String?> = _error
+    val error = _error.asStateFlow()
+
+    init {
+        Log.d("APP_VERSION", "TrustedContactsViewModel init -> loading family protection data")
+        loadDashboard()
+    }
 
     fun loadContacts() {
         viewModelScope.launch {
@@ -155,7 +161,7 @@ class TrustedContactsViewModel(
                 _error.value = null
                 _loading.value = true
                 val dashboard = repository.getFamilyDashboard()
-                _familyMembers.value = dashboard.members
+                _familyMembers.value = dashboard.members ?: emptyList()
                 _capabilities.value = dashboard.capabilities ?: FamilyProtectionCapabilities()
                 _dashboardMode.value = dashboard.mode
                 loadContacts()
@@ -163,6 +169,10 @@ class TrustedContactsViewModel(
                 loadSecureNow()
                 loadNotifications()
             } catch (e: Exception) {
+                _familyMembers.value = emptyList()
+                _pendingInvites.value = emptyList()
+                _ownSecureNow.value = emptyList()
+                _notifications.value = NotificationFeedResponse()
                 _error.value = e.message ?: "Unable to load family dashboard"
             } finally {
                 _loading.value = false
