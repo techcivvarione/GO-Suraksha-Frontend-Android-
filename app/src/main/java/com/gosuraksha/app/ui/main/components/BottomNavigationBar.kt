@@ -21,6 +21,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.rounded.Article
 import androidx.compose.material.icons.rounded.*
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
@@ -64,7 +65,7 @@ fun BottomNavigationBar(
     // Left items — Home, Search
     val leftItems = listOf(
         NavItem(Screen.Home.route,   stringResource(R.string.ui_mainshell_9), Icons.Rounded.Home),
-        NavItem(Screen.Search.route, "Search",                                 Icons.Rounded.Search)
+        NavItem(Screen.Learn.route, "Learn",                                   Icons.AutoMirrored.Rounded.Article)
     )
     // Right items — Family (Threat Center = AlertsScreen with 3 tabs), History
     val rightItems = listOf(

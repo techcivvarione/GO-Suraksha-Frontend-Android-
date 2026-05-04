@@ -61,6 +61,7 @@ import com.gosuraksha.app.design.tokens.ColorTokens
 @Composable
 fun SecuritySection(
     isDark: Boolean,
+    isAppLockEnabled: Boolean,
     securityExpanded: Boolean,
     currentPass: String,
     newPass: String,
@@ -77,6 +78,7 @@ fun SecuritySection(
     onToggleNewPass: () -> Unit,
     onToggleConfirmPass: () -> Unit,
     onUpdatePassword: () -> Unit,
+    onToggleAppLock: (Boolean) -> Unit,
     onShowLanguage: () -> Unit,
     onLogoutClick: () -> Unit,
     onDeleteClick: () -> Unit
@@ -156,6 +158,14 @@ fun SecuritySection(
         ProfileRow(Icons.Default.Laptop, PC.iconBgSlate(isDark), PC.subText(isDark), "Chrome on Windows", "2d ago", PC.subText(isDark), isDark, true)
     }
 
+    ProfileSectionCard(header = "APP LOCK", isDark = isDark) {
+        AppLockPreferenceRow(
+            isDark = isDark,
+            isEnabled = isAppLockEnabled,
+            onToggle = onToggleAppLock,
+        )
+    }
+
     ProfileSectionCard(header = "MORE", isDark = isDark) {
         ProfileActionRow(Icons.Outlined.Language, PC.iconBgBlue(isDark), PC.Blue, stringResource(R.string.home_quick_language), isDark, onClick = onShowLanguage)
         ProfileActionRow(Icons.Outlined.Notifications, PC.iconBgAmber(isDark), PC.Amber, "Notification Settings", isDark, onClick = {})
@@ -164,6 +174,72 @@ fun SecuritySection(
     }
 
     ProfileDangerZone(isDark = isDark, onLogoutClick = onLogoutClick, onDeleteClick = onDeleteClick)
+}
+
+@Composable
+private fun AppLockPreferenceRow(
+    isDark: Boolean,
+    isEnabled: Boolean,
+    onToggle: (Boolean) -> Unit,
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(14.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(11.dp)
+        ) {
+            Box(
+                Modifier
+                    .size(34.dp)
+                    .clip(RoundedCornerShape(10.dp))
+                    .background(if (isEnabled) PC.iconBgGreen(isDark) else PC.iconBgSlate(isDark)),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = Icons.Outlined.Lock,
+                    contentDescription = null,
+                    tint = if (isEnabled) PC.Green else PC.subText(isDark),
+                    modifier = Modifier.size(16.dp)
+                )
+            }
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = "App Lock",
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.Medium,
+                    color = PC.onSurf(isDark)
+                )
+                Text(
+                    text = if (isEnabled) {
+                        "Uses fingerprint, face, PIN, pattern, or device password when the app opens."
+                    } else {
+                        "Protect the app with your device security every time you reopen it."
+                    },
+                    fontSize = 11.sp,
+                    color = PC.subText(isDark)
+                )
+            }
+        }
+        OutlinedButton(
+            onClick = { onToggle(!isEnabled) },
+            modifier = Modifier.fillMaxWidth().height(46.dp),
+            border = BorderStroke(0.5.dp, if (isEnabled) PC.Green.copy(alpha = 0.45f) else PC.LightBorder),
+            shape = RoundedCornerShape(12.dp),
+            colors = ButtonDefaults.outlinedButtonColors(
+                contentColor = if (isEnabled) PC.Green else PC.onSurf(isDark)
+            )
+        ) {
+            Text(
+                text = if (isEnabled) "Disable App Lock" else "Enable App Lock",
+                fontSize = 13.sp,
+                fontWeight = FontWeight.SemiBold
+            )
+        }
+    }
 }
 
 @Composable

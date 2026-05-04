@@ -82,6 +82,8 @@ import com.gosuraksha.app.domain.model.hasFeature
 import com.gosuraksha.app.network.QuotaResponse
 import com.gosuraksha.app.profile.ProfileViewModel
 import com.gosuraksha.app.profile.ProfileViewModelFactory
+import com.gosuraksha.app.security.LocalAppLockController
+import com.gosuraksha.app.security.LocalAppLockEnabled
 import com.gosuraksha.app.security.model.SecurityViewModel
 import com.gosuraksha.app.security.model.SecurityViewModelFactory
 import com.gosuraksha.app.ui.components.localizedUiMessage
@@ -122,6 +124,8 @@ fun ProfileScreen(onLogout: () -> Unit) {
     val context  = LocalContext.current
     val activity = context as? Activity
     val isDark   = ColorTokens.LocalAppDarkMode.current
+    val appLockController = LocalAppLockController.current
+    val isAppLockEnabled = LocalAppLockEnabled.current
 
     var dialogs   by remember { mutableStateOf(ProfileDialogUiState()) }
     var formState by remember { mutableStateOf(ProfileFormUiState()) }
@@ -273,6 +277,7 @@ fun ProfileScreen(onLogout: () -> Unit) {
                 ProfileSectionLabel(label = "Security & Preferences", isDark = isDark)
                 SecuritySection(
                     isDark             = isDark,
+                    isAppLockEnabled   = isAppLockEnabled,
                     securityExpanded   = dialogs.securityExpanded,
                     currentPass        = formState.currentPass,
                     newPass            = formState.newPass,
@@ -290,6 +295,13 @@ fun ProfileScreen(onLogout: () -> Unit) {
                     onToggleConfirmPass  = { formState = formState.copy(showConfirmPass = !formState.showConfirmPass) },
                     onUpdatePassword     = {
                         securityViewModel.changePassword(formState.currentPass, formState.newPass, formState.confirmPass)
+                    },
+                    onToggleAppLock   = { enabled ->
+                        if (enabled) {
+                            appLockController?.requestEnable()
+                        } else {
+                            appLockController?.disable()
+                        }
                     },
                     onShowLanguage   = { dialogs = dialogs.copy(showLanguageDialog = true) },
                     onLogoutClick    = { dialogs = dialogs.copy(showLogoutDialog = true) },

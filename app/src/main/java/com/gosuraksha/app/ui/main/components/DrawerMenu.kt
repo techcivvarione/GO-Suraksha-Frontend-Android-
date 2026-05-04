@@ -139,7 +139,7 @@ fun DrawerMenu(
                 iconBgRed(true), iconBgRed(false), iconTintRed(true), iconTintRed(false)),
             DrawerItem(Screen.RiskInternal.route,    "Risk Intelligence", Icons.Rounded.Star,
                 iconBgAmber(true), iconBgAmber(false), iconTintAmber(true), iconTintAmber(false)),
-            DrawerItem(Screen.News.route,            "Cyber News",        Icons.AutoMirrored.Rounded.Article,
+            DrawerItem(Screen.Learn.route,           "Learn Safety",      Icons.AutoMirrored.Rounded.Article,
                 iconBgBlue(true), iconBgBlue(false), iconTintBlue(true), iconTintBlue(false))
         )),
         DrawerSection("Account & Safety", listOf(

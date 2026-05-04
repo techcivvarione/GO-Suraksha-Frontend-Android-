@@ -37,7 +37,6 @@ import com.gosuraksha.app.ui.language.LanguageSelectorScreen
 import com.gosuraksha.app.ui.main.MainShell
 import com.gosuraksha.app.ui.onboarding.IntroOnboardingScreen
 import com.gosuraksha.app.ui.screens.CyberSosScreen
-import com.gosuraksha.app.ui.security.BiometricUnlockScreen
 import com.gosuraksha.app.ui.signup.SignupScreen
 import com.gosuraksha.app.ui.trusted.NotificationScreen
 import com.gosuraksha.app.ui.trusted.TrustedContactsScreen
@@ -89,7 +88,7 @@ fun AppNavGraph() {
         composable(Screen.Entry.route) {
             EntryScreen {
                 if (isLoggedIn) {
-                    navController.navigate(Screen.UnlockPin.route) {
+                    navController.navigate(Screen.Home.route) {
                         popUpTo(Screen.Entry.route) { inclusive = true }
                     }
                 } else if (isFirstLaunch) {
@@ -220,13 +219,11 @@ fun AppNavGraph() {
         }
 
         composable(Screen.UnlockPin.route) {
-            BiometricUnlockScreen(
-                onUnlocked = {
-                    navController.navigate(Screen.Home.route) {
-                        popUpTo(0) { inclusive = true }
-                    }
+            LaunchedEffect(Unit) {
+                navController.navigate(Screen.Home.route) {
+                    popUpTo(Screen.UnlockPin.route) { inclusive = true }
                 }
-            )
+            }
         }
 
         composable(Screen.Signup.route) {

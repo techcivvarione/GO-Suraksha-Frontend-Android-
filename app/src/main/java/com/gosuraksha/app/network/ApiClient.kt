@@ -29,6 +29,8 @@ object ApiClient {
         private set
     lateinit var newsApi: NewsApi
         private set
+    lateinit var learnApi: LearnApi
+        private set
     lateinit var profileApi: ProfileApi
         private set
     lateinit var securityApi: SecurityApi
@@ -89,6 +91,7 @@ object ApiClient {
         analyzeApi = retrofit.create(AnalyzeApi::class.java)
         homeApi = retrofit.create(HomeApi::class.java)
         newsApi = retrofit.create(NewsApi::class.java)
+        learnApi = retrofit.create(LearnApi::class.java)
         profileApi = retrofit.create(ProfileApi::class.java)
         securityApi = retrofit.create(SecurityApi::class.java)
         historyApi = retrofit.create(HistoryApi::class.java)

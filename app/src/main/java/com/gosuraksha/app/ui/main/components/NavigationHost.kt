@@ -1,7 +1,12 @@
 package com.gosuraksha.app.ui.main
 
+import android.app.Application
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -15,6 +20,8 @@ import com.gosuraksha.app.scan.core.ScanScreen
 import com.gosuraksha.app.ui.alerts.AlertsScreen
 import com.gosuraksha.app.ui.history.HistoryScreen
 import com.gosuraksha.app.ui.home.HomeScreen
+import com.gosuraksha.app.ui.learn.LearnDetailScreen
+import com.gosuraksha.app.ui.learn.LearnScreen
 import com.gosuraksha.app.ui.news.NewsScreen
 import com.gosuraksha.app.ui.search.SearchScreen
 import com.gosuraksha.app.ui.trusted.NotificationScreen
@@ -42,13 +49,32 @@ fun NavigationHost(
                 onNavigateToScamNetwork = { navController.navigate(Screen.ScamAlertHub.route) },
                 onNavigateToFamily = { navController.navigate(Screen.TrustedContacts.route) },
                 onNavigateToSecuritySettings = { navController.navigate(Screen.Profile.route) },
-                onNavigateToNews = { navController.navigate(Screen.News.route) },
+                onNavigateToNews = { navController.navigate(Screen.Learn.route) },
                 onNavigateToScamLookup = { navController.navigate(Screen.CheckNumber.route) },
                 onNavigateToReportScam = { navController.navigate(Screen.ReportScam.route) },
                 onNavigateToScamAlertsFeed = { navController.navigate(Screen.ScamAlertsFeed.route) },
                 onNavigateToScan = { navController.navigate(Screen.Scan.route) },
                 onNavigateToProfile = { navController.navigate(Screen.Profile.route) },
                 onNavigateToTrustedContacts = { navController.navigate(Screen.TrustedContacts.route) }
+            )
+        }
+        composable(Screen.Learn.route) {
+            LearnScreen(
+                onOpenArticle = { article ->
+                    navController.currentBackStackEntry
+                        ?.savedStateHandle
+                        ?.set("learn_article", article)
+                    navController.navigate(Screen.LearnDetail.route)
+                }
+            )
+        }
+        composable(Screen.LearnDetail.route) {
+            val article = navController.previousBackStackEntry
+                ?.savedStateHandle
+                ?.get<com.gosuraksha.app.learn.model.LearnArticle>("learn_article")
+            LearnScreenBridgeDetail(
+                article = article,
+                onBack = { navController.popBackStack() }
             )
         }
         composable(Screen.News.route) { NewsScreen() }
@@ -95,4 +121,23 @@ fun NavigationHost(
         composable(Screen.RiskInternal.route) { RiskScreen() }
         composable(Screen.CyberSos.route) { com.gosuraksha.app.ui.screens.CyberSosScreen() }
     }
+}
+
+@Composable
+private fun LearnScreenBridgeDetail(
+    article: com.gosuraksha.app.learn.model.LearnArticle?,
+    onBack: () -> Unit
+) {
+    val application = LocalContext.current.applicationContext as Application
+    val viewModel: com.gosuraksha.app.learn.LearnViewModel = viewModel(
+        factory = com.gosuraksha.app.learn.LearnViewModelFactory(application)
+    )
+    val bookmarks by viewModel.bookmarks.collectAsStateWithLifecycle()
+
+    LearnDetailScreen(
+        article = article,
+        onBack = onBack,
+        onToggleBookmark = viewModel::toggleBookmark,
+        isBookmarked = article?.stableId?.let(bookmarks::contains) == true
+    )
 }
